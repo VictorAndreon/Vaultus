@@ -13,6 +13,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "php", "-r", "echo 1;"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     env_file: .env
     user: "1000:1000"
 
@@ -35,6 +40,11 @@ services:
     image: redis:7-alpine
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   horizon:
     build:
@@ -44,8 +54,10 @@ services:
     volumes:
       - ./src:/var/www/html
     depends_on:
-      - app
-      - redis
+      app:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file: .env
     user: "1000:1000"
     restart: unless-stopped
@@ -59,8 +71,10 @@ services:
       - ./src:/var/www/html
       - ./backups:/backups
     depends_on:
-      - app
-      - db
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     env_file: .env
     user: "1000:1000"
     restart: unless-stopped
