@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
     postgresql-dev \
@@ -10,6 +10,9 @@ RUN apk add --no-cache \
     gpg-agent \
     rsync \
     postgresql-client \
+    autoconf \
+    g++ \
+    make \
     && docker-php-ext-install \
         pdo_pgsql \
         pgsql \
