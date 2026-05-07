@@ -1,0 +1,9 @@
+.git
+.worktrees
+node_modules
+src/node_modules
+src/vendor
+src/storage/logs/*
+src/.env
+backups
+docs

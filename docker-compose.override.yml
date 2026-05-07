@@ -1,0 +1,18 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  app:
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+
+  node:
+    image: node:20-alpine
+    working_dir: /var/www/html
+    volumes:
+      - ./src:/var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
