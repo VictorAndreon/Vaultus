@@ -65,3 +65,44 @@ export interface JournalPrompt {
     is_active: boolean
     position: number
 }
+
+export interface Account {
+    id: number
+    name: string
+    type: string
+    currency: string
+    current_balance: number
+}
+
+export interface Transaction {
+    id: number
+    account_id: number
+    type: 'income' | 'expense'
+    amount: number
+    description: string
+    category: string | null
+    occurred_at: string
+}
+
+export interface FinancialGoal {
+    id: number
+    name: string
+    target_amount: number
+    current_amount: number
+    progress_percent: number
+    category: string | null
+    deadline: string | null
+    is_completed: boolean
+    is_archived: boolean
+}
+
+export interface WishlistItem {
+    id: number
+    name: string
+    estimated_price: number | null
+    priority: 'low' | 'medium' | 'high'
+    url: string | null
+    notes: string | null
+    financial_goal_id: number | null
+    goal: FinancialGoal | null
+}

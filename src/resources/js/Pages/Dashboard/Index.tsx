@@ -17,6 +17,7 @@ interface Props {
         habits_total: number
         journal_entries_this_month: number
         open_projects: number
+        net_worth: number
     }
     recent_activity: Array<{ event: string; created_at: string }>
     habits_today: HabitSummary[]

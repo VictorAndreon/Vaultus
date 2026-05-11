@@ -33,6 +33,7 @@ class DashboardAggregator
             'habits_total'               => $expectedToday->count(),
             'journal_entries_this_month' => $journalThisMonth,
             'open_projects'              => 0,
+            'net_worth'                  => (float) $user->accounts()->with('transactions')->get()->sum(fn($a) => $a->current_balance),
         ];
     }
 

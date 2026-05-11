@@ -6,6 +6,11 @@ interface Stats {
     habits_total: number
     journal_entries_this_month: number
     open_projects: number
+    net_worth: number
+}
+
+function formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value)
 }
 
 export default function QuickStats({ stats }: { stats: Stats }) {
@@ -14,6 +19,7 @@ export default function QuickStats({ stats }: { stats: Stats }) {
         { label: 'Hábitos',         value: `${stats.habits_done_today}/${stats.habits_total}`, unit: '' },
         { label: 'Diário (mês)',    value: stats.journal_entries_this_month, unit: 'entradas' },
         { label: 'Projetos ativos', value: stats.open_projects,     unit: '' },
+        { label: 'Patrimônio',      value: formatCurrency(stats.net_worth), unit: '' },
     ]
 
     return (
