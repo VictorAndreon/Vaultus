@@ -63,4 +63,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Domains\Journal\Models\JournalPrompt::class);
     }
+
+    public function accounts()
+    {
+        return $this->hasMany(\App\Domains\Finance\Models\Account::class);
+    }
+
+    public function financialGoals()
+    {
+        return $this->hasMany(\App\Domains\Finance\Models\FinancialGoal::class);
+    }
+
+    public function wishlistItems()
+    {
+        return $this->hasMany(\App\Domains\Finance\Models\WishlistItem::class);
+    }
 }
