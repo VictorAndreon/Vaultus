@@ -1,10 +1,35 @@
-import { PageProps } from '@/types'
+import AppLayout from '@/Layouts/AppLayout'
+import QuickStats from './widgets/QuickStats'
+import RecentActivity from './widgets/RecentActivity'
+import Card from '@/Components/ui/Card'
 
-export default function Dashboard({ auth }: PageProps) {
+interface Props {
+    stats: {
+        tasks_due_today: number
+        habits_done_today: number
+        habits_total: number
+        journal_streak: number
+        open_projects: number
+    }
+    recent_activity: Array<{ event: string; created_at: string }>
+}
+
+export default function Dashboard({ stats, recent_activity }: Props) {
     return (
-        <div style={{ minHeight: '100vh', background: '#0f172a', color: '#f8fafc', padding: 32 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700 }}>Olá, {auth.user?.name}</h1>
-            <p style={{ color: '#94a3b8', marginTop: 8 }}>Vaultus está no ar. Módulos chegando em breve.</p>
-        </div>
+        <AppLayout title="Dashboard">
+            <div className="space-y-6 max-w-6xl">
+                <QuickStats stats={stats} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <RecentActivity activities={recent_activity} />
+
+                    <Card title="Módulos">
+                        <p className="text-sm text-slate-600">
+                            Os widgets dos módulos aparecerão aqui conforme forem implementados.
+                        </p>
+                    </Card>
+                </div>
+            </div>
+        </AppLayout>
     )
 }
