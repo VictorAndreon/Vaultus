@@ -106,7 +106,7 @@ export default function WishlistForm({ item, goals, onClose }: Props) {
                         >
                             <option value="">Nenhuma</option>
                             {goals.map(g => (
-                                <option key={g.id} value={g.id}>{g.name}</option>
+                                <option key={g.id} value={String(g.id)}>{g.name}</option>
                             ))}
                         </select>
                     </div>

@@ -35,8 +35,8 @@ export default function GoalCard({ goal, onEdit, onDelete }: Props) {
                     )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(goal)}>Editar</Button>
-                    <Button variant="danger" size="sm" onClick={() => onDelete(goal)}>Excluir</Button>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(goal) }}>Editar</Button>
+                    <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); onDelete(goal) }}>Excluir</Button>
                 </div>
             </div>
 

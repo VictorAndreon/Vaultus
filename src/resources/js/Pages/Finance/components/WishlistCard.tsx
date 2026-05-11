@@ -41,8 +41,8 @@ export default function WishlistCard({ item, onEdit, onDelete }: Props) {
                     )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>Editar</Button>
-                    <Button variant="danger" size="sm" onClick={() => onDelete(item)}>Excluir</Button>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(item) }}>Editar</Button>
+                    <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); onDelete(item) }}>Excluir</Button>
                 </div>
             </div>
 
