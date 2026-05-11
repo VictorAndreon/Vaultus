@@ -4,7 +4,7 @@ interface Stats {
     tasks_due_today: number
     habits_done_today: number
     habits_total: number
-    journal_streak: number
+    journal_entries_this_month: number
     open_projects: number
 }
 
@@ -12,7 +12,7 @@ export default function QuickStats({ stats }: { stats: Stats }) {
     const items = [
         { label: 'Tarefas hoje',    value: stats.tasks_due_today,   unit: '' },
         { label: 'Hábitos',         value: `${stats.habits_done_today}/${stats.habits_total}`, unit: '' },
-        { label: 'Streak diário',   value: stats.journal_streak,    unit: 'dias' },
+        { label: 'Diário (mês)',    value: stats.journal_entries_this_month, unit: 'entradas' },
         { label: 'Projetos ativos', value: stats.open_projects,     unit: '' },
     ]
 

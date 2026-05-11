@@ -15,7 +15,7 @@ interface Props {
         tasks_due_today: number
         habits_done_today: number
         habits_total: number
-        journal_streak: number
+        journal_entries_this_month: number
         open_projects: number
     }
     recent_activity: Array<{ event: string; created_at: string }>

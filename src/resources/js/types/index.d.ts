@@ -47,3 +47,21 @@ export interface HealthMetric {
     weight_kg: string | null
     notes: string | null
 }
+
+export interface JournalEntry {
+    id: number
+    date: string
+    content: string
+    tags: string[]
+    health_metric_id: number | null
+    mood: number | null
+    energy: number | null
+    preview: string | null
+}
+
+export interface JournalPrompt {
+    id: number
+    content: string
+    is_active: boolean
+    position: number
+}
