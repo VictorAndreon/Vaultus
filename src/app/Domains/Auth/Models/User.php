@@ -48,4 +48,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(AuditLog::class);
     }
+
+    public function habits()
+    {
+        return $this->hasMany(\App\Domains\Habits\Models\Habit::class);
+    }
 }

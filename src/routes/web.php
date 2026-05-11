@@ -3,6 +3,9 @@
 use App\Domains\Auth\Controllers\AuthController;
 use App\Domains\Auth\Controllers\TwoFactorController;
 use App\Domains\Dashboard\Controllers\DashboardController;
+use App\Domains\Habits\Controllers\CheckInController;
+use App\Domains\Habits\Controllers\HabitController;
+use App\Domains\Habits\Controllers\HealthMetricController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -17,7 +20,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    $stubs = ['tasks', 'projects', 'habits', 'journal', 'finance', 'library', 'notes', 'contacts', 'reviews'];
+    // Habits — /habits/health-metrics DEVE vir antes de /habits/{habit}
+    Route::get('/habits', [HabitController::class, 'index'])->name('habits');
+    Route::post('/habits', [HabitController::class, 'store']);
+    Route::post('/habits/health-metrics', [HealthMetricController::class, 'store']);
+    Route::patch('/habits/{habit}', [HabitController::class, 'update']);
+    Route::delete('/habits/{habit}', [HabitController::class, 'destroy']);
+    Route::post('/habits/{habit}/check-in', [CheckInController::class, 'store']);
+    Route::delete('/habits/{habit}/check-in', [CheckInController::class, 'destroy']);
+
+    $stubs = ['tasks', 'projects', 'journal', 'finance', 'library', 'notes', 'contacts', 'reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
     }
