@@ -1,7 +1,14 @@
 import AppLayout from '@/Layouts/AppLayout'
 import QuickStats from './widgets/QuickStats'
 import RecentActivity from './widgets/RecentActivity'
-import Card from '@/Components/ui/Card'
+import TodayHabits from './widgets/TodayHabits'
+
+interface HabitSummary {
+    id: number
+    name: string
+    icon: string | null
+    checked_in_today: boolean
+}
 
 interface Props {
     stats: {
@@ -12,9 +19,10 @@ interface Props {
         open_projects: number
     }
     recent_activity: Array<{ event: string; created_at: string }>
+    habits_today: HabitSummary[]
 }
 
-export default function Dashboard({ stats, recent_activity }: Props) {
+export default function Dashboard({ stats, recent_activity, habits_today }: Props) {
     return (
         <AppLayout title="Dashboard">
             <div className="space-y-6 max-w-6xl">
@@ -22,12 +30,11 @@ export default function Dashboard({ stats, recent_activity }: Props) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <RecentActivity activities={recent_activity} />
-
-                    <Card title="Módulos">
-                        <p className="text-sm text-slate-600">
-                            Os widgets dos módulos aparecerão aqui conforme forem implementados.
-                        </p>
-                    </Card>
+                    <TodayHabits
+                        habits_today={habits_today}
+                        done={stats.habits_done_today}
+                        total={stats.habits_total}
+                    />
                 </div>
             </div>
         </AppLayout>
