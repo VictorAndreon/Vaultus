@@ -5,6 +5,7 @@ namespace App\Domains\Finance\Controllers;
 use App\Domains\Finance\Models\WishlistItem;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule;
 
 class WishlistController extends Controller
 {
@@ -16,7 +17,7 @@ class WishlistController extends Controller
             'priority'                  => 'required|in:low,medium,high',
             'url'                       => 'nullable|url|max:500',
             'notes'                     => 'nullable|string|max:1000',
-            'financial_goal_id'         => 'nullable|exists:financial_goals,id',
+            'financial_goal_id'         => ['nullable', Rule::exists('financial_goals', 'id')->where('user_id', $request->user()->id)],
         ]);
 
         $request->user()->wishlistItems()->create($validated);
@@ -34,7 +35,7 @@ class WishlistController extends Controller
             'priority'                  => 'sometimes|in:low,medium,high',
             'url'                       => 'nullable|url|max:500',
             'notes'                     => 'nullable|string|max:1000',
-            'financial_goal_id'         => 'nullable|exists:financial_goals,id',
+            'financial_goal_id'         => ['nullable', Rule::exists('financial_goals', 'id')->where('user_id', $request->user()->id)],
         ]);
 
         $item->update($validated);

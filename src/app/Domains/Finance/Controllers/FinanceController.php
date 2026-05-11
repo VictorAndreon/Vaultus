@@ -20,7 +20,7 @@ class FinanceController extends Controller
         return Inertia::render('Finance/Index', [
             'accounts'  => AccountResource::collection($accounts),
             'goals'     => FinancialGoalResource::collection($user->financialGoals()->with('transactionGoals')->get()),
-            'wishlist'  => WishlistItemResource::collection($user->wishlistItems()->with('goal')->get()),
+            'wishlist'  => WishlistItemResource::collection($user->wishlistItems()->with('goal.transactionGoals')->get()),
             'net_worth' => (float) $accounts->sum(fn($a) => $a->current_balance),
         ]);
     }
