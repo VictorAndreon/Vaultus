@@ -29,7 +29,11 @@ class FinancialGoal extends Model
 
     public function getCurrentAmountAttribute(): float
     {
-        return (float) $this->transactionGoals->sum(fn($tg) => (float) $tg->amount_encrypted);
+        $goals = $this->relationLoaded('transactionGoals')
+            ? $this->transactionGoals
+            : $this->transactionGoals()->get();
+
+        return $goals->sum(fn($tg) => (float) $tg->amount_encrypted);
     }
 
     public function getProgressPercentAttribute(): float

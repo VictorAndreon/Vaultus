@@ -24,11 +24,14 @@ class Account extends Model
 
     public function getCurrentBalanceAttribute(): float
     {
-        $base = (float) ($this->balance_encrypted ?? 0);
-        $incomeSum = $this->transactions->where('type', 'income')->sum(fn($t) => (float) $t->amount_encrypted);
-        $expenseSum = $this->transactions->where('type', 'expense')->sum(fn($t) => (float) $t->amount_encrypted);
+        $transactions = $this->relationLoaded('transactions')
+            ? $this->transactions
+            : $this->transactions()->get();
 
-        return $base + $incomeSum - $expenseSum;
+        $income  = $transactions->where('type', 'income')->sum(fn($t) => (float) $t->amount_encrypted);
+        $expense = $transactions->where('type', 'expense')->sum(fn($t) => (float) $t->amount_encrypted);
+
+        return (float) ($this->balance_encrypted ?? 0) + $income - $expense;
     }
 
     public function user()
