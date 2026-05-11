@@ -11,6 +11,15 @@ class FinancialGoal extends Model
 {
     use SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::creating(function (FinancialGoal $goal) {
+            if ($goal->getRawOriginal('current_amount_encrypted') === null) {
+                $goal->current_amount_encrypted = '0';
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id', 'name', 'target_amount_encrypted', 'current_amount_encrypted',
         'category', 'deadline', 'is_completed', 'is_archived',
