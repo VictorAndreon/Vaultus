@@ -53,4 +53,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Domains\Habits\Models\Habit::class);
     }
+
+    public function journalEntries()
+    {
+        return $this->hasMany(\App\Domains\Journal\Models\JournalEntry::class);
+    }
+
+    public function journalPrompts()
+    {
+        return $this->hasMany(\App\Domains\Journal\Models\JournalPrompt::class);
+    }
 }

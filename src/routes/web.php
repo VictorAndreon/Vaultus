@@ -6,6 +6,8 @@ use App\Domains\Dashboard\Controllers\DashboardController;
 use App\Domains\Habits\Controllers\CheckInController;
 use App\Domains\Habits\Controllers\HabitController;
 use App\Domains\Habits\Controllers\HealthMetricController;
+use App\Domains\Journal\Controllers\JournalEntryController;
+use App\Domains\Journal\Controllers\JournalPromptController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -29,7 +31,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/habits/{habit}/check-in', [CheckInController::class, 'store']);
     Route::delete('/habits/{habit}/check-in', [CheckInController::class, 'destroy']);
 
-    $stubs = ['tasks', 'projects', 'journal', 'finance', 'library', 'notes', 'contacts', 'reviews'];
+    // Journal — /journal/prompts DEVE vir antes de /journal/{entry}
+    Route::get('/journal', [JournalEntryController::class, 'index'])->name('journal');
+    Route::post('/journal', [JournalEntryController::class, 'store']);
+    Route::post('/journal/prompts', [JournalPromptController::class, 'store']);
+    Route::patch('/journal/prompts/{prompt}', [JournalPromptController::class, 'update']);
+    Route::delete('/journal/prompts/{prompt}', [JournalPromptController::class, 'destroy']);
+    Route::patch('/journal/{entry}', [JournalEntryController::class, 'update']);
+
+    $stubs = ['tasks', 'projects', 'finance', 'library', 'notes', 'contacts', 'reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
     }
