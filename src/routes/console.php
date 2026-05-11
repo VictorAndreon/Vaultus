@@ -1,8 +1,17 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command('backup:run --type=daily')
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->onFailure(fn() => Log::channel('backup')->critical('Backup diário falhou no scheduler'));
+
+Schedule::command('backup:run --type=weekly')
+    ->weeklyOn(0, '03:30')
+    ->withoutOverlapping();
+
+Schedule::command('backup:run --type=monthly')
+    ->monthlyOn(1, '04:00')
+    ->withoutOverlapping();
