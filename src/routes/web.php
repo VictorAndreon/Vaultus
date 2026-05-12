@@ -17,6 +17,8 @@ use App\Domains\Journal\Controllers\JournalPromptController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::get('/', fn() => redirect('/dashboard'));
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
