@@ -25,8 +25,8 @@ class JournalEntryController extends Controller
         $prompts = $user->journalPrompts()->active()->get();
 
         return Inertia::render('Journal/Index', [
-            'entries' => JournalEntryResource::collection($entries),
-            'prompts' => JournalPromptResource::collection($prompts),
+            'entries' => $entries->map(fn($e) => new JournalEntryResource($e)),
+            'prompts' => $prompts->map(fn($p) => new JournalPromptResource($p)),
             'today'   => Carbon::now($user->timezone)->toDateString(),
         ]);
     }

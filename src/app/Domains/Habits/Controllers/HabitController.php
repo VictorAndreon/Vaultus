@@ -30,7 +30,7 @@ class HabitController extends Controller
             ->first();
 
         return Inertia::render('Habits/Index', [
-            'habits'        => HabitResource::collection($habits),
+            'habits'        => $habits->map(fn($h) => new HabitResource($h)),
             'today_metrics' => $todayMetric ? HealthMetricResource::make($todayMetric) : null,
             'today'         => $today,
         ]);
