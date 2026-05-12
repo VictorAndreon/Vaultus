@@ -50,9 +50,9 @@ export default function EntryList({ entries, selectedDate, onSelectDate }: Props
                         ) : (
                             <p className="text-sm text-slate-700 italic">Entrada vazia</p>
                         )}
-                        {entry.tags.length > 0 && (
+                        {(entry.tags ?? []).length > 0 && (
                             <div className="flex gap-1 mt-2 flex-wrap">
-                                {entry.tags.map(tag => (
+                                {(entry.tags ?? []).map(tag => (
                                     <span key={tag} className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
                                         {tag}
                                     </span>
