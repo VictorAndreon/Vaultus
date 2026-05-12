@@ -33,7 +33,7 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
         e.preventDefault()
         const data = {
             type,
-            amount_encrypted: amount,
+            amount_encrypted: parseFloat(amount),
             description,
             category: category || null,
             occurred_at,
