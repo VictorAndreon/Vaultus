@@ -10,7 +10,7 @@ class Want extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['user_id', 'title', 'description', 'category', 'priority', 'promoted_at'];
+    protected $fillable = ['user_id', 'title', 'description', 'category', 'priority'];
 
     protected function casts(): array
     {
