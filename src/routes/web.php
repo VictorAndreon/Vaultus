@@ -14,6 +14,12 @@ use App\Domains\Finance\Controllers\TransactionGoalController;
 use App\Domains\Finance\Controllers\WishlistController;
 use App\Domains\Journal\Controllers\JournalEntryController;
 use App\Domains\Journal\Controllers\JournalPromptController;
+use App\Domains\Projects\Controllers\ProjectController;
+use App\Domains\Projects\Controllers\WantController;
+use App\Domains\Projects\Controllers\ProjectColumnController;
+use App\Domains\Projects\Controllers\ProjectTaskController;
+use App\Domains\Projects\Controllers\ProjectNoteController;
+use App\Domains\Projects\Controllers\ProjectLinkController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -65,7 +71,40 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/transactions/{transaction}/allocations', [TransactionGoalController::class, 'store']);
     Route::delete('/finance/allocations/{allocation}', [TransactionGoalController::class, 'destroy']);
 
-    $stubs = ['tasks', 'projects', 'library', 'notes', 'contacts', 'reviews'];
+    // Projects
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
+    Route::post('/projects', [ProjectController::class, 'store']);
+    Route::get('/projects/{project}', [ProjectController::class, 'show']);
+    Route::patch('/projects/{project}', [ProjectController::class, 'update']);
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+
+    // Wants
+    Route::post('/wants', [WantController::class, 'store']);
+    Route::patch('/wants/{want}', [WantController::class, 'update']);
+    Route::delete('/wants/{want}', [WantController::class, 'destroy']);
+    Route::post('/wants/{want}/promote', [WantController::class, 'promote']);
+
+    // Project Columns
+    Route::post('/projects/{project}/columns', [ProjectColumnController::class, 'store']);
+    Route::patch('/projects/{project}/columns/{column}', [ProjectColumnController::class, 'update']);
+    Route::delete('/projects/{project}/columns/{column}', [ProjectColumnController::class, 'destroy']);
+
+    // Project Tasks
+    Route::post('/projects/{project}/tasks', [ProjectTaskController::class, 'store']);
+    Route::patch('/projects/tasks/{task}', [ProjectTaskController::class, 'update']);
+    Route::delete('/projects/tasks/{task}', [ProjectTaskController::class, 'destroy']);
+    Route::patch('/projects/tasks/{task}/move', [ProjectTaskController::class, 'move']);
+
+    // Project Notes
+    Route::post('/projects/{project}/notes', [ProjectNoteController::class, 'store']);
+    Route::patch('/projects/notes/{note}', [ProjectNoteController::class, 'update']);
+    Route::delete('/projects/notes/{note}', [ProjectNoteController::class, 'destroy']);
+
+    // Project Links
+    Route::post('/projects/{project}/links', [ProjectLinkController::class, 'store']);
+    Route::delete('/projects/links/{link}', [ProjectLinkController::class, 'destroy']);
+
+    $stubs = ['tasks', 'library', 'notes', 'contacts', 'reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
     }

@@ -78,4 +78,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Domains\Finance\Models\WishlistItem::class);
     }
+
+    public function projects()
+    {
+        return $this->hasMany(\App\Domains\Projects\Models\Project::class);
+    }
+
+    public function wants()
+    {
+        return $this->hasMany(\App\Domains\Projects\Models\Want::class);
+    }
 }
