@@ -66,4 +66,16 @@ class ProjectColumnTest extends TestCase
             ->patch("/projects/{$project->id}/columns/{$column->id}", ['name' => 'Hack'])
             ->assertForbidden();
     }
+
+    public function test_cannot_modify_column_from_different_project(): void
+    {
+        $user     = User::factory()->create();
+        $project1 = $this->makeProject($user);
+        $project2 = $this->makeProject($user);
+        $column   = ProjectColumn::create(['project_id' => $project1->id, 'name' => 'Col', 'position' => 0]);
+
+        $this->actingAs($user)
+            ->patch("/projects/{$project2->id}/columns/{$column->id}", ['name' => 'Hack'])
+            ->assertNotFound();
+    }
 }

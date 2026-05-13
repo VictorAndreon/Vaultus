@@ -26,6 +26,7 @@ class ProjectColumnController extends Controller
     public function update(Request $request, Project $project, ProjectColumn $column)
     {
         abort_if($project->user_id !== $request->user()->id, 403);
+        abort_if($column->project_id !== $project->id, 404);
 
         $validated = $request->validate([
             'name'     => 'sometimes|string|max:255',
@@ -40,6 +41,7 @@ class ProjectColumnController extends Controller
     public function destroy(Request $request, Project $project, ProjectColumn $column)
     {
         abort_if($project->user_id !== $request->user()->id, 403);
+        abort_if($column->project_id !== $project->id, 404);
 
         $column->delete();
 
