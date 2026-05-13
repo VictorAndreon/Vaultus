@@ -54,7 +54,11 @@ class WantController extends Controller
     {
         abort_if($want->user_id !== $request->user()->id, 403);
 
-        $project = $service->promote($want);
+        try {
+            $project = $service->promote($want);
+        } catch (\LogicException $e) {
+            abort(422, $e->getMessage());
+        }
 
         return redirect("/projects/{$project->id}");
     }

@@ -56,8 +56,6 @@ class WantTest extends TestCase
 
         $response = $this->actingAs($user)->post("/wants/{$want->id}/promote");
 
-        $response->assertRedirect();
-
         $this->assertDatabaseHas('projects', [
             'user_id' => $user->id,
             'title'   => 'Meu Projeto',
@@ -65,6 +63,7 @@ class WantTest extends TestCase
         ]);
 
         $project = $user->projects()->first();
+        $response->assertRedirect("/projects/{$project->id}");
         $this->assertCount(3, $project->columns);
 
         $want->refresh();
