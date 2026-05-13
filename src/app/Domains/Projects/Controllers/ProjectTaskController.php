@@ -6,6 +6,8 @@ use App\Domains\Projects\Models\Project;
 use App\Domains\Projects\Models\ProjectTask;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ProjectTaskController extends Controller
 {
@@ -16,7 +18,7 @@ class ProjectTaskController extends Controller
         $validated = $request->validate([
             'title'             => 'required|string|max:255',
             'description'       => 'nullable|string',
-            'project_column_id' => 'required|integer|exists:project_columns,id',
+            'project_column_id' => ['required', 'integer', Rule::exists('project_columns', 'id')->where('project_id', $project->id)],
             'priority'          => 'nullable|in:low,medium,high,urgent',
             'due_at'            => 'nullable|date',
         ]);
@@ -67,19 +69,20 @@ class ProjectTaskController extends Controller
             'position'          => 'required|integer|min:0',
         ]);
 
-        $task->update(['project_column_id' => $validated['project_column_id']]);
+        DB::transaction(function () use ($task, $validated) {
+            $task->update(['project_column_id' => $validated['project_column_id']]);
 
-        // Reorder all tasks in the destination column
-        $siblings = ProjectTask::where('project_column_id', $validated['project_column_id'])
-            ->where('id', '!=', $task->id)
-            ->orderBy('position')
-            ->get();
+            $siblings = ProjectTask::where('project_column_id', $validated['project_column_id'])
+                ->where('id', '!=', $task->id)
+                ->orderBy('position')
+                ->get();
 
-        $siblings->splice($validated['position'], 0, [$task]);
+            $siblings->splice($validated['position'], 0, [$task]);
 
-        foreach ($siblings as $i => $t) {
-            $t->update(['position' => $i]);
-        }
+            foreach ($siblings as $i => $t) {
+                $t->update(['position' => $i]);
+            }
+        });
 
         return back();
     }

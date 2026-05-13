@@ -107,5 +107,7 @@ class ProjectTaskTest extends TestCase
         ]);
 
         $this->actingAs($user2)->patch("/projects/tasks/{$task->id}", ['title' => 'Hack'])->assertForbidden();
+        $this->actingAs($user2)->delete("/projects/tasks/{$task->id}")->assertForbidden();
+        $this->actingAs($user2)->patch("/projects/tasks/{$task->id}/move", ['project_column_id' => $column->id, 'position' => 0])->assertForbidden();
     }
 }
