@@ -32,7 +32,7 @@ class DashboardAggregator
             'habits_done_today'          => $doneToday->count(),
             'habits_total'               => $expectedToday->count(),
             'journal_entries_this_month' => $journalThisMonth,
-            'open_projects'              => 0,
+            'open_projects'              => $user->projects()->where('status', 'active')->count(),
             'net_worth'                  => (float) $user->accounts()->with('transactions')->get()->sum(fn($a) => $a->current_balance),
         ];
     }
