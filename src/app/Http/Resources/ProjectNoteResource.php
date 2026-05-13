@@ -12,7 +12,7 @@ class ProjectNoteResource extends JsonResource
         return [
             'id'         => $this->id,
             'content'    => $this->content,
-            'created_at' => $this->created_at?->toDateString(),
+            'created_at' => $this->created_at->toDateString(),
         ];
     }
 }

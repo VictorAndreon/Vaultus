@@ -15,7 +15,7 @@ class WantResource extends JsonResource
             'description' => $this->description,
             'category'    => $this->category,
             'priority'    => $this->priority,
-            'promoted_at' => $this->promoted_at?->toISOString(),
+            'promoted_at' => $this->promoted_at?->toDateString(),
         ];
     }
 }
