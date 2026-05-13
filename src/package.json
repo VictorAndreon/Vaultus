@@ -19,6 +19,7 @@
         "vite": "^6.0.11"
     },
     "dependencies": {
+        "@hello-pangea/dnd": "^18.0.1",
         "@inertiajs/react": "^3.1.1",
         "@tiptap/extension-heading": "^3.23.1",
         "@tiptap/pm": "^3.23.1",

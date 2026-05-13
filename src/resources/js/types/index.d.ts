@@ -106,3 +106,53 @@ export interface WishlistItem {
     financial_goal_id: number | null
     goal: FinancialGoal | null
 }
+
+export interface Want {
+    id: number
+    title: string
+    description: string | null
+    category: string | null
+    priority: 'low' | 'medium' | 'high'
+    promoted_at: string | null
+}
+
+export interface Project {
+    id: number
+    title: string
+    description: string | null
+    status: 'active' | 'paused' | 'done' | 'archived'
+    want_id: number | null
+    tasks_count?: number
+    columns?: ProjectColumn[]
+    notes?: ProjectNote[]
+    links?: ProjectLink[]
+}
+
+export interface ProjectColumn {
+    id: number
+    name: string
+    position: number
+    tasks: ProjectTask[]
+}
+
+export interface ProjectTask {
+    id: number
+    project_column_id: number
+    title: string
+    description: string | null
+    priority: 'low' | 'medium' | 'high' | 'urgent'
+    position: number
+    due_at: string | null
+}
+
+export interface ProjectNote {
+    id: number
+    content: string
+    created_at: string
+}
+
+export interface ProjectLink {
+    id: number
+    title: string
+    url: string
+}
