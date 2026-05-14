@@ -1,3 +1,4 @@
+import React from 'react'
 import { usePage } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
@@ -125,14 +126,14 @@ function HabitGrid({ habits, weeks = 12 }: {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `68px repeat(${weeks}, 1fr)`, gap: 3, alignItems: 'center' }}>
       {rows.map((h, r) => (
-        <>
-          <div key={`l${r}`} style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.name}</div>
+        <React.Fragment key={r}>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.name}</div>
           {Array.from({ length: weeks }, (_, c) => {
             const lvl = cell(r, c)
             const bg = ['var(--surface-2)', 'oklch(35% 0.06 var(--h))', 'oklch(50% 0.10 var(--h))', 'oklch(70% 0.14 var(--h))'][lvl]
             return <div key={`${r}-${c}`} style={{ aspectRatio: '1', background: bg, borderRadius: 2 }} />
           })}
-        </>
+        </React.Fragment>
       ))}
     </div>
   )
