@@ -51,7 +51,7 @@ export default function TasksIndex({ tasks, stats, by_project }: Props) {
                     {[
                         { label: 'Hoje',        value: String(stats.today),     unit: `/ ${stats.today + stats.this_week}`, sub: `${stats.today} pendentes` },
                         { label: 'Atrasadas',   value: String(stats.overdue),   sub: stats.overdue === 0 ? 'bom trabalho' : 'requer atenção' },
-                        { label: 'Esta semana', value: String(stats.this_week), sub: `${stats.today} alta prioridade` },
+                        { label: 'Esta semana', value: String(stats.this_week), sub: 'prazo esta semana' },
                         { label: 'Sem prazo',   value: String(stats.no_due),    sub: 'ver Inbox' },
                     ].map((s, i) => (
                         <div key={i} className="stat" style={{ padding: '16px 20px' }}>

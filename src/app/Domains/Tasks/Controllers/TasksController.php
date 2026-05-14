@@ -40,8 +40,10 @@ class TasksController extends Controller
             'is_done'      => $isDone($t),
             'group'        => $isDone($t)
                 ? 'done_today'
-                : ($t->due_at?->toDateString() === $today ? 'today'
-                    : ($t->due_at?->toDateString() <= $weekEnd ? 'week' : 'later')),
+                : (! $t->due_at
+                    ? 'later'
+                    : ($t->due_at->toDateString() === $today ? 'today'
+                        : ($t->due_at->toDateString() <= $weekEnd ? 'week' : 'later'))),
         ])->values()->toArray();
 
         $todayTasks = collect($tasks)->where('due_date', $today);
@@ -50,8 +52,6 @@ class TasksController extends Controller
         $noDue      = $allTasks->whereNull('due_at')->where(fn($t) => ! $isDone($t));
 
         $byProject = ProjectTask::whereHas('project', fn($q) => $q->where('user_id', $user->id))
-            ->whereNull('due_at')
-            ->orWhereHas('project', fn($q) => $q->where('user_id', $user->id))
             ->with('project')
             ->get()
             ->groupBy('project_id')
