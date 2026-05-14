@@ -10,15 +10,15 @@ export default function StreakDisplay({ currentStreak, bestStreak, frequencyType
     const unit = frequencyType === 'x_per_week' ? 'semanas' : 'dias'
 
     return (
-        <div className="flex items-center gap-4 text-sm">
-            <div className="flex flex-col items-center">
-                <span className="text-xl font-bold text-indigo-400">{currentStreak}</span>
-                <span className="text-xs text-slate-500">{unit} atual</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--green)' }}>{currentStreak}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-4)' }}>{unit} atual</span>
             </div>
-            <div className="w-px h-8 bg-slate-700" />
-            <div className="flex flex-col items-center">
-                <span className="text-xl font-bold text-slate-400">{bestStreak}</span>
-                <span className="text-xs text-slate-500">melhor</span>
+            <div style={{ width: 1, height: 32, background: 'var(--line)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-3)' }}>{bestStreak}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-4)' }}>melhor</span>
             </div>
         </div>
     )

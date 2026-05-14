@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { Habit, FrequencyType } from '@/types'
-import Button from '@/Components/ui/Button'
 
 interface Props {
     habit: Habit | null   // null = criar novo
@@ -79,64 +78,65 @@ export default function HabitDrawer({ habit, onClose }: Props) {
         <>
             {/* Overlay */}
             <div
-                className="fixed inset-0 bg-black/50 z-40"
+                style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 60%)', zIndex: 40 }}
                 onClick={onClose}
             />
 
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-80 bg-slate-900 border-l border-slate-800 z-50 flex flex-col">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-                    <h2 className="text-sm font-semibold text-slate-200">
+            <div style={{ position: 'fixed', right: 0, top: 0, height: '100vh', width: 320, background: 'var(--surface)', borderLeft: '1px solid var(--line)', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
+                    <h2 style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>
                         {isEditing ? 'Editar hábito' : 'Novo hábito'}
                     </h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-lg">×</button>
+                    <button onClick={onClose} className="btn btn-ghost btn-sm">×</button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {/* Nome */}
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Nome *</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Nome *</label>
                         <input
                             type="text"
                             value={form.name}
                             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                             placeholder="Ex: Meditar"
                         />
                     </div>
 
                     {/* Ícone */}
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Ícone (emoji)</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Ícone (emoji)</label>
                         <input
                             type="text"
                             value={form.icon}
                             onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
                             maxLength={2}
-                            className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
+                            style={{ width: 64, textAlign: 'center' }}
                             placeholder="⭐"
                         />
                     </div>
 
                     {/* Categoria */}
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Categoria</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
                         <input
                             type="text"
                             value={form.category}
                             onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                             placeholder="Ex: Saúde, Estudo..."
                         />
                     </div>
 
                     {/* Frequência */}
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Frequência *</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Frequência *</label>
                         <select
                             value={form.frequency_type}
                             onChange={e => setForm(f => ({ ...f, frequency_type: e.target.value as FrequencyType }))}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         >
                             <option value="daily">Diário</option>
                             <option value="weekly">Dias específicos</option>
@@ -147,17 +147,13 @@ export default function HabitDrawer({ habit, onClose }: Props) {
                     {/* Dias da semana */}
                     {form.frequency_type === 'weekly' && (
                         <div>
-                            <label className="text-xs text-slate-500 block mb-2">Dias</label>
-                            <div className="flex gap-1.5 flex-wrap">
+                            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Dias</label>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                                 {DAY_OPTIONS.map(({ value, label }) => (
                                     <button
                                         key={value}
                                         onClick={() => toggleDay(value)}
-                                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                                            form.frequency_days.includes(value)
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                        }`}
+                                        className={form.frequency_days.includes(value) ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
                                     >
                                         {label}
                                     </button>
@@ -169,23 +165,24 @@ export default function HabitDrawer({ habit, onClose }: Props) {
                     {/* Vezes por semana */}
                     {form.frequency_type === 'x_per_week' && (
                         <div>
-                            <label className="text-xs text-slate-500 block mb-1">Vezes por semana</label>
+                            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Vezes por semana</label>
                             <input
                                 type="number"
                                 min="1"
                                 max="7"
                                 value={form.frequency_times}
                                 onChange={e => setForm(f => ({ ...f, frequency_times: Number(e.target.value) }))}
-                                className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                className="input"
+                                style={{ width: 80 }}
                             />
                         </div>
                     )}
                 </div>
 
-                <div className="px-5 py-4 border-t border-slate-800">
-                    <Button onClick={submit} className="w-full" disabled={!form.name.trim()}>
+                <div style={{ padding: '16px 20px', borderTop: '1px solid var(--line)' }}>
+                    <button className="btn btn-primary" style={{ width: '100%' }} onClick={submit} disabled={!form.name.trim()}>
                         {isEditing ? 'Salvar alterações' : 'Criar hábito'}
-                    </Button>
+                    </button>
                 </div>
             </div>
         </>

@@ -1,138 +1,95 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
+import { Icons } from '@/Components/Icons'
 import { Habit } from '@/types'
-import FrequencyBadge from './FrequencyBadge'
-import StreakDisplay from './StreakDisplay'
-import Button from '@/Components/ui/Button'
 
-interface Props {
-    habit: Habit
-    today: string
-    onEdit: (habit: Habit) => void
-}
+interface Props { habit: Habit; today: string; onEdit: (h: Habit) => void; isFirst: boolean }
 
-export default function HabitCard({ habit, today, onEdit }: Props) {
-    const [expanded, setExpanded] = useState(false)
+const WEEK = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']
+
+export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
     const [checkedIn, setCheckedIn] = useState(habit.checked_in_today)
+    const color = checkedIn ? 'var(--green)' : 'var(--gold)'
 
     const toggle = () => {
-        const wasChecked = checkedIn
-        setCheckedIn(!wasChecked)
-
-        const url = `/habits/${habit.id}/check-in`
-        const method = wasChecked ? 'delete' : 'post'
-
-        router[method](url, {}, {
-            preserveState: true,
-            preserveScroll: true,
-            onError: () => setCheckedIn(wasChecked),
+        const prev = checkedIn
+        setCheckedIn(!prev)
+        const method = prev ? 'delete' : 'post'
+        router[method](`/habits/${habit.id}/check-in`, {}, {
+            preserveState: true, preserveScroll: true,
+            onError: () => setCheckedIn(prev),
         })
     }
 
     const archive = () => {
-        router.delete(`/habits/${habit.id}`, {}, {
-            preserveScroll: true,
-        })
+        router.delete(`/habits/${habit.id}`, {}, { preserveScroll: true })
     }
 
-    // Mini-calendário: últimos 7 dias
+    // Week dots — last 7 days
     const last7 = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today)
-        d.setDate(d.getDate() - (6 - i))
+        const d = new Date(today); d.setDate(d.getDate() - (6 - i))
         return d.toISOString().split('T')[0]
     })
 
+    const rate = Math.round(
+        (habit.recent_check_ins?.filter(d => {
+            const cutoff = new Date(today)
+            cutoff.setDate(cutoff.getDate() - 29)
+            return new Date(d) >= cutoff
+        }).length ?? 0) / 30 * 100
+    )
+
     return (
-        <div className={`bg-slate-900 border rounded-xl transition-colors ${
-            checkedIn ? 'border-indigo-500/40' : 'border-slate-800'
-        }`}>
-            {/* Header */}
-            <div
-                className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
-                onClick={() => setExpanded(e => !e)}
-            >
-                <span className="text-xl">{habit.icon ?? '⭐'}</span>
-                <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${
-                        checkedIn ? 'text-slate-300 line-through decoration-indigo-500' : 'text-slate-200'
-                    }`}>
-                        {habit.name}
-                    </p>
-                    <div className="mt-0.5">
-                        <FrequencyBadge
-                            frequencyType={habit.frequency_type}
-                            frequencyDays={habit.frequency_days}
-                            frequencyTimes={habit.frequency_times}
-                        />
-                    </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px 180px 100px 120px', padding: '18px 24px', borderTop: isFirst ? 'none' : '1px solid var(--line-soft)', alignItems: 'center' }}>
+            {/* Hábito */}
+            <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 50, background: color }} />
+                    <div className="h-3">{habit.name}</div>
                 </div>
-                <button
-                    onClick={e => { e.stopPropagation(); toggle() }}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors ${
-                        checkedIn
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
-                    }`}
-                >
-                    {checkedIn ? '✓' : '○'}
-                </button>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, marginLeft: 18 }}>
+                    {habit.icon ?? ''} {habit.frequency_type === 'daily' ? 'Todo dia' : `${habit.frequency_times}x · semana`}
+                </div>
             </div>
 
-            {/* Conteúdo expandido */}
-            {expanded && (
-                <div className="px-4 pb-4 border-t border-slate-800 pt-4 space-y-4">
-                    <StreakDisplay
-                        currentStreak={habit.current_streak}
-                        bestStreak={habit.best_streak}
-                        frequencyType={habit.frequency_type}
-                    />
-
-                    {/* Mini-calendário 7 dias */}
-                    <div className="flex gap-1.5">
-                        {last7.map(date => (
-                            <div key={date} className="flex flex-col items-center gap-1">
-                                <div className={`w-6 h-6 rounded-full ${
-                                    habit.recent_check_ins.includes(date)
-                                        ? 'bg-indigo-600'
-                                        : date === today
-                                        ? 'bg-slate-700 ring-1 ring-indigo-500'
-                                        : 'bg-slate-800'
-                                }`} />
-                                <span className="text-xs text-slate-600">
-                                    {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'narrow' })}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Progresso semanal para x_per_week */}
-                    {habit.frequency_type === 'x_per_week' && habit.frequency_times && (
-                        <div>
-                            <div className="flex justify-between text-xs text-slate-500 mb-1">
-                                <span>Esta semana</span>
-                                <span>{habit.week_check_ins_count ?? 0}/{habit.frequency_times}</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-indigo-600 rounded-full transition-all"
-                                    style={{
-                                        width: `${Math.min(100, ((habit.week_check_ins_count ?? 0) / habit.frequency_times) * 100)}%`
-                                    }}
-                                />
+            {/* Esta semana — 7 dots */}
+            <div style={{ display: 'flex', gap: 6 }}>
+                {last7.map((date, di) => {
+                    const done = habit.recent_check_ins?.includes(date)
+                    const isToday = date === today
+                    return (
+                        <div key={di} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: isToday ? 'var(--green)' : 'var(--text-4)', textTransform: 'uppercase' }}>{WEEK[di]}</div>
+                            <div style={{ width: 18, height: 18, borderRadius: 5, background: done ? color : 'transparent', border: done ? 'none' : '1px dashed var(--line-2)', display: 'grid', placeItems: 'center' }}>
+                                {done && <Icons.Check size={11} style={{ color: 'var(--bg)' }} />}
                             </div>
                         </div>
-                    )}
+                    )
+                })}
+            </div>
 
-                    <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(habit)}>
-                            Editar
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={archive}>
-                            Arquivar
-                        </Button>
-                    </div>
+            {/* Taxa 30d */}
+            <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div className="meter" style={{ flex: 1 }}><span style={{ width: `${rate}%`, background: color }} /></div>
+                    <span className="mono" style={{ fontSize: 12, color: 'var(--text-2)' }}>{rate}%</span>
                 </div>
-            )}
+            </div>
+
+            {/* Streak */}
+            <div className="mono" style={{ fontSize: 13, color: 'var(--text)' }}>
+                {habit.current_streak ?? 0} <span style={{ color: 'var(--text-4)', fontSize: 11 }}>dias</span>
+            </div>
+
+            {/* Ações */}
+            <div style={{ textAlign: 'right', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                <button className="btn btn-soft btn-sm" onClick={toggle}>
+                    <Icons.Check size={12} /> Hoje
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => onEdit(habit)}>
+                    <Icons.Edit size={12} />
+                </button>
+            </div>
         </div>
     )
 }

@@ -19,8 +19,6 @@ export default function FrequencyBadge({ frequencyType, frequencyDays, frequency
     }
 
     return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-800 text-slate-400">
-            {label()}
-        </span>
+        <span className="tag">{label()}</span>
     )
 }
