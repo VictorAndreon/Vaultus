@@ -3,6 +3,7 @@
 namespace App\Domains\Dashboard\Services;
 
 use App\Domains\Auth\Models\User;
+use App\Domains\Finance\Models\Transaction;
 use App\Domains\Library\Models\LibraryItem;
 use App\Domains\Projects\Models\ProjectTask;
 use Carbon\Carbon;
@@ -40,6 +41,31 @@ class DashboardAggregator
             'project', fn($q) => $q->where('user_id', $user->id)
         )->whereDate('due_at', $today)->count();
 
+        $maxStreak = $activeHabits->max('current_streak') ?? 0;
+
+        $startOfMonth   = $now->copy()->startOfMonth()->toDateString();
+        $monthCheckIns  = $activeHabits->sum(
+            fn($h) => $h->checkIns->filter(fn($ci) => $ci->date->toDateString() >= $startOfMonth)->count()
+        );
+        $daysElapsed    = $now->day;
+        $habitRate      = $expectedToday->count() > 0
+            ? (int) round($monthCheckIns / ($daysElapsed * $expectedToday->count()) * 100)
+            : 0;
+        $topHabit       = $activeHabits->sortByDesc(
+            fn($h) => $h->checkIns->filter(fn($ci) => $ci->date->toDateString() >= $startOfMonth)->count()
+        )->first();
+
+        $monthEnd  = $now->copy()->endOfMonth()->toDateString();
+        $monthlyTx = Transaction::whereHas(
+            'account', fn($q) => $q->where('user_id', $user->id)
+        )
+        ->whereBetween('occurred_at', [$startOfMonth, $monthEnd])
+        ->whereNull('deleted_at')
+        ->get();
+
+        $monthIncome  = (float) $monthlyTx->where('type', 'income')->sum(fn($t) => (float) $t->amount_encrypted);
+        $monthExpense = (float) $monthlyTx->where('type', 'expense')->sum(fn($t) => (float) $t->amount_encrypted);
+
         return [
             'tasks_due_today'            => $tasksDueToday,
             'habits_done_today'          => $doneToday->count(),
@@ -48,6 +74,11 @@ class DashboardAggregator
             'open_projects'              => $user->projects()->where('status', 'active')->count(),
             'net_worth'                  => (float) $user->accounts()->with('transactions')->get()
                                                ->sum(fn($a) => $a->current_balance),
+            'habit_streak'               => $maxStreak,
+            'habit_rate'                 => $habitRate,
+            'habit_top'                  => $topHabit?->name,
+            'month_income'               => $monthIncome,
+            'month_expense'              => $monthExpense,
         ];
     }
 
@@ -198,6 +229,25 @@ class DashboardAggregator
                 'checked_in_today' => $h->checkIns->isNotEmpty(),
             ])
             ->values()
+            ->toArray();
+    }
+
+    public function getJournalRecent(User $user): array
+    {
+        $moodLabel = [1 => 'Difícil', 2 => 'Cansado', 3 => 'Neutro', 4 => 'Calmo', 5 => 'Realizado'];
+        $ptMonths  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+        return $user->journalEntries()
+            ->orderBy('date', 'desc')
+            ->limit(3)
+            ->get()
+            ->map(fn($e) => [
+                'day'   => $e->date->format('d'),
+                'month' => $ptMonths[$e->date->month - 1],
+                'quote' => mb_substr(strip_tags($e->content ?? ''), 0, 120),
+                'mood'  => $moodLabel[$e->mood ?? 0] ?? 'Sereno',
+                'tag'   => implode(' · ', array_slice($e->tags ?? [], 0, 2)),
+            ])
             ->toArray();
     }
 

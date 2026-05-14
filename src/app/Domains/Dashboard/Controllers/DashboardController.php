@@ -17,7 +17,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard/Index', [
             'stats'           => $this->aggregator->getStats($user),
-            'recent_activity' => $this->aggregator->getRecentActivity($user),
+            'journal_recent'  => $this->aggregator->getJournalRecent($user),
             'habits_today'    => $this->aggregator->getHabitsToday($user),
             'tasks_today'     => $this->aggregator->getTasksToday($user),
             'projects'        => $this->aggregator->getActiveProjects($user),

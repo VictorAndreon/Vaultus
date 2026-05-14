@@ -1,5 +1,5 @@
-import React from 'react'
-import { usePage } from '@inertiajs/react'
+import React, { useState } from 'react'
+import { usePage, Link, router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { PageProps } from '@/types'
@@ -22,12 +22,17 @@ interface ReadingItem {
   id: number; title: string; author: string | null
   progress_percent: number; current_page: number; total_pages: number | null
 }
+interface JournalEntry {
+  day: string; month: string; quote: string; mood: string; tag: string
+}
 interface Props {
   stats: {
     tasks_due_today: number; habits_done_today: number; habits_total: number
     journal_entries_this_month: number; open_projects: number; net_worth: number
+    habit_streak: number; habit_rate: number; habit_top: string | null
+    month_income: number; month_expense: number
   }
-  recent_activity: Array<{ event: string; created_at: string }>
+  journal_recent: JournalEntry[]
   habits_today: Array<{ id: number; name: string; icon: string | null; checked_in_today: boolean }>
   tasks_today: TaskToday[]
   projects: DashProject[]
@@ -164,6 +169,10 @@ function fmtNetWorth(v: number): { main: string; unit: string } {
   return { main: `R$ ${v.toFixed(0)}`, unit: '' }
 }
 
+function fmtBRL(v: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
+}
+
 function goalStatus(g: Goal): keyof typeof STATUS_MAP {
   if (g.is_completed) return 'no-prazo'
   if (g.progress_percent >= 80) return 'no-prazo'
@@ -173,7 +182,7 @@ function goalStatus(g: Goal): keyof typeof STATUS_MAP {
 
 /* ---- Dashboard ---- */
 export default function Dashboard({
-  stats, recent_activity, habits_today,
+  stats, journal_recent, habits_today,
   tasks_today, projects, financial_goals, wealth_chart, reading,
 }: Props) {
   const { props: pageProps } = usePage<PageProps>()
@@ -181,6 +190,27 @@ export default function Dashboard({
   const nw = fmtNetWorth(stats.net_worth)
   const habDone = stats.habits_done_today
   const habTotal = stats.habits_total || 5
+
+  const [chartPeriod, setChartPeriod] = useState<'3M' | '6M' | '12M' | 'Tudo'>('12M')
+  const chartData = (() => {
+    const all = wealth_chart.data
+    const labels = wealth_chart.labels
+    if (chartPeriod === '3M')   return { data: all.slice(-4),  labels: labels.slice(-4)  }
+    if (chartPeriod === '6M')   return { data: all.slice(-7),  labels: labels.slice(-7)  }
+    if (chartPeriod === 'Tudo') return { data: all,            labels                      }
+    return { data: all.slice(-13), labels: labels.slice(-13) }
+  })()
+
+  const [localTasks, setLocalTasks] = useState(tasks_today)
+  function toggleTask(id: number) {
+    const task = localTasks.find(t => t.id === id)
+    if (!task) return
+    setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, is_done: !t.is_done } : t))
+    router.patch(`/projects/tasks/${id}`, { is_done: !task.is_done }, {
+      preserveScroll: true,
+      onError: () => setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, is_done: task.is_done } : t)),
+    })
+  }
 
   // Determine greeting by hour
   const hour = new Date().getHours()
@@ -240,26 +270,32 @@ export default function Dashboard({
                 </div>
               </div>
               <div className="seg">
-                <button>3M</button><button>6M</button>
-                <button data-active="true">12M</button><button>Tudo</button>
+                {(['3M', '6M', '12M', 'Tudo'] as const).map(p => (
+                  <button key={p} data-active={chartPeriod === p} onClick={() => setChartPeriod(p)}>{p}</button>
+                ))}
               </div>
             </div>
-            <AreaChart data={wealth_chart.data} labels={wealth_chart.labels} />
+            <AreaChart data={chartData.data} labels={chartData.labels} />
+            <div style={{ display: 'flex', gap: 32, marginTop: 18, paddingTop: 18, borderTop: '1px solid var(--line-soft)' }}>
+              <Mini label={`Receitas (${new Date().toLocaleString('pt-BR', { month: 'short' })})`} value={fmtBRL(stats.month_income)} delta="este mês" dir="up" />
+              <Mini label={`Despesas (${new Date().toLocaleString('pt-BR', { month: 'short' })})`} value={fmtBRL(stats.month_expense)} delta="este mês" dir="flat" />
+              <Mini label="Patrimônio líquido" value={fmtBRL(stats.net_worth)} delta="acumulado" dir="up" />
+            </div>
           </div>
 
           <div className="card">
             <div className="card-head">
               <div className="card-title">Foco de Hoje</div>
-              <button className="card-link">Ver agenda <Icons.ChevronRight size={11} /></button>
+              <Link href="/tasks" className="card-link">Ver agenda <Icons.ChevronRight size={11} /></Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {tasks_today.length === 0 && (
+              {localTasks.length === 0 && (
                 <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma tarefa para hoje.</div>
               )}
-              {tasks_today.map((t, i) => (
+              {localTasks.map((t, i) => (
                 <div key={t.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderTop: i ? '1px solid var(--line-soft)' : 'none', alignItems: 'flex-start' }}>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-3)', width: 48, paddingTop: 2 }}>{t.due_at ?? '—'}</div>
-                  <div className="check" data-checked={t.is_done} />
+                  <div className="check" data-checked={t.is_done} onClick={() => toggleTask(t.id)} style={{ cursor: 'pointer' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ textDecoration: t.is_done ? 'line-through' : 'none', color: t.is_done ? 'var(--text-3)' : 'var(--text)', fontSize: 13.5 }}>{t.title}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -292,38 +328,35 @@ export default function Dashboard({
             </div>
             <HabitGrid habits={habits_today} />
             <div style={{ display: 'flex', gap: 24, marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--line-soft)' }}>
-              <Mini label="Hoje" value={`${habDone}/${habTotal}`} delta="completados" />
-              <Mini label="Taxa do mês" value="—" />
-              <Mini label="Entradas diário" value={String(stats.journal_entries_this_month)} delta="este mês" />
+              <Mini label="Streak Atual" value={`${stats.habit_streak} dias`} delta="recorde pessoal" />
+              <Mini label="Taxa do mês" value={`${stats.habit_rate}%`} delta={stats.habit_rate >= 80 ? '+bom ritmo' : 'abaixo da meta'} dir={stats.habit_rate >= 80 ? 'up' : 'flat'} />
+              <Mini label="Hábito top" value={stats.habit_top ?? '—'} delta="mais consistente" />
             </div>
           </div>
 
           <div className="card">
             <div className="card-head">
-              <div className="card-title">Atividade Recente</div>
-              <button className="card-link">Ver tudo <Icons.ChevronRight size={11} /></button>
+              <div className="card-title">Diário · <b>últimas entradas</b></div>
+              <Link href="/journal" className="card-link">Abrir diário <Icons.ChevronRight size={11} /></Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {recent_activity.slice(0, 5).map((a, i) => (
+              {journal_recent.length === 0 ? (
+                <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma entrada recente.</div>
+              ) : journal_recent.map((j, i) => (
                 <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ textAlign: 'center', flex: 'none', width: 42, paddingTop: 2 }}>
-                    <div style={{ fontFamily: 'var(--serif)', fontSize: 20, lineHeight: 1, color: 'var(--text)' }}>
-                      {new Date(a.created_at).getDate()}
-                    </div>
-                    <div className="kicker" style={{ marginTop: 2, fontSize: 9 }}>
-                      {new Date(a.created_at).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
-                    </div>
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 22, lineHeight: 1, color: 'var(--text)' }}>{j.day}</div>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>{j.month}</div>
                   </div>
                   <div style={{ flex: 1, paddingLeft: 14, borderLeft: '1px solid var(--line-soft)' }}>
-                    <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontStyle: 'italic', color: 'var(--text-2)', lineHeight: 1.4 }}>
-                      {a.event}
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 15, fontStyle: 'italic', color: 'var(--text-2)', lineHeight: 1.4 }}>"{j.quote}"</div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                      <span className="tag tag-green"><span className="dot" />{j.mood}</span>
+                      {j.tag && <span className="kicker">{j.tag}</span>}
                     </div>
                   </div>
                 </div>
               ))}
-              {recent_activity.length === 0 && (
-                <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma atividade recente.</div>
-              )}
             </div>
           </div>
         </div>
@@ -344,7 +377,7 @@ export default function Dashboard({
                 </div>
               )}
             </div>
-            <button className="card-link">Ver todas <Icons.ChevronRight size={11} /></button>
+            <Link href="/finance" className="card-link">Ver todas <Icons.ChevronRight size={11} /></Link>
           </div>
           {financial_goals.length === 0 ? (
             <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma meta cadastrada.</div>
@@ -386,7 +419,7 @@ export default function Dashboard({
           <div className="card">
             <div className="card-head">
               <div className="card-title">Projetos Ativos</div>
-              <button className="card-link">Ver todos <Icons.ChevronRight size={11} /></button>
+              <Link href="/projects" className="card-link">Ver todos <Icons.ChevronRight size={11} /></Link>
             </div>
             {projects.length === 0 ? (
               <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum projeto ativo.</div>
@@ -413,7 +446,7 @@ export default function Dashboard({
           <div className="card">
             <div className="card-head">
               <div className="card-title">Em leitura</div>
-              <button className="card-link">Biblioteca <Icons.ChevronRight size={11} /></button>
+              <Link href="/library" className="card-link">Biblioteca <Icons.ChevronRight size={11} /></Link>
             </div>
             {reading.length === 0 ? (
               <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum livro em leitura.</div>
