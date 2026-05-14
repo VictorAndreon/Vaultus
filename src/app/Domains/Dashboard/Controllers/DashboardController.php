@@ -19,6 +19,11 @@ class DashboardController extends Controller
             'stats'           => $this->aggregator->getStats($user),
             'recent_activity' => $this->aggregator->getRecentActivity($user),
             'habits_today'    => $this->aggregator->getHabitsToday($user),
+            'tasks_today'     => $this->aggregator->getTasksToday($user),
+            'projects'        => $this->aggregator->getActiveProjects($user),
+            'financial_goals' => $this->aggregator->getFinancialGoals($user),
+            'wealth_chart'    => $this->aggregator->getWealthChart($user),
+            'reading'         => $this->aggregator->getReading($user),
         ]);
     }
 }

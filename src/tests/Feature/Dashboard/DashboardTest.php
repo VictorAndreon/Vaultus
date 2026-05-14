@@ -25,6 +25,14 @@ class DashboardTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Dashboard/Index')
                 ->has('stats')
+                ->has('stats.tasks_due_today')
+                ->has('tasks_today')
+                ->has('projects')
+                ->has('financial_goals')
+                ->has('wealth_chart')
+                ->has('wealth_chart.labels')
+                ->has('wealth_chart.data')
+                ->has('reading')
             );
     }
 
