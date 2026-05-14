@@ -29,6 +29,7 @@ export interface Habit {
     frequency_days: number[] | null    // 0=dom ... 6=sab
     frequency_times: number | null
     category: string | null
+    color: string | null
     current_streak: number
     best_streak: number
     is_active: boolean

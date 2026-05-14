@@ -20,7 +20,7 @@ class Habit extends Model
 
     protected $fillable = [
         'user_id', 'name', 'icon', 'frequency_type',
-        'frequency_days', 'frequency_times', 'category',
+        'frequency_days', 'frequency_times', 'category', 'color',
         'current_streak', 'best_streak', 'is_active',
     ];
 

@@ -20,6 +20,7 @@ class HabitResource extends JsonResource
             'frequency_days'       => $this->frequency_days,
             'frequency_times'      => $this->frequency_times,
             'category'             => $this->category,
+            'color'                => $this->color,
             'current_streak'       => $this->current_streak,
             'best_streak'          => $this->best_streak,
             'is_active'            => $this->is_active,

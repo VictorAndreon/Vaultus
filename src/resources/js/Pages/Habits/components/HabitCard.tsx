@@ -5,11 +5,11 @@ import { Habit } from '@/types'
 
 interface Props { habit: Habit; today: string; onEdit: (h: Habit) => void; isFirst: boolean }
 
-const WEEK = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']
+const WEEK_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
     const [checkedIn, setCheckedIn] = useState(habit.checked_in_today)
-    const color = checkedIn ? 'var(--green)' : 'var(--gold)'
+    const color = habit.color ?? 'var(--green)'
 
     const toggle = () => {
         const prev = checkedIn
@@ -25,10 +25,16 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
         router.delete(`/habits/${habit.id}`, {}, { preserveScroll: true })
     }
 
-    // Week dots — last 7 days
-    const last7 = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today); d.setDate(d.getDate() - (6 - i))
-        return d.toISOString().split('T')[0]
+    // Week dots — Seg–Dom da semana atual
+    const todayDate = new Date()
+    const dayOfWeek = todayDate.getDay() // 0=dom, 1=seg...
+    const monday = new Date(todayDate)
+    monday.setDate(todayDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+
+    const weekDates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday)
+        d.setDate(monday.getDate() + i)
+        return d.toISOString().slice(0, 10)
     })
 
     const rate = Math.round(
@@ -52,17 +58,21 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
                 </div>
             </div>
 
-            {/* Esta semana — 7 dots */}
+            {/* Esta semana — dots Seg-Dom */}
             <div style={{ display: 'flex', gap: 6 }}>
-                {last7.map((date, di) => {
-                    const done = habit.recent_check_ins?.includes(date)
-                    const isToday = date === today
+                {weekDates.map((dateStr, i) => {
+                    const filled = habit.recent_check_ins?.includes(dateStr) ?? false
+                    const isToday = dateStr === today
                     return (
-                        <div key={di} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: isToday ? 'var(--green)' : 'var(--text-4)', textTransform: 'uppercase' }}>{WEEK[di]}</div>
-                            <div style={{ width: 18, height: 18, borderRadius: 5, background: done ? color : 'transparent', border: done ? 'none' : '1px dashed var(--line-2)', display: 'grid', placeItems: 'center' }}>
-                                {done && <Icons.Check size={11} style={{ color: 'var(--bg)' }} />}
-                            </div>
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <div style={{
+                                width: 20, height: 20, borderRadius: 4,
+                                background: filled ? color : 'transparent',
+                                border: filled ? 'none' : `1.5px ${isToday ? 'solid' : 'dashed'} ${isToday ? color : 'var(--line-2)'}`,
+                            }} />
+                            <span style={{ fontSize: 9.5, color: isToday ? color : 'var(--text-4)', fontFamily: 'var(--mono)' }}>
+                                {WEEK_LABELS[i]}
+                            </span>
                         </div>
                     )
                 })}
