@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { ProjectTask, ProjectColumn } from '@/types'
-import Button from '@/Components/ui/Button'
 
 interface Props {
     task: ProjectTask | null
@@ -52,38 +51,38 @@ export default function TaskForm({ task, projectId, columns, defaultColumnId, on
     }
 
     return (
-        <div className="fixed inset-y-0 right-0 w-80 bg-slate-900 border-l border-slate-800 z-50 flex flex-col shadow-xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-                <h2 className="text-sm font-semibold text-slate-200">{task ? 'Editar tarefa' : 'Nova tarefa'}</h2>
-                <button className="text-slate-500 hover:text-slate-300 text-lg leading-none" onClick={onClose}>×</button>
+        <div style={{ position: 'fixed', inset: '0 0 0 auto', width: 320, background: 'var(--surface)', borderLeft: '1px solid var(--line)', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
+                <h2 style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, margin: 0 }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h2>
+                <button className="btn btn-ghost btn-sm" onClick={onClose}>×</button>
             </div>
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
+            <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                    <label className="text-xs text-slate-500 block mb-1">Título</label>
+                    <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Título</label>
                     <input
                         type="text"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         required
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="input"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-slate-500 block mb-1">Coluna</label>
+                    <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Coluna</label>
                     <select
                         value={colId}
                         onChange={e => setColId(Number(e.target.value))}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="input"
                     >
                         {columns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
                 <div>
-                    <label className="text-xs text-slate-500 block mb-1">Prioridade</label>
+                    <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prioridade</label>
                     <select
                         value={priority}
                         onChange={e => setPriority(e.target.value as ProjectTask['priority'])}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="input"
                     >
                         <option value="low">Baixa</option>
                         <option value="medium">Média</option>
@@ -92,29 +91,29 @@ export default function TaskForm({ task, projectId, columns, defaultColumnId, on
                     </select>
                 </div>
                 <div>
-                    <label className="text-xs text-slate-500 block mb-1">Prazo</label>
+                    <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prazo</label>
                     <input
                         type="date"
                         value={dueAt}
                         onChange={e => setDueAt(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="input"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-slate-500 block mb-1">Descrição</label>
+                    <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
                     <textarea
                         value={desc}
                         onChange={e => setDesc(e.target.value)}
                         rows={4}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="input"
                     />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                    {task ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={handleDelete}>Excluir</Button>
-                    ) : null}
-                    <Button type="button" variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-                    <Button type="submit" variant="primary" size="sm">Salvar</Button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 8 }}>
+                    {task && (
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={handleDelete}>Excluir</button>
+                    )}
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary btn-sm">Salvar</button>
                 </div>
             </form>
         </div>

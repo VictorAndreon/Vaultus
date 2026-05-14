@@ -7,11 +7,11 @@ interface Props {
     onEdit: (t: ProjectTask) => void
 }
 
-const priorityDot: Record<string, string> = {
-    low:    'bg-slate-500',
-    medium: 'bg-yellow-500',
-    high:   'bg-orange-500',
-    urgent: 'bg-red-500',
+const priorityDotColor: Record<string, string> = {
+    low:    'var(--text-3)',
+    medium: 'var(--gold)',
+    high:   'var(--rose)',
+    urgent: 'var(--rose)',
 }
 
 export default function TaskCard({ task, index, onEdit }: Props) {
@@ -23,18 +23,21 @@ export default function TaskCard({ task, index, onEdit }: Props) {
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     onClick={() => onEdit(task)}
-                    className={`bg-slate-800 border rounded-lg p-3 cursor-pointer transition-colors ${
-                        snapshot.isDragging
-                            ? 'border-indigo-500 shadow-lg shadow-indigo-900/40'
-                            : 'border-slate-700 hover:border-slate-600'
-                    }`}
+                    style={{
+                        background: 'var(--surface-2)',
+                        border: snapshot.isDragging ? '1px solid var(--green)' : '1px solid var(--line)',
+                        borderRadius: 'var(--r-2)',
+                        padding: '12px 14px',
+                        cursor: 'pointer',
+                        ...provided.draggableProps.style,
+                    }}
                 >
-                    <div className="flex items-start gap-2">
-                        <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${priorityDot[task.priority]}`} />
-                        <p className="text-sm text-slate-200 leading-snug">{task.title}</p>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                        <span style={{ marginTop: 6, width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: priorityDotColor[task.priority] ?? 'var(--text-3)' }} />
+                        <p style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.4, margin: 0 }}>{task.title}</p>
                     </div>
                     {task.due_at && (
-                        <p className="text-xs text-slate-500 mt-1 pl-4">{task.due_at}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4, paddingLeft: 16, fontFamily: 'var(--mono)' }}>{task.due_at}</p>
                     )}
                 </div>
             )}

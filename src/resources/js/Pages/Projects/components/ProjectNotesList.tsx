@@ -1,21 +1,18 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
-import { ProjectNote } from '@/types'
-import Button from '@/Components/ui/Button'
+import { Project, ProjectNote, ProjectColumn, ProjectLink } from '@/types'
 
-interface Props {
-    notes: ProjectNote[]
-    projectId: number
-}
+type FullProject = Project & { columns: ProjectColumn[]; notes: ProjectNote[]; links: ProjectLink[] }
+interface Props { project: FullProject }
 
-export default function ProjectNotesList({ notes, projectId }: Props) {
+export default function ProjectNotesList({ project }: Props) {
     const [newContent, setNewContent] = useState('')
     const [editingId, setEditingId]   = useState<number | null>(null)
     const [editContent, setEditContent] = useState('')
 
     function addNote() {
         if (!newContent.trim()) return
-        router.post('/projects/' + projectId + '/notes', { content: newContent }, { preserveScroll: true })
+        router.post('/projects/' + project.id + '/notes', { content: newContent }, { preserveScroll: true })
         setNewContent('')
     }
 
@@ -36,44 +33,44 @@ export default function ProjectNotesList({ notes, projectId }: Props) {
     }
 
     return (
-        <div className="space-y-3">
-            {notes.map(note => (
-                <div key={note.id} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {project.notes.map(note => (
+                <div key={note.id} className="card" style={{ padding: '16px 20px' }}>
                     {editingId === note.id ? (
-                        <div className="space-y-2">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <textarea
                                 autoFocus
                                 value={editContent}
                                 onChange={e => setEditContent(e.target.value)}
                                 rows={4}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                className="input"
                             />
-                            <div className="flex gap-2 justify-end">
-                                <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>Cancelar</Button>
-                                <Button variant="primary" size="sm" onClick={saveEdit}>Salvar</Button>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Cancelar</button>
+                                <button className="btn btn-primary btn-sm" onClick={saveEdit}>Salvar</button>
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-start justify-between gap-3">
-                            <p className="text-sm text-slate-300 whitespace-pre-wrap flex-1">{note.content}</p>
-                            <div className="flex gap-1 shrink-0">
-                                <Button variant="ghost" size="sm" onClick={() => startEdit(note)}>Editar</Button>
-                                <Button variant="ghost" size="sm" onClick={() => deleteNote(note.id)}>×</Button>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                            <p style={{ margin: 0, color: 'var(--text-2)', whiteSpace: 'pre-wrap', flex: 1, fontSize: 14, lineHeight: 1.6 }}>{note.content}</p>
+                            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                <button className="btn btn-ghost btn-sm" onClick={() => startEdit(note)}>Editar</button>
+                                <button className="btn btn-ghost btn-sm" onClick={() => deleteNote(note.id)}>×</button>
                             </div>
                         </div>
                     )}
                 </div>
             ))}
 
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <textarea
                     value={newContent}
                     onChange={e => setNewContent(e.target.value)}
                     placeholder="Adicionar nota…"
                     rows={3}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-400 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="input"
                 />
-                <Button variant="primary" size="sm" onClick={addNote}>Adicionar</Button>
+                <button className="btn btn-primary btn-sm" onClick={addNote}>Adicionar</button>
             </div>
         </div>
     )

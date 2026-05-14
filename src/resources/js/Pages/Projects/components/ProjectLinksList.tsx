@@ -1,21 +1,18 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
-import { ProjectLink } from '@/types'
-import Button from '@/Components/ui/Button'
+import { Project, ProjectNote, ProjectColumn, ProjectLink } from '@/types'
 
-interface Props {
-    links: ProjectLink[]
-    projectId: number
-}
+type FullProject = Project & { columns: ProjectColumn[]; notes: ProjectNote[]; links: ProjectLink[] }
+interface Props { project: FullProject }
 
-export default function ProjectLinksList({ links, projectId }: Props) {
+export default function ProjectLinksList({ project }: Props) {
     const [title, setTitle] = useState('')
     const [url, setUrl]     = useState('')
 
     function addLink(e: React.FormEvent) {
         e.preventDefault()
         if (!title.trim() || !url.trim()) return
-        router.post('/projects/' + projectId + '/links', { title, url }, { preserveScroll: true })
+        router.post('/projects/' + project.id + '/links', { title, url }, { preserveScroll: true })
         setTitle('')
         setUrl('')
     }
@@ -25,29 +22,34 @@ export default function ProjectLinksList({ links, projectId }: Props) {
     }
 
     return (
-        <div className="space-y-3">
-            {links.map(link => (
-                <div key={link.id} className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-lg px-4 py-3">
-                    <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-indigo-400 hover:text-indigo-300 truncate flex-1"
-                    >
-                        {link.title}
-                    </a>
-                    <Button variant="ghost" size="sm" onClick={() => deleteLink(link.id)}>×</Button>
-                </div>
-            ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="card" style={{ padding: 0 }}>
+                {project.links.length === 0 ? (
+                    <div style={{ padding: '18px 20px', color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum link adicionado.</div>
+                ) : (
+                    project.links.map((link, i) => (
+                        <div key={link.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none' }}>
+                            <div>
+                                <a href={link.url} target="_blank" rel="noopener noreferrer" className="card-link" style={{ fontSize: 14 }}>
+                                    {link.title}
+                                </a>
+                                <div className="mono muted" style={{ fontSize: 11, marginTop: 2 }}>{link.url}</div>
+                            </div>
+                            <button className="btn btn-ghost btn-sm" onClick={() => deleteLink(link.id)}>×</button>
+                        </div>
+                    ))
+                )}
+            </div>
 
-            <form onSubmit={addLink} className="flex gap-2">
+            <form onSubmit={addLink} style={{ display: 'flex', gap: 8 }}>
                 <input
                     type="text"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     placeholder="Título"
                     required
-                    className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-400 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="input"
+                    style={{ flex: 1 }}
                 />
                 <input
                     type="url"
@@ -55,9 +57,10 @@ export default function ProjectLinksList({ links, projectId }: Props) {
                     onChange={e => setUrl(e.target.value)}
                     placeholder="https://…"
                     required
-                    className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-400 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="input"
+                    style={{ flex: 1 }}
                 />
-                <Button type="submit" variant="primary" size="sm">Adicionar</Button>
+                <button type="submit" className="btn btn-primary btn-sm">Adicionar</button>
             </form>
         </div>
     )

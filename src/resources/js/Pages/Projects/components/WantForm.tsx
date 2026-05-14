@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Want } from '@/types'
-import Button from '@/Components/ui/Button'
 
 interface Props {
     want: Want | null
@@ -26,47 +25,47 @@ export default function WantForm({ want, onClose }: Props) {
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-sm z-50">
-                <h2 className="text-sm font-semibold text-slate-200 mb-4">
+        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 60%)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="card" style={{ padding: 28, width: '100%', maxWidth: 480, zIndex: 50 }}>
+                <div style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, marginBottom: 20 }}>
                     {want ? 'Editar vontade' : 'Nova vontade'}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-3">
+                </div>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Título</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Título</label>
                         <input
                             type="text"
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             required
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Categoria</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
                         <input
                             type="text"
                             value={category}
                             onChange={e => setCategory(e.target.value)}
                             placeholder="ex: Desenvolvimento, Leitura…"
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Prioridade</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prioridade</label>
                         <select
                             value={priority}
                             onChange={e => setPriority(e.target.value as Want['priority'])}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         >
                             <option value="low">Baixa</option>
                             <option value="medium">Média</option>
                             <option value="high">Alta</option>
                         </select>
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-                        <Button type="submit" variant="primary" size="sm">Salvar</Button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 8 }}>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary btn-sm">Salvar</button>
                     </div>
                 </form>
             </div>

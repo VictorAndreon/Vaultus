@@ -1,21 +1,14 @@
 import { router } from '@inertiajs/react'
 import { Project } from '@/types'
-import Button from '@/Components/ui/Button'
+import { Icons } from '@/Components/Icons'
 
-interface Props {
-    project: Project
-    onEdit: (p: Project) => void
+interface Props { project: Project; onEdit: (p: Project) => void }
+
+const STATUS_TAG: Record<string, string> = {
+    active: 'tag-green', paused: 'tag-gold', done: 'tag-sky', archived: 'tag',
 }
-
-const statusBadge: Record<string, string> = {
-    active:   'bg-emerald-600/20 text-emerald-400',
-    paused:   'bg-yellow-600/20 text-yellow-400',
-    done:     'bg-slate-600/20 text-slate-400',
-    archived: 'bg-slate-700 text-slate-500',
-}
-
-const statusLabel: Record<string, string> = {
-    active: 'Ativo', paused: 'Pausado', done: 'Concluído', archived: 'Arquivado',
+const STATUS_LABEL: Record<string, string> = {
+    active: 'Ativo', paused: 'Em pausa', done: 'Concluído', archived: 'Arquivado',
 }
 
 export default function ProjectCard({ project, onEdit }: Props) {
@@ -25,27 +18,28 @@ export default function ProjectCard({ project, onEdit }: Props) {
     }
 
     return (
-        <div
-            className="bg-slate-900 border border-slate-800 rounded-xl p-5 cursor-pointer hover:border-slate-700 transition-colors"
-            onClick={() => router.get('/projects/' + project.id)}
-        >
-            <div className="flex items-start justify-between mb-2">
-                <p className="text-sm font-medium text-slate-200">{project.title}</p>
-                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(project)}>Editar</Button>
-                    <Button variant="ghost" size="sm" onClick={handleDelete}>Excluir</Button>
+        <div className="card" style={{ padding: '22px 24px', cursor: 'pointer' }} onClick={() => router.get('/projects/' + project.id)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                        <span className={`tag ${STATUS_TAG[project.status] ?? 'tag'}`}><span className="dot" />{STATUS_LABEL[project.status] ?? project.status}</span>
+                    </div>
+                    <h3 className="h-2">{project.title}</h3>
+                    {project.description && (
+                        <div style={{ color: 'var(--text-3)', marginTop: 6, fontSize: 13, maxWidth: '42ch' }}>{project.description}</div>
+                    )}
+                </div>
+                <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => onEdit(project)}>Editar</button>
+                    <button className="btn btn-ghost btn-sm" onClick={handleDelete}>Excluir</button>
                 </div>
             </div>
-            {project.description && (
-                <p className="text-xs text-slate-500 mb-3 line-clamp-2">{project.description}</p>
-            )}
-            <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge[project.status] ?? ''}`}>
-                    {statusLabel[project.status] ?? project.status}
-                </span>
+            <div className="meter" style={{ margin: '16px 0 14px' }}><span style={{ width: '0%' }} /></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-3)' }}>
                 {project.tasks_count !== undefined && (
-                    <span className="text-xs text-slate-500">{project.tasks_count} tarefas</span>
+                    <span><span className="mono" style={{ color: 'var(--text-2)' }}>{project.tasks_count}</span> tarefas</span>
                 )}
+                <a className="card-link">Abrir <Icons.ChevronRight size={11} /></a>
             </div>
         </div>
     )

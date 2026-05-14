@@ -3,7 +3,6 @@ import { Droppable } from '@hello-pangea/dnd'
 import { router } from '@inertiajs/react'
 import { ProjectColumn, ProjectTask } from '@/types'
 import TaskCard from './TaskCard'
-import Button from '@/Components/ui/Button'
 
 interface Props {
     column: ProjectColumn
@@ -29,8 +28,8 @@ export default function KanbanColumn({ column, projectId, onAddTask, onEditTask 
     }
 
     return (
-        <div className="flex flex-col w-72 shrink-0 bg-slate-900 border border-slate-800 rounded-xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+        <div style={{ display: 'flex', flexDirection: 'column', width: 288, flexShrink: 0, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
                 {editingName ? (
                     <input
                         autoFocus
@@ -38,19 +37,22 @@ export default function KanbanColumn({ column, projectId, onAddTask, onEditTask 
                         onChange={e => setName(e.target.value)}
                         onBlur={saveName}
                         onKeyDown={e => e.key === 'Enter' && saveName()}
-                        className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="input"
+                        style={{ padding: '2px 8px', fontSize: 12 }}
                     />
                 ) : (
                     <button
-                        className="text-sm font-medium text-slate-300 hover:text-slate-100 text-left flex-1"
+                        className="kicker"
+                        style={{ textAlign: 'left', flex: 1, background: 'none', border: 'none', cursor: 'pointer' }}
                         onClick={() => setEditingName(true)}
                     >
                         {column.name}
                     </button>
                 )}
-                <span className="text-xs text-slate-600 ml-2">{column.tasks.length}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-4)', marginLeft: 8 }}>{column.tasks.length}</span>
                 <button
-                    className="ml-2 text-slate-600 hover:text-red-400 text-sm leading-none"
+                    className="btn btn-ghost btn-sm"
+                    style={{ marginLeft: 4 }}
                     onClick={deleteColumn}
                 >×</button>
             </div>
@@ -60,9 +62,16 @@ export default function KanbanColumn({ column, projectId, onAddTask, onEditTask 
                     <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex-1 p-3 space-y-2 min-h-[80px] transition-colors ${
-                            snapshot.isDraggingOver ? 'bg-slate-800/50' : ''
-                        }`}
+                        style={{
+                            flex: 1,
+                            padding: 12,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 8,
+                            minHeight: 80,
+                            background: snapshot.isDraggingOver ? 'var(--surface-2)' : undefined,
+                            transition: 'background 0.15s',
+                        }}
                     >
                         {column.tasks.map((task, i) => (
                             <TaskCard key={task.id} task={task} index={i} onEdit={onEditTask} />
@@ -72,15 +81,14 @@ export default function KanbanColumn({ column, projectId, onAddTask, onEditTask 
                 )}
             </Droppable>
 
-            <div className="px-3 pb-3">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-slate-500 hover:text-slate-300"
+            <div style={{ padding: '0 12px 12px' }}>
+                <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ width: '100%' }}
                     onClick={() => onAddTask(column.id)}
                 >
                     + Adicionar tarefa
-                </Button>
+                </button>
             </div>
         </div>
     )

@@ -47,9 +47,9 @@ export default function KanbanBoard({ project }: Props) {
     }
 
     return (
-        <div className="relative">
+        <div style={{ position: 'relative' }}>
             <DragDropContext onDragEnd={onDragEnd}>
-                <div className="flex gap-4 overflow-x-auto pb-4">
+                <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16 }}>
                     {project.columns.map(col => (
                         <KanbanColumn
                             key={col.id}
@@ -61,7 +61,7 @@ export default function KanbanBoard({ project }: Props) {
                     ))}
                     <button
                         onClick={addColumn}
-                        className="flex items-center justify-center w-72 h-12 shrink-0 border border-dashed border-slate-700 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:border-slate-600 transition-colors"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 288, height: 48, flexShrink: 0, border: '1px dashed var(--line)', borderRadius: 'var(--r-3)', fontSize: 13, color: 'var(--text-3)' }}
                     >
                         + Nova coluna
                     </button>
