@@ -21,11 +21,11 @@ const TYPE_LABELS: Record<string, string> = {
     cash: 'Dinheiro',
 }
 
-const TYPE_BADGE: Record<string, string> = {
-    checking: 'bg-blue-600/20 text-blue-400',
-    savings: 'bg-green-600/20 text-green-400',
-    investment: 'bg-purple-600/20 text-purple-400',
-    cash: 'bg-slate-700 text-slate-400',
+const TYPE_COLORS: Record<string, string> = {
+    checking: 'var(--sky)',
+    savings: 'var(--green)',
+    investment: 'var(--purple, var(--sky))',
+    cash: 'var(--text-4)',
 }
 
 export default function FinanceAccount({ account, transactions }: Props) {
@@ -34,21 +34,29 @@ export default function FinanceAccount({ account, transactions }: Props) {
 
     return (
         <AppLayout title={acc.name}>
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
                 {/* Header card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div className="flex items-start justify-between mb-3">
+                <div className="card" style={{ padding: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                         <div>
-                            <h1 className="text-xl font-semibold text-slate-100">{acc.name}</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_BADGE[acc.type] ?? 'bg-slate-700 text-slate-400'}`}>
+                            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>{acc.name}</h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{
+                                    fontSize: 11,
+                                    padding: '2px 8px',
+                                    borderRadius: 99,
+                                    fontWeight: 500,
+                                    background: `color-mix(in oklab, ${TYPE_COLORS[acc.type] ?? 'var(--text-4)'} 16%, transparent)`,
+                                    color: TYPE_COLORS[acc.type] ?? 'var(--text-4)',
+                                    border: `1px solid color-mix(in oklab, ${TYPE_COLORS[acc.type] ?? 'var(--text-4)'} 28%, transparent)`,
+                                }}>
                                     {TYPE_LABELS[acc.type] ?? acc.type}
                                 </span>
-                                <span className="text-xs text-slate-500">{acc.currency}</span>
+                                <span className="muted" style={{ fontSize: 12 }}>{acc.currency}</span>
                             </div>
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-slate-100">{fmtBRL(acc.current_balance)}</p>
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 30, color: 'var(--text)', letterSpacing: '-0.015em' }}>{fmtBRL(acc.current_balance)}</div>
                 </div>
 
                 {/* Nova transação */}

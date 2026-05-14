@@ -72,6 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/finance/wishlist/{item}', [WishlistController::class, 'destroy']);
     Route::post('/finance/transactions/{transaction}/allocations', [TransactionGoalController::class, 'store']);
     Route::delete('/finance/allocations/{allocation}', [TransactionGoalController::class, 'destroy']);
+    Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
+    Route::patch('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'update']);
+    Route::delete('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'destroy']);
 
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');

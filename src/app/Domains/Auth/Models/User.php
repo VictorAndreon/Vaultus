@@ -79,6 +79,11 @@ class User extends Authenticatable
         return $this->hasMany(\App\Domains\Finance\Models\WishlistItem::class);
     }
 
+    public function budgetCategories()
+    {
+        return $this->hasMany(\App\Domains\Finance\Models\BudgetCategory::class)->orderBy('position');
+    }
+
     public function projects()
     {
         return $this->hasMany(\App\Domains\Projects\Models\Project::class);

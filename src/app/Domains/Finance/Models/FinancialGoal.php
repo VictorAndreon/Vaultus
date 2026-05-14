@@ -21,8 +21,9 @@ class FinancialGoal extends Model
     }
 
     protected $fillable = [
-        'user_id', 'name', 'target_amount_encrypted', 'current_amount_encrypted',
-        'category', 'deadline', 'is_completed', 'is_archived',
+        'user_id', 'name', 'icon', 'color', 'note',
+        'target_amount_encrypted', 'current_amount_encrypted', 'monthly_amount_encrypted',
+        'category', 'deadline', 'is_completed', 'is_archived', 'status',
     ];
 
     protected function casts(): array
@@ -30,10 +31,29 @@ class FinancialGoal extends Model
         return [
             'target_amount_encrypted' => EncryptedCast::class,
             'current_amount_encrypted' => EncryptedCast::class,
+            'monthly_amount_encrypted' => EncryptedCast::class,
             'deadline' => 'date',
             'is_completed' => 'boolean',
             'is_archived' => 'boolean',
         ];
+    }
+
+    public function getMonthlyAmountAttribute(): float
+    {
+        return (float) ($this->monthly_amount_encrypted ?? 0);
+    }
+
+    public function getMonthsLeftAttribute(): int
+    {
+        if (!$this->deadline) return 0;
+        return (int) max(0, now()->diffInMonths($this->deadline, false));
+    }
+
+    public function getSuggestedMonthlyAttribute(): float
+    {
+        $remaining = (float) $this->target_amount_encrypted - $this->current_amount;
+        $months    = $this->months_left;
+        return $months > 0 ? round($remaining / $months, 2) : 0;
     }
 
     public function getCurrentAmountAttribute(): float
