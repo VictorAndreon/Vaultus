@@ -95,7 +95,7 @@ export default function GoalForm({ goal, onClose }: Props) {
                                     id="is_completed"
                                     checked={isCompleted}
                                     onChange={e => setIsCompleted(e.target.checked)}
-                                    className="accent-indigo-500"
+                                    style={{ accentColor: 'var(--green)' }}
                                 />
                                 <label htmlFor="is_completed" className="kicker">Concluída</label>
                             </div>
@@ -105,7 +105,7 @@ export default function GoalForm({ goal, onClose }: Props) {
                                     id="is_archived"
                                     checked={isArchived}
                                     onChange={e => setIsArchived(e.target.checked)}
-                                    className="accent-indigo-500"
+                                    style={{ accentColor: 'var(--green)' }}
                                 />
                                 <label htmlFor="is_archived" className="kicker">Arquivada</label>
                             </div>
