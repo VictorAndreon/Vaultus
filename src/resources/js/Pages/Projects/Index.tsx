@@ -1,22 +1,16 @@
 import { useState } from 'react'
-import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { Project, Want } from '@/types'
 import ProjectForm from './components/ProjectForm'
 import WantForm from './components/WantForm'
+import ProjectCard from './components/ProjectCard'
 
 interface Props {
     projects: { data: Project[] }
     wants: { data: Want[] }
 }
 
-const STATUS_TAG: Record<string, string> = {
-    active: 'tag-green', paused: 'tag-gold', done: 'tag-sky', archived: 'tag',
-}
-const STATUS_LABEL: Record<string, string> = {
-    active: 'Ativo', paused: 'Em pausa', done: 'Concluído', archived: 'Arquivado',
-}
 
 export default function ProjectsIndex({ projects, wants }: Props) {
     const [showProjectForm, setShowProjectForm] = useState(false)
@@ -63,34 +57,11 @@ export default function ProjectsIndex({ projects, wants }: Props) {
                     ) : (
                         <div className="grid g-2">
                             {projects.data.map(p => (
-                                <div
+                                <ProjectCard
                                     key={p.id}
-                                    className="card"
-                                    style={{ padding: '22px 24px', cursor: 'pointer' }}
-                                    onClick={() => router.get('/projects/' + p.id)}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                                                <span className={`tag ${STATUS_TAG[p.status] ?? 'tag'}`}><span className="dot" />{STATUS_LABEL[p.status] ?? p.status}</span>
-                                            </div>
-                                            <h3 className="h-2">{p.title}</h3>
-                                            {p.description && (
-                                                <div style={{ color: 'var(--text-3)', marginTop: 6, fontSize: 13, maxWidth: '42ch' }}>{p.description}</div>
-                                            )}
-                                        </div>
-                                        <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
-                                            <button className="btn btn-ghost btn-sm" onClick={() => { setEditingProject(p); setShowProjectForm(true) }}>Editar</button>
-                                        </div>
-                                    </div>
-                                    <div className="meter" style={{ margin: '16px 0 14px' }}>
-                                        <span style={{ width: '0%' }} />
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-3)' }}>
-                                        <span><span className="mono" style={{ color: 'var(--text-2)' }}>{p.tasks_count ?? 0}</span> tarefas</span>
-                                        <a className="card-link">Abrir <Icons.ChevronRight size={11} /></a>
-                                    </div>
-                                </div>
+                                    project={p}
+                                    onEdit={proj => { setEditingProject(proj); setShowProjectForm(true) }}
+                                />
                             ))}
                         </div>
                     )}
