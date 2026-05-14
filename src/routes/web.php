@@ -20,6 +20,8 @@ use App\Domains\Projects\Controllers\ProjectColumnController;
 use App\Domains\Projects\Controllers\ProjectTaskController;
 use App\Domains\Projects\Controllers\ProjectNoteController;
 use App\Domains\Projects\Controllers\ProjectLinkController;
+use App\Domains\Tasks\Controllers\TasksController;
+use App\Domains\Library\Controllers\LibraryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -104,7 +106,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/links', [ProjectLinkController::class, 'store']);
     Route::delete('/projects/links/{link}', [ProjectLinkController::class, 'destroy']);
 
-    $stubs = ['tasks', 'library', 'notes', 'contacts', 'reviews'];
+    Route::get('/tasks', [TasksController::class, 'index'])->name('tasks');
+    Route::get('/library', [LibraryController::class, 'index'])->name('library');
+
+    $stubs = ['notes', 'contacts', 'reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
     }
