@@ -9,11 +9,14 @@ class ProjectTask extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['project_id', 'project_column_id', 'title', 'description', 'priority', 'position', 'due_at'];
+    protected $fillable = ['project_id', 'project_column_id', 'title', 'description', 'priority', 'tag', 'position', 'due_at', 'completed_at'];
 
     protected function casts(): array
     {
-        return ['due_at' => 'datetime'];
+        return [
+            'due_at'       => 'datetime',
+            'completed_at' => 'datetime',
+        ];
     }
 
     public function project()

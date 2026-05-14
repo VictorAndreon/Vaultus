@@ -206,7 +206,7 @@ export default function Dashboard({
     const task = localTasks.find(t => t.id === id)
     if (!task) return
     setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, is_done: !t.is_done } : t))
-    router.patch(`/projects/tasks/${id}`, { is_done: !task.is_done }, {
+    router.patch(`/projects/tasks/${id}/toggle-done`, {}, {
       preserveScroll: true,
       onError: () => setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, is_done: task.is_done } : t)),
     })

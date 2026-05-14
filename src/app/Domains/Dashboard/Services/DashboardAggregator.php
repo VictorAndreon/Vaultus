@@ -98,7 +98,7 @@ class DashboardAggregator
                 'project_name' => $t->project->title,
                 'priority'     => $t->priority,
                 'due_at'       => $t->due_at?->format('H:i'),
-                'is_done'      => $this->isDoneColumn($t->column?->name),
+                'is_done'      => $t->completed_at !== null || $this->isDoneColumn($t->column?->name),
             ])
             ->toArray();
     }

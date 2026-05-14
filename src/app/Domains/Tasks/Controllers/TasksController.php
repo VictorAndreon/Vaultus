@@ -25,10 +25,10 @@ class TasksController extends Controller
         ->orderBy('due_at')
         ->get();
 
-        $isDone = fn($t) => $t->column && (
+        $isDone = fn($t) => $t->completed_at !== null || ($t->column && (
             str_contains(strtolower($t->column->name), 'done') ||
             str_contains(strtolower($t->column->name), 'conclu')
-        );
+        ));
 
         $tasks = $allTasks->map(fn($t) => [
             'id'           => $t->id,
@@ -49,7 +49,7 @@ class TasksController extends Controller
         $todayTasks = collect($tasks)->where('due_date', $today);
         $doneTasks  = collect($tasks)->where('is_done', true)->where('due_date', $today);
         $weekTasks  = collect($tasks)->whereBetween('due_date', [$now->copy()->addDay()->toDateString(), $weekEnd]);
-        $noDue      = $allTasks->whereNull('due_at')->where(fn($t) => ! $isDone($t));
+        $noDue      = $allTasks->filter(fn($t) => $t->due_at === null && ! $isDone($t));
 
         $byProject = ProjectTask::whereHas('project', fn($q) => $q->where('user_id', $user->id))
             ->with('project')
@@ -63,14 +63,18 @@ class TasksController extends Controller
             ->toArray();
 
         return Inertia::render('Tasks/Index', [
-            'tasks'      => $tasks,
-            'stats'      => [
+            'tasks'        => $tasks,
+            'stats'        => [
                 'today'     => $todayTasks->count(),
                 'overdue'   => 0,
                 'this_week' => $weekTasks->count(),
                 'no_due'    => $noDue->count(),
             ],
-            'by_project' => $byProject,
+            'by_project'   => $byProject,
+            'no_due_tasks' => $noDue->take(5)->map(fn($t) => [
+                'id'    => $t->id,
+                'title' => $t->title,
+            ])->values()->toArray(),
         ]);
     }
 }

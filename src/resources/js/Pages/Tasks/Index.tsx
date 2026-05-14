@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 
@@ -10,12 +12,14 @@ interface Task {
     due_date: string | null
     is_done: boolean
     group: 'today' | 'week' | 'later' | 'done_today'
+    tag: string | null
 }
 
 interface Props {
     tasks: Task[]
     stats: { today: number; overdue: number; this_week: number; no_due: number }
     by_project: Array<{ project_name: string; count: number }>
+    no_due_tasks: Array<{ id: number; title: string }>
 }
 
 const PRIO_TAG: Record<string, string>   = { high: 'tag-rose', medium: 'tag-gold', low: 'tag-sky' }
@@ -30,8 +34,20 @@ const PROJECT_COLORS = [
     'oklch(70% 0.13 320)', 'var(--text-3)',
 ]
 
-export default function TasksIndex({ tasks, stats, by_project }: Props) {
-    const groups = GROUP_ORDER.filter(g => tasks.some(t => t.group === g))
+export default function TasksIndex({ tasks, stats, by_project, no_due_tasks }: Props) {
+    const [localTasks, setLocalTasks] = useState(tasks)
+
+    function toggleTask(id: number) {
+        const task = localTasks.find(t => t.id === id)
+        if (!task) return
+        setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, is_done: !t.is_done } : t))
+        router.patch(`/projects/tasks/${id}/toggle-done`, {}, {
+            preserveScroll: true,
+            onError: () => setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, is_done: task.is_done } : t)),
+        })
+    }
+
+    const groups = GROUP_ORDER.filter(g => localTasks.some(t => t.group === g))
 
     return (
         <AppLayout
@@ -71,7 +87,7 @@ export default function TasksIndex({ tasks, stats, by_project }: Props) {
                             <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma tarefa encontrada.</div>
                         )}
                         {groups.map(g => {
-                            const groupTasks = tasks.filter(t => t.group === g)
+                            const groupTasks = localTasks.filter(t => t.group === g)
                             return (
                                 <div key={g}>
                                     <div className="kicker" style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -81,7 +97,7 @@ export default function TasksIndex({ tasks, stats, by_project }: Props) {
                                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                                         {groupTasks.map((t, i) => (
                                             <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderTop: i ? '1px solid var(--line-soft)' : 'none' }}>
-                                                <div className="check" data-checked={t.is_done} />
+                                                <div className="check" data-checked={t.is_done} onClick={() => toggleTask(t.id)} style={{ cursor: 'pointer' }} />
                                                 <div style={{ flex: 1, minWidth: 0 }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                                         <div style={{ fontSize: 14, color: t.is_done ? 'var(--text-3)' : 'var(--text)', textDecoration: t.is_done ? 'line-through' : 'none' }}>
@@ -96,6 +112,11 @@ export default function TasksIndex({ tasks, stats, by_project }: Props) {
                                                         {t.due_at && (
                                                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                                                 <Icons.Clock size={11} /> {t.due_at}
+                                                            </span>
+                                                        )}
+                                                        {t.tag && (
+                                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                                <Icons.Tag size={11} /> {t.tag}
                                                             </span>
                                                         )}
                                                     </div>
@@ -116,8 +137,15 @@ export default function TasksIndex({ tasks, stats, by_project }: Props) {
                                 <div className="card-title">Inbox <b style={{ color: 'var(--green)' }}>· {stats.no_due}</b></div>
                                 <a className="card-link">Processar</a>
                             </div>
-                            <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>
-                                {stats.no_due === 0 ? 'Inbox zerado.' : `${stats.no_due} itens sem prazo.`}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {no_due_tasks.length === 0
+                                    ? <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Inbox vazia.</div>
+                                    : no_due_tasks.map(x => (
+                                        <div key={x.id} style={{ fontSize: 13, color: 'var(--text-2)', padding: '6px 0', borderBottom: '1px solid var(--line-soft)' }}>
+                                            {x.title}
+                                        </div>
+                                    ))
+                                }
                             </div>
                         </div>
 

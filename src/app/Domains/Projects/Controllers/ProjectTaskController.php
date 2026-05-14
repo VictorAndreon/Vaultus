@@ -51,6 +51,17 @@ class ProjectTaskController extends Controller
         return back();
     }
 
+    public function toggleDone(Request $request, ProjectTask $task): \Illuminate\Http\Response
+    {
+        abort_if($task->project->user_id !== $request->user()->id, 403);
+
+        $task->update([
+            'completed_at' => $task->completed_at ? null : now(),
+        ]);
+
+        return response()->noContent();
+    }
+
     public function destroy(Request $request, ProjectTask $task)
     {
         abort_if($task->project->user_id !== $request->user()->id, 403);
