@@ -1,67 +1,56 @@
 import { JournalEntry } from '@/types'
 
-interface Props {
-    entries: JournalEntry[]
-    selectedDate: string | null
-    onSelectDate: (date: string) => void
-}
+interface Props { entries: JournalEntry[]; selectedDate: string | null; onSelectDate: (d: string) => void }
 
-function formatDate(dateStr: string): string {
-    return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-    })
+const MOOD_TAG: Record<number, { label: string; cls: string }> = {
+    5: { label: 'Ótimo',   cls: 'tag-green' },
+    4: { label: 'Bom',     cls: 'tag-green' },
+    3: { label: 'Neutro',  cls: 'tag' },
+    2: { label: 'Cansado', cls: 'tag-gold' },
+    1: { label: 'Difícil', cls: 'tag-rose' },
 }
-
-const MOOD_EMOJI: Record<number, string> = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' }
 
 export default function EntryList({ entries, selectedDate, onSelectDate }: Props) {
-    if (entries.length === 0) {
-        return (
-            <p className="text-center py-8 text-sm text-slate-600">
-                Nenhuma entrada ainda. Comece escrevendo hoje.
-            </p>
-        )
-    }
+    if (entries.length === 0) return (
+        <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic', textAlign: 'center', padding: 32 }}>
+            Nenhuma entrada ainda. Comece escrevendo hoje.
+        </div>
+    )
 
     return (
-        <ul className="space-y-2">
-            {entries.map(entry => (
-                <li key={entry.id}>
-                    <button
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {entries.map(entry => {
+                const d = new Date(entry.date + 'T12:00:00')
+                const mood = entry.mood ? MOOD_TAG[entry.mood] : null
+                return (
+                    <article
+                        key={entry.id}
+                        className="card"
+                        style={{ padding: 28, cursor: 'pointer', borderColor: selectedDate === entry.date ? 'var(--green-soft)' : undefined }}
                         onClick={() => onSelectDate(entry.date)}
-                        className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
-                            selectedDate === entry.date
-                                ? 'bg-slate-800 border-indigo-500/40'
-                                : 'bg-slate-900 border-slate-800 hover:border-slate-700'
-                        }`}
                     >
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-slate-400 capitalize">
-                                {formatDate(entry.date)}
-                            </span>
-                            {entry.mood && (
-                                <span className="text-sm">{MOOD_EMOJI[entry.mood]}</span>
-                            )}
-                        </div>
-                        {entry.preview ? (
-                            <p className="text-sm text-slate-500 line-clamp-2">{entry.preview}</p>
-                        ) : (
-                            <p className="text-sm text-slate-700 italic">Entrada vazia</p>
-                        )}
-                        {(entry.tags ?? []).length > 0 && (
-                            <div className="flex gap-1 mt-2 flex-wrap">
-                                {(entry.tags ?? []).map(tag => (
-                                    <span key={tag} className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
-                                        {tag}
-                                    </span>
-                                ))}
+                        <div style={{ display: 'flex', gap: 24 }}>
+                            <div style={{ flex: 'none', textAlign: 'center', width: 64, paddingTop: 6 }}>
+                                <div style={{ fontFamily: 'var(--serif)', fontSize: 42, lineHeight: 1, color: 'var(--text)' }}>{d.getDate()}</div>
+                                <div className="kicker" style={{ marginTop: 4 }}>
+                                    {d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                                </div>
                             </div>
-                        )}
-                    </button>
-                </li>
-            ))}
-        </ul>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                                    {mood && <span className={`tag ${mood.cls}`}><span className="dot" />{mood.label}</span>}
+                                    {(entry.tags ?? []).slice(0, 3).map(t => (
+                                        <span key={t} className="tag"><span className="dot" />{t}</span>
+                                    ))}
+                                </div>
+                                {entry.preview && (
+                                    <p style={{ margin: 0, color: 'var(--text-2)', lineHeight: 1.65, fontSize: 14.5, maxWidth: '62ch' }}>{entry.preview}</p>
+                                )}
+                            </div>
+                        </div>
+                    </article>
+                )
+            })}
+        </div>
     )
 }

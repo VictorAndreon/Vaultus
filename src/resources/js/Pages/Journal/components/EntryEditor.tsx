@@ -74,26 +74,24 @@ export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
     const hasMoodOrEnergy = (entry?.mood ?? null) !== null || (entry?.energy ?? null) !== null
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <button onClick={onBack} className="text-sm text-slate-500 hover:text-slate-300 flex items-center gap-1">
-                    ← Voltar
-                </button>
-                <span className="text-xs text-slate-600">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button onClick={onBack} className="card-link">← Voltar</button>
+                <span style={{ fontSize: 11, color: 'var(--text-4)', fontFamily: 'var(--mono)' }}>
                     {status === 'saving' && 'Salvando…'}
                     {status === 'saved' && 'Salvo'}
                 </span>
             </div>
 
             {hasMoodOrEnergy && (
-                <div className="flex gap-3 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-400">
+                <div style={{ display: 'flex', gap: 12, padding: '8px 12px', background: 'var(--surface-2)', borderRadius: 'var(--r-2)', border: '1px solid var(--line-soft)', fontSize: 12, color: 'var(--text-3)' }}>
                     {entry?.mood && <span>Humor: {MOOD_EMOJI[entry.mood]}</span>}
                     {entry?.energy && <span>Energia: {ENERGY_EMOJI[entry.energy]} registrados neste dia</span>}
                 </div>
             )}
 
             {editor && (
-                <div className="flex items-center gap-1 flex-wrap border border-slate-800 rounded-lg px-2 py-1.5 bg-slate-900">
+                <div className="card" style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                     {[
                         { label: 'B',        action: () => editor.chain().focus().toggleBold().run(),                  active: editor.isActive('bold') },
                         { label: 'I',        action: () => editor.chain().focus().toggleItalic().run(),                active: editor.isActive('italic') },
@@ -105,11 +103,7 @@ export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
                         <button
                             key={label}
                             onClick={action}
-                            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                active
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                            }`}
+                            className={active ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
                         >
                             {label}
                         </button>
@@ -117,7 +111,7 @@ export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
                 </div>
             )}
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="card" style={{ padding: 20 }}>
                 <EditorContent editor={editor} />
             </div>
         </div>

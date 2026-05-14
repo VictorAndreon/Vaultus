@@ -13,10 +13,10 @@ export default function PromptsPanel({ prompts }: Props) {
     if (prompts.length === 0) {
         return (
             <>
-                <div className="flex justify-end">
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <button
                         onClick={() => setManagerOpen(true)}
-                        className="text-xs text-slate-600 hover:text-slate-400 flex items-center gap-1"
+                        className="btn btn-ghost btn-sm"
                     >
                         ⚙ Adicionar prompts
                     </button>
@@ -28,26 +28,24 @@ export default function PromptsPanel({ prompts }: Props) {
 
     return (
         <>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
+            <div className="card">
                 <button
                     onClick={() => setOpen(o => !o)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', width: '100%', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        Prompts de escrita
-                    </span>
-                    <div className="flex items-center gap-2">
+                    <span className="kicker">Prompts de escrita</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button
                             onClick={e => { e.stopPropagation(); setManagerOpen(true) }}
-                            className="text-slate-600 hover:text-slate-400 text-xs"
+                            className="btn btn-ghost btn-sm"
                         >⚙</button>
-                        <span className="text-slate-600 text-xs">{open ? '▲' : '▼'}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-4)' }}>{open ? '▲' : '▼'}</span>
                     </div>
                 </button>
                 {open && (
-                    <div className="px-4 pb-4 space-y-2 border-t border-slate-800 pt-3">
+                    <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--line)' }}>
                         {prompts.map(prompt => (
-                            <div key={prompt.id} className="text-sm text-slate-400 px-3 py-2 bg-slate-800/50 rounded-lg">
+                            <div key={prompt.id} style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.5 }}>
                                 {prompt.content}
                             </div>
                         ))}

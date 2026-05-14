@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { JournalEntry } from '@/types'
+import { Icons } from '@/Components/Icons'
 
 interface Props {
     entries: JournalEntry[]
@@ -49,45 +50,58 @@ export default function JournalCalendar({ entries, today, selectedDate, onSelect
     ]
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-4">
-                <button onClick={prevMonth} className="text-slate-500 hover:text-slate-300 px-2 py-1 rounded">‹</button>
-                <span className="text-sm font-medium text-slate-300">
+        <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <button onClick={prevMonth} className="btn btn-ghost btn-sm">
+                    <Icons.ChevronLeft size={14} />
+                </button>
+                <span className="card-title">
                     {MONTH_NAMES[currentMonth]} {currentYear}
                 </span>
                 <button
                     onClick={nextMonth}
                     disabled={currentYear === todayDate.getFullYear() && currentMonth >= todayDate.getMonth()}
-                    className="text-slate-500 hover:text-slate-300 px-2 py-1 rounded disabled:opacity-30"
-                >›</button>
+                    className="btn btn-ghost btn-sm"
+                >
+                    <Icons.ChevronRight size={14} />
+                </button>
             </div>
 
-            <div className="grid grid-cols-7 mb-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 8 }}>
                 {WEEKDAY_LABELS.map(d => (
-                    <div key={d} className="text-center text-xs text-slate-600 pb-1">{d}</div>
+                    <div key={d} style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-4)', paddingBottom: 4, fontFamily: 'var(--mono)' }}>{d}</div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-y-1">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px 0' }}>
                 {cells.map((day, idx) => {
                     if (!day) return <div key={`blank-${idx}`} />
                     const future = isFuture(day)
+                    const selected = isSelected(day)
+                    const today_ = isToday(day)
                     return (
                         <button
                             key={day}
                             onClick={() => !future && onSelectDate(toDateString(currentYear, currentMonth, day))}
                             disabled={future}
-                            className={`
-                                relative flex flex-col items-center py-1 rounded-lg text-xs transition-colors
-                                ${future ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
-                                ${isSelected(day) ? 'bg-indigo-600 text-white' : ''}
-                                ${isToday(day) && !isSelected(day) ? 'ring-1 ring-indigo-500 text-indigo-400' : ''}
-                                ${!isSelected(day) && !isToday(day) && !future ? 'text-slate-400 hover:bg-slate-800' : ''}
-                            `}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                padding: '4px 0',
+                                fontSize: 12,
+                                border: 'none',
+                                background: 'transparent',
+                                cursor: future ? 'not-allowed' : 'pointer',
+                                ...(selected ? { background: 'var(--green)', color: 'var(--bg)', borderRadius: 8 } : {}),
+                                ...(today_ && !selected ? { background: 'var(--green-soft)', color: 'var(--green-bright)', borderRadius: 8 } : {}),
+                                ...(future ? { opacity: 0.3, cursor: 'not-allowed' } : {}),
+                                ...(!selected && !today_ && !future ? { color: 'var(--text-3)' } : {}),
+                            }}
                         >
                             {day}
                             {hasEntry(day) && (
-                                <span className={`w-1 h-1 rounded-full mt-0.5 ${isSelected(day) ? 'bg-white/60' : 'bg-indigo-500'}`} />
+                                <span style={{ width: 4, height: 4, borderRadius: '50%', background: selected ? 'var(--bg)' : 'var(--green)', margin: '2px auto 0' }} />
                             )}
                         </button>
                     )
