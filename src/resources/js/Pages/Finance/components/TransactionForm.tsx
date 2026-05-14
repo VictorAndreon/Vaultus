@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
-import Button from '@/Components/ui/Button'
 import { Transaction } from '@/types'
 
 export const TRANSACTION_CATEGORIES = [
@@ -14,9 +13,6 @@ interface Props {
     transaction: Transaction | null
     onClose: () => void
 }
-
-const inputCls = 'bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500'
-const labelCls = 'text-xs text-slate-500 block mb-1'
 
 function todayStr() {
     return new Date().toISOString().slice(0, 10)
@@ -52,32 +48,26 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
     }
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-4">
+        <div className="card" style={{ padding: 20, marginBottom: 16 }}>
             <form onSubmit={handleSubmit}>
-                <div className="flex flex-wrap gap-3 items-end">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
                     {/* Type tabs */}
                     <div>
-                        <label className={labelCls}>Tipo</label>
-                        <div className="flex rounded-lg overflow-hidden border border-slate-700">
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Tipo</label>
+                        <div className="seg">
                             <button
                                 type="button"
+                                data-active={type === 'income'}
                                 onClick={() => setType('income')}
-                                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                                    type === 'income'
-                                        ? 'bg-green-600/30 text-green-400'
-                                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                                }`}
+                                style={type === 'income' ? { background: 'var(--green-wash)', color: 'var(--green)' } : undefined}
                             >
                                 Receita
                             </button>
                             <button
                                 type="button"
+                                data-active={type === 'expense'}
                                 onClick={() => setType('expense')}
-                                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                                    type === 'expense'
-                                        ? 'bg-red-600/30 text-red-400'
-                                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                                }`}
+                                style={type === 'expense' ? { background: 'oklch(40% 0.12 20 / 20%)', color: 'var(--rose)' } : undefined}
                             >
                                 Despesa
                             </button>
@@ -85,21 +75,21 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                     </div>
 
                     {/* Description */}
-                    <div className="flex-1 min-w-[160px]">
-                        <label className={labelCls}>Descrição</label>
+                    <div style={{ flex: 1, minWidth: 160 }}>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
                         <input
                             type="text"
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             placeholder="Ex: Supermercado"
                             required
-                            className={`${inputCls} w-full`}
+                            className="input"
                         />
                     </div>
 
                     {/* Amount */}
-                    <div className="w-32">
-                        <label className={labelCls}>Valor (R$)</label>
+                    <div style={{ width: 128 }}>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
                         <input
                             type="number"
                             step="0.01"
@@ -108,17 +98,17 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                             onChange={e => setAmount(e.target.value)}
                             placeholder="0,00"
                             required
-                            className={`${inputCls} w-full`}
+                            className="input"
                         />
                     </div>
 
                     {/* Category */}
-                    <div className="w-40">
-                        <label className={labelCls}>Categoria</label>
+                    <div style={{ width: 160 }}>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
                         <select
                             value={category}
                             onChange={e => setCategory(e.target.value)}
-                            className={`${inputCls} w-full`}
+                            className="input"
                         >
                             <option value="">Sem categoria</option>
                             {TRANSACTION_CATEGORIES.map(c => (
@@ -128,21 +118,21 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                     </div>
 
                     {/* Date */}
-                    <div className="w-40">
-                        <label className={labelCls}>Data</label>
+                    <div style={{ width: 160 }}>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data</label>
                         <input
                             type="date"
                             value={occurred_at}
                             onChange={e => setOccurredAt(e.target.value)}
                             required
-                            className={`${inputCls} w-full`}
+                            className="input"
                         />
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
-                        <Button type="submit" variant="primary" size="sm">Salvar</Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button type="submit" className="btn btn-primary btn-sm">Salvar</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
                     </div>
                 </div>
             </form>

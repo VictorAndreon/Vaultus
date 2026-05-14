@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
+import { Icons } from '@/Components/Icons'
 import { Account, FinancialGoal, WishlistItem } from '@/types'
 import AccountCard from './components/AccountCard'
 import AccountForm from './components/AccountForm'
@@ -7,8 +9,6 @@ import GoalCard from './components/GoalCard'
 import GoalForm from './components/GoalForm'
 import WishlistCard from './components/WishlistCard'
 import WishlistForm from './components/WishlistForm'
-import Button from '@/Components/ui/Button'
-import { router } from '@inertiajs/react'
 
 interface Props {
     accounts: { data: Account[] }
@@ -24,13 +24,13 @@ function fmtBRL(v: number) {
 type Tab = 'goals' | 'wishlist'
 
 export default function FinanceIndex({ accounts, goals, wishlist, net_worth }: Props) {
-    const [editingAccount, setEditingAccount] = useState<Account | null>(null)
-    const [showAccountForm, setShowAccountForm] = useState(false)
-    const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null)
-    const [showGoalForm, setShowGoalForm] = useState(false)
-    const [editingWishlistItem, setEditingWishlistItem] = useState<WishlistItem | null>(null)
+    const [editingAccount, setEditingAccount]     = useState<Account | null>(null)
+    const [showAccountForm, setShowAccountForm]   = useState(false)
+    const [editingGoal, setEditingGoal]           = useState<FinancialGoal | null>(null)
+    const [showGoalForm, setShowGoalForm]         = useState(false)
+    const [editingWishlist, setEditingWishlist]   = useState<WishlistItem | null>(null)
     const [showWishlistForm, setShowWishlistForm] = useState(false)
-    const [activeTab, setActiveTab] = useState<Tab>('goals')
+    const [activeTab, setActiveTab]               = useState<Tab>('goals')
 
     function deleteGoal(goal: FinancialGoal) {
         if (!confirm(`Excluir a meta "${goal.name}"?`)) return
@@ -43,138 +43,116 @@ export default function FinanceIndex({ accounts, goals, wishlist, net_worth }: P
     }
 
     return (
-        <AppLayout title="Finanças">
-            <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-                {/* Net Worth */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                    <p className="text-xs text-slate-500 mb-1">Patrimônio líquido</p>
-                    <p className="text-3xl font-bold text-slate-100">{fmtBRL(net_worth)}</p>
+        <AppLayout
+            title="Finanças"
+            eyebrow="Patrimônio"
+            subtitle="Saldo, fluxo, orçamento e metas."
+            actions={
+                <>
+                    <div className="seg">
+                        <button>Mês</button>
+                        <button data-active="true">Trim.</button>
+                        <button>Ano</button>
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={() => { setEditingAccount(null); setShowAccountForm(true) }}>
+                        <Icons.Plus size={13} /> Lançamento
+                    </button>
+                </>
+            }
+        >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {/* Stats */}
+                <div className="grid g-4">
+                    <div className="stat" style={{ padding: '22px 24px' }}>
+                        <div className="stat-label">Patrimônio Líquido</div>
+                        <div className="stat-value" style={{ fontSize: 32 }}>{fmtBRL(net_worth)}</div>
+                        <div className="stat-delta up"><Icons.ArrowUpRight size={11} /> +2,4% mês</div>
+                    </div>
+                    <div className="stat" style={{ padding: '22px 24px' }}>
+                        <div className="stat-label">Contas</div>
+                        <div className="stat-value" style={{ fontSize: 32 }}>{accounts.data.length}<span className="unit">ativas</span></div>
+                        <div className="stat-delta flat">ver detalhes</div>
+                    </div>
+                    <div className="stat" style={{ padding: '22px 24px' }}>
+                        <div className="stat-label">Metas</div>
+                        <div className="stat-value" style={{ fontSize: 32 }}>{goals.data.length}<span className="unit">ativas</span></div>
+                        <div className="stat-delta flat">ver metas</div>
+                    </div>
+                    <div className="stat" style={{ padding: '22px 24px' }}>
+                        <div className="stat-label">Wishlist</div>
+                        <div className="stat-value" style={{ fontSize: 32 }}>{wishlist.data.length}<span className="unit">itens</span></div>
+                        <div className="stat-delta flat">ver wishlist</div>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Left: Accounts */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-semibold text-slate-300">Contas</h2>
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => { setEditingAccount(null); setShowAccountForm(true) }}
-                            >
-                                Nova conta
-                            </Button>
+                {/* Contas + Metas/Wishlist */}
+                <div className="grid g-2">
+                    {/* Contas */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div className="kicker" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>Contas</span>
+                            <button className="card-link" onClick={() => { setEditingAccount(null); setShowAccountForm(true) }}>
+                                <Icons.Plus size={11} /> Nova conta
+                            </button>
                         </div>
-                        {accounts.data.length === 0 && (
-                            <p className="text-xs text-slate-500">Nenhuma conta cadastrada.</p>
+                        {accounts.data.length === 0 ? (
+                            <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma conta cadastrada.</div>
+                        ) : (
+                            accounts.data.map(a => (
+                                <AccountCard key={a.id} account={a} onEdit={ac => { setEditingAccount(ac); setShowAccountForm(true) }} />
+                            ))
                         )}
-                        {accounts.data.map(account => (
-                            <AccountCard
-                                key={account.id}
-                                account={account}
-                                onEdit={a => { setEditingAccount(a); setShowAccountForm(true) }}
-                            />
-                        ))}
                     </div>
 
-                    {/* Right: Goals / Wishlist tabs */}
-                    <div className="space-y-4">
-                        {/* Tab buttons */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setActiveTab('goals')}
-                                className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                                    activeTab === 'goals'
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                                }`}
-                            >
-                                Metas
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('wishlist')}
-                                className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                                    activeTab === 'wishlist'
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                                }`}
-                            >
-                                Wishlist
-                            </button>
+                    {/* Metas / Wishlist */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <div className="seg">
+                                <button data-active={activeTab === 'goals'} onClick={() => setActiveTab('goals')}>Metas</button>
+                                <button data-active={activeTab === 'wishlist'} onClick={() => setActiveTab('wishlist')}>Wishlist</button>
+                            </div>
+                            {activeTab === 'goals' && (
+                                <button className="btn btn-ghost btn-sm" onClick={() => { setEditingGoal(null); setShowGoalForm(true) }}>
+                                    <Icons.Plus size={12} /> Nova meta
+                                </button>
+                            )}
+                            {activeTab === 'wishlist' && (
+                                <button className="btn btn-ghost btn-sm" onClick={() => { setEditingWishlist(null); setShowWishlistForm(true) }}>
+                                    <Icons.Plus size={12} /> Novo item
+                                </button>
+                            )}
                         </div>
 
                         {activeTab === 'goals' && (
-                            <div className="space-y-3">
-                                <div className="flex justify-end">
-                                    <Button
-                                        variant="primary"
-                                        size="sm"
-                                        onClick={() => { setEditingGoal(null); setShowGoalForm(true) }}
-                                    >
-                                        Nova meta
-                                    </Button>
-                                </div>
-                                {goals.data.length === 0 && (
-                                    <p className="text-xs text-slate-500">Nenhuma meta cadastrada.</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {goals.data.length === 0 ? (
+                                    <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma meta cadastrada.</div>
+                                ) : (
+                                    goals.data.map(g => (
+                                        <GoalCard key={g.id} goal={g} onEdit={go => { setEditingGoal(go); setShowGoalForm(true) }} onDelete={deleteGoal} />
+                                    ))
                                 )}
-                                {goals.data.map(goal => (
-                                    <GoalCard
-                                        key={goal.id}
-                                        goal={goal}
-                                        onEdit={g => { setEditingGoal(g); setShowGoalForm(true) }}
-                                        onDelete={deleteGoal}
-                                    />
-                                ))}
                             </div>
                         )}
 
                         {activeTab === 'wishlist' && (
-                            <div className="space-y-3">
-                                <div className="flex justify-end">
-                                    <Button
-                                        variant="primary"
-                                        size="sm"
-                                        onClick={() => { setEditingWishlistItem(null); setShowWishlistForm(true) }}
-                                    >
-                                        Novo item
-                                    </Button>
-                                </div>
-                                {wishlist.data.length === 0 && (
-                                    <p className="text-xs text-slate-500">Nenhum item na wishlist.</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {wishlist.data.length === 0 ? (
+                                    <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum item na wishlist.</div>
+                                ) : (
+                                    wishlist.data.map(item => (
+                                        <WishlistCard key={item.id} item={item} onEdit={i => { setEditingWishlist(i); setShowWishlistForm(true) }} onDelete={deleteWishlistItem} />
+                                    ))
                                 )}
-                                {wishlist.data.map(item => (
-                                    <WishlistCard
-                                        key={item.id}
-                                        item={item}
-                                        onEdit={i => { setEditingWishlistItem(i); setShowWishlistForm(true) }}
-                                        onDelete={deleteWishlistItem}
-                                    />
-                                ))}
                             </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Modals */}
-            {showAccountForm && (
-                <AccountForm
-                    account={editingAccount}
-                    onClose={() => setShowAccountForm(false)}
-                />
-            )}
-            {showGoalForm && (
-                <GoalForm
-                    goal={editingGoal}
-                    onClose={() => setShowGoalForm(false)}
-                />
-            )}
-            {showWishlistForm && (
-                <WishlistForm
-                    item={editingWishlistItem}
-                    goals={goals.data}
-                    onClose={() => setShowWishlistForm(false)}
-                />
-            )}
+            {showAccountForm && <AccountForm account={editingAccount} onClose={() => setShowAccountForm(false)} />}
+            {showGoalForm && <GoalForm goal={editingGoal} onClose={() => setShowGoalForm(false)} />}
+            {showWishlistForm && <WishlistForm item={editingWishlist} goals={goals.data} onClose={() => setShowWishlistForm(false)} />}
         </AppLayout>
     )
 }

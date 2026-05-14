@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { FinancialGoal } from '@/types'
-import Button from '@/Components/ui/Button'
 
 interface Props {
     goal: FinancialGoal | null
@@ -39,58 +38,58 @@ export default function GoalForm({ goal, onClose }: Props) {
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-40 flex items-start justify-center">
-            <div className="fixed bg-slate-900 border border-slate-800 z-50 w-full max-w-sm mx-auto top-1/3 rounded-xl p-6">
-                <h2 className="text-sm font-semibold text-slate-200 mb-4">
+        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 60%)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="card" style={{ padding: 28, width: '100%', maxWidth: 480, zIndex: 50 }}>
+                <div style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, marginBottom: 20 }}>
                     {goal ? 'Editar meta' : 'Nova meta'}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-3">
+                </div>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Nome</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Nome</label>
                         <input
                             type="text"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             required
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         />
                     </div>
 
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Meta (R$)</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Meta (R$)</label>
                         <input
                             type="number"
                             step="0.01"
                             value={targetAmount}
                             onChange={e => setTargetAmount(e.target.value)}
                             required
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         />
                     </div>
 
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Categoria</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
                         <input
                             type="text"
                             value={category}
                             onChange={e => setCategory(e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         />
                     </div>
 
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Prazo</label>
+                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prazo</label>
                         <input
                             type="date"
                             value={deadline}
                             onChange={e => setDeadline(e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="input"
                         />
                     </div>
 
                     {goal && (
                         <>
-                            <div className="flex items-center gap-2">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <input
                                     type="checkbox"
                                     id="is_completed"
@@ -98,9 +97,9 @@ export default function GoalForm({ goal, onClose }: Props) {
                                     onChange={e => setIsCompleted(e.target.checked)}
                                     className="accent-indigo-500"
                                 />
-                                <label htmlFor="is_completed" className="text-xs text-slate-400">Concluída</label>
+                                <label htmlFor="is_completed" className="kicker">Concluída</label>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <input
                                     type="checkbox"
                                     id="is_archived"
@@ -108,14 +107,14 @@ export default function GoalForm({ goal, onClose }: Props) {
                                     onChange={e => setIsArchived(e.target.checked)}
                                     className="accent-indigo-500"
                                 />
-                                <label htmlFor="is_archived" className="text-xs text-slate-400">Arquivada</label>
+                                <label htmlFor="is_archived" className="kicker">Arquivada</label>
                             </div>
                         </>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-                        <Button type="submit" variant="primary" size="sm">Salvar</Button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 8 }}>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary btn-sm">Salvar</button>
                     </div>
                 </form>
             </div>

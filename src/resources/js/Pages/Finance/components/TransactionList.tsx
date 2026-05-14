@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Transaction, PaginatedResponse } from '@/types'
-import Button from '@/Components/ui/Button'
 import TransactionForm from './TransactionForm'
 import { TRANSACTION_CATEGORIES } from './TransactionForm'
 
@@ -37,17 +36,13 @@ export default function TransactionList({ transactions, accountId }: Props) {
     return (
         <div>
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center mb-4">
-                <div className="flex rounded-lg overflow-hidden border border-slate-700">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+                <div className="seg">
                     {(['all', 'income', 'expense'] as const).map(f => (
                         <button
                             key={f}
+                            data-active={typeFilter === f}
                             onClick={() => setTypeFilter(f)}
-                            className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                                typeFilter === f
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                            }`}
                         >
                             {f === 'all' ? 'Todos' : f === 'income' ? 'Receitas' : 'Despesas'}
                         </button>
@@ -57,7 +52,7 @@ export default function TransactionList({ transactions, accountId }: Props) {
                 <select
                     value={categoryFilter}
                     onChange={e => setCategoryFilter(e.target.value)}
-                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="input"
                 >
                     <option value="">Todas as categorias</option>
                     {TRANSACTION_CATEGORIES.map(c => (
@@ -77,46 +72,37 @@ export default function TransactionList({ transactions, accountId }: Props) {
 
             {/* Transaction rows */}
             {filtered.length === 0 ? (
-                <p className="text-sm text-slate-500 py-6 text-center">Nenhuma transação encontrada.</p>
+                <div style={{ color: 'var(--text-4)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Nenhuma transação encontrada.</div>
             ) : (
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {filtered.map(t => (
                         <div
                             key={t.id}
-                            className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
+                            className="card"
+                            style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
                         >
                             {/* Left */}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-200 font-medium truncate">{t.description}</p>
-                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ color: 'var(--text)', fontSize: 13.5, fontWeight: 500 }}>{t.description}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
                                     {t.category && (
-                                        <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
-                                            {t.category}
-                                        </span>
+                                        <span className="tag">{t.category}</span>
                                     )}
-                                    <span className="text-xs text-slate-500">{fmtDate(t.occurred_at)}</span>
+                                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-4)' }}>{fmtDate(t.occurred_at)}</span>
                                 </div>
                             </div>
 
                             {/* Right */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className={`text-sm font-semibold ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                <span style={{ fontSize: 13.5, fontWeight: 600, color: t.type === 'income' ? 'var(--green)' : 'var(--rose)' }}>
                                     {t.type === 'income' ? '+' : '-'}{fmtBRL(t.amount)}
                                 </span>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingTransaction(t)}
-                                >
+                                <button className="btn btn-ghost btn-sm" onClick={() => setEditingTransaction(t)}>
                                     Editar
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => handleDelete(t.id)}
-                                >
+                                </button>
+                                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--rose)' }} onClick={() => handleDelete(t.id)}>
                                     Excluir
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     ))}
@@ -125,27 +111,25 @@ export default function TransactionList({ transactions, accountId }: Props) {
 
             {/* Pagination */}
             {transactions.last_page > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                    <span className="text-xs text-slate-500">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-4)' }}>
                         Página {transactions.current_page} de {transactions.last_page}
                     </span>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="ghost"
-                            size="sm"
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                            className="btn btn-ghost btn-sm"
                             disabled={transactions.current_page <= 1}
                             onClick={() => router.get(window.location.pathname, { page: transactions.current_page - 1 })}
                         >
                             Anterior
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
+                        </button>
+                        <button
+                            className="btn btn-ghost btn-sm"
                             disabled={transactions.current_page >= transactions.last_page}
                             onClick={() => router.get(window.location.pathname, { page: transactions.current_page + 1 })}
                         >
                             Próxima
-                        </Button>
+                        </button>
                     </div>
                 </div>
             )}
