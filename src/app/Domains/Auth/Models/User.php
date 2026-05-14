@@ -88,4 +88,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Domains\Projects\Models\Want::class);
     }
+
+    public function libraryItems()
+    {
+        return $this->hasMany(\App\Domains\Library\Models\LibraryItem::class);
+    }
 }

@@ -27,4 +27,22 @@ class DashboardTest extends TestCase
                 ->has('stats')
             );
     }
+
+    public function test_library_item_progress_percent_calculates_correctly(): void
+    {
+        $user = User::factory()->create();
+
+        \App\Domains\Library\Models\LibraryItem::create([
+            'user_id'      => $user->id,
+            'type'         => 'book',
+            'title'        => 'Test Book',
+            'status'       => 'reading',
+            'total_pages'  => 200,
+            'current_page' => 50,
+        ]);
+
+        $item = $user->libraryItems()->first();
+
+        $this->assertEquals(25, $item->progress_percent);
+    }
 }
