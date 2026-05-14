@@ -43,6 +43,9 @@ export default function EntryList({ entries, selectedDate, onSelectDate }: Props
                                         <span key={t} className="tag"><span className="dot" />{t}</span>
                                     ))}
                                 </div>
+                                {entry.title && (
+                                    <div style={{ fontSize: 16, fontFamily: 'var(--serif)', color: 'var(--text)', marginBottom: 4 }}>{entry.title}</div>
+                                )}
                                 {entry.preview && (
                                     <p style={{ margin: 0, color: 'var(--text-2)', lineHeight: 1.65, fontSize: 14.5, maxWidth: '62ch' }}>{entry.preview}</p>
                                 )}

@@ -18,6 +18,7 @@ const ENERGY_EMOJI: Record<number, string> = { 1: '🪫', 2: '😴', 3: '⚡', 4
 
 export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
     const [status, setStatus] = useState<SaveStatus>('idle')
+    const [title, setTitle] = useState(entry?.title ?? '')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const editor = useEditor({
@@ -45,6 +46,7 @@ export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
         if (editor.getHTML() !== newContent) {
             editor.commands.setContent(newContent, false)
         }
+        setTitle(entry?.title ?? '')
     }, [entry?.id, selectedDate])
 
     useEffect(() => {
@@ -56,14 +58,14 @@ export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
     const save = (content: string) => {
         setStatus('saving')
         if (entry?.id) {
-            router.patch(`/journal/${entry.id}`, { content }, {
+            router.patch(`/journal/${entry.id}`, { title, content }, {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => setStatus('saved'),
                 onError: () => setStatus('idle'),
             })
         } else {
-            router.post('/journal', { date: selectedDate, content }, {
+            router.post('/journal', { date: selectedDate, title, content }, {
                 preserveScroll: true,
                 onSuccess: () => setStatus('saved'),
                 onError: () => setStatus('idle'),
@@ -89,6 +91,19 @@ export default function EntryEditor({ entry, selectedDate, onBack }: Props) {
                     {entry?.energy && <span>Energia: {ENERGY_EMOJI[entry.energy]} registrados neste dia</span>}
                 </div>
             )}
+
+            <input
+                type="text"
+                placeholder="Título da entrada (opcional)"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                style={{
+                    width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                    fontFamily: 'var(--serif)', fontSize: 22, color: 'var(--text)',
+                    marginBottom: 12, paddingBottom: 12,
+                    borderBottom: '1px solid var(--line-soft)',
+                }}
+            />
 
             {editor && (
                 <div className="card" style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

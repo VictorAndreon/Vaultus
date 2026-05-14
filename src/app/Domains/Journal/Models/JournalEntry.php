@@ -19,7 +19,7 @@ class JournalEntry extends Model
         return JournalEntryFactory::new();
     }
 
-    protected $fillable = ['user_id', 'date', 'content', 'tags', 'health_metric_id'];
+    protected $fillable = ['user_id', 'date', 'title', 'content', 'tags', 'health_metric_id'];
 
     protected function casts(): array
     {

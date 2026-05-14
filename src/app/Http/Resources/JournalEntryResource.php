@@ -12,6 +12,7 @@ class JournalEntryResource extends JsonResource
         return [
             'id'               => $this->id,
             'date'             => $this->date->toDateString(),
+            'title'            => $this->title,
             'content'          => $this->content,
             'tags'             => $this->tags ?? [],
             'health_metric_id' => $this->health_metric_id,

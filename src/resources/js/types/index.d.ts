@@ -52,6 +52,7 @@ export interface HealthMetric {
 export interface JournalEntry {
     id: number
     date: string
+    title: string | null
     content: string
     tags: string[]
     health_metric_id: number | null
