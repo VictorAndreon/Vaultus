@@ -44,26 +44,63 @@ function fmtBRL(v: number, compact = false) {
 }
 
 function FlowAreaChart({ income, expense, labels, h = 160 }: { income: number[]; expense: number[]; labels: string[]; h?: number }) {
+  const [hovered, setHovered] = useState<number | null>(null)
   const w = 600, pad = 24
   const allVals = [...income, ...expense]
   if (allVals.length === 0) return null
   const min = Math.min(...allVals) * 0.9
   const max = Math.max(...allVals) * 1.1 || 1
   const range = max - min || 1
-  const toLine = (data: number[]) => data.map((v, i) => [
-    pad + (i / (data.length - 1)) * (w - pad * 2),
-    h - 24 - ((v - min) / range) * (h - 48),
-  ] as [number, number]).map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')
+  const n = labels.length
+  const ptX = (i: number) => pad + (n > 1 ? (i / (n - 1)) : 0.5) * (w - pad * 2)
+  const ptY = (v: number) => h - 24 - ((v - min) / range) * (h - 48)
+  const toLine = (data: number[]) => data.map((v, i) => `${i ? 'L' : 'M'}${ptX(i).toFixed(1)},${ptY(v).toFixed(1)}`).join(' ')
+  const zoneW = n > 1 ? (w - pad * 2) / (n - 1) : w - pad * 2
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} preserveAspectRatio="none">
-      {[0,1,2,3].map(i => <line key={i} x1={pad} x2={w-pad} y1={24+i*((h-48)/3)} y2={24+i*((h-48)/3)} stroke="var(--line-soft)" strokeWidth="1" strokeDasharray="2,4" />)}
-      <path d={toLine(income)} fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={toLine(expense)} fill="none" stroke="var(--gold)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4,3" />
-      {labels.map((l, i) => {
-        const x = pad + (i / (labels.length - 1)) * (w - pad * 2)
-        return <text key={i} x={x} y={h-6} fontSize="10" fill="var(--text-4)" textAnchor="middle" fontFamily="var(--mono)">{l}</text>
-      })}
-    </svg>
+    <div style={{ position: 'relative' }}>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} preserveAspectRatio="none">
+        {[0,1,2,3].map(i => <line key={i} x1={pad} x2={w-pad} y1={24+i*((h-48)/3)} y2={24+i*((h-48)/3)} stroke="var(--line-soft)" strokeWidth="1" strokeDasharray="2,4" />)}
+        <path d={toLine(income)} fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={toLine(expense)} fill="none" stroke="var(--gold)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4,3" />
+        {labels.map((l, i) => (
+          <text key={i} x={ptX(i)} y={h-6} fontSize="10" fill="var(--text-4)" textAnchor="middle" fontFamily="var(--mono)">{l}</text>
+        ))}
+        {hovered !== null && (
+          <>
+            <line x1={ptX(hovered)} x2={ptX(hovered)} y1={20} y2={h-24} stroke="var(--line)" strokeWidth={1} />
+            <circle cx={ptX(hovered)} cy={ptY(income[hovered])} r={3.5} fill="var(--green)" />
+            <circle cx={ptX(hovered)} cy={ptY(expense[hovered])} r={3.5} fill="var(--gold)" />
+          </>
+        )}
+        {labels.map((_, i) => (
+          <rect key={i} x={ptX(i) - zoneW / 2} y={0} width={zoneW} height={h - 12}
+            fill="transparent" style={{ cursor: 'crosshair' }}
+            onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)} />
+        ))}
+      </svg>
+      {hovered !== null && (() => {
+        const net = income[hovered] - expense[hovered]
+        const leftPct = (ptX(hovered) / w * 100).toFixed(1)
+        return (
+          <div style={{
+            position: 'absolute', top: 4, left: `${leftPct}%`,
+            transform: hovered < n / 2 ? 'translateX(8px)' : 'translateX(calc(-100% - 8px))',
+            background: 'var(--surface-2)', border: '1px solid var(--line)',
+            borderRadius: 8, padding: '8px 12px', fontSize: 11,
+            fontFamily: 'var(--mono)', pointerEvents: 'none', zIndex: 10,
+            whiteSpace: 'nowrap', boxShadow: 'var(--shadow-2)',
+          }}>
+            <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>{labels[hovered]}</div>
+            <div style={{ color: 'var(--green)', marginBottom: 2 }}>↑ {fmtBRL(income[hovered])}</div>
+            <div style={{ color: 'var(--gold)', marginBottom: 5 }}>↓ {fmtBRL(expense[hovered])}</div>
+            <div style={{ color: net >= 0 ? 'var(--green)' : 'var(--rose)', borderTop: '1px solid var(--line-soft)', paddingTop: 4 }}>
+              {net >= 0 ? '+' : ''}{fmtBRL(net)}
+            </div>
+          </div>
+        )
+      })()}
+    </div>
   )
 }
 
@@ -278,22 +315,32 @@ function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: 
   )
 }
 
+const DEADLINE_MONTHS = [
+  { v: '01', l: 'Jan' }, { v: '02', l: 'Fev' }, { v: '03', l: 'Mar' },
+  { v: '04', l: 'Abr' }, { v: '05', l: 'Mai' }, { v: '06', l: 'Jun' },
+  { v: '07', l: 'Jul' }, { v: '08', l: 'Ago' }, { v: '09', l: 'Set' },
+  { v: '10', l: 'Out' }, { v: '11', l: 'Nov' }, { v: '12', l: 'Dez' },
+]
+
 function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () => void }) {
   const [name, setName] = useState(goal?.name ?? '')
   const [icon, setIcon] = useState(goal?.icon ?? 'shield')
   const [color, setColor] = useState(goal?.color ?? 'var(--green)')
   const [targetAmount, setTargetAmount] = useState(goal ? goal.target_amount : 0)
   const [monthlyAmount, setMonthlyAmount] = useState(goal ? goal.monthly_amount : 0)
-  const [deadline, setDeadline] = useState(goal?.deadline ?? '')
+  const [deadlineMonth, setDeadlineMonth] = useState(goal?.deadline ? goal.deadline.slice(5, 7) : '')
+  const [deadlineYear, setDeadlineYear] = useState(goal?.deadline ? goal.deadline.slice(0, 4) : '')
   const [note, setNote] = useState(goal?.note ?? '')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
+    if (!targetAmount) return
+    const deadline = deadlineMonth && deadlineYear ? `${deadlineYear}-${deadlineMonth}` : null
     const data = {
       name, icon, color, note: note || null,
       target_amount: targetAmount,
       monthly_amount: monthlyAmount,
-      deadline: deadline || null,
+      deadline,
     }
     const opts = { preserveScroll: true, onSuccess: onClose }
     if (goal) router.patch(`/finance/goals/${goal.id}`, data, opts)
@@ -353,8 +400,8 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
           {/* Valor alvo + aporte mensal */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
             <div>
-              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor alvo (R$)</label>
-              <CurrencyInput className="input" style={{ width: '100%' }} value={targetAmount} onValueChange={setTargetAmount} required />
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor alvo (R$) *</label>
+              <CurrencyInput className="input" style={{ width: '100%' }} value={targetAmount} onValueChange={setTargetAmount} />
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Aporte mensal (R$)</label>
@@ -365,8 +412,15 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
           {/* Prazo + nota */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
             <div>
-              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prazo (mês/ano)</label>
-              <input className="input" style={{ width: '100%' }} type="month" value={deadline} onChange={e => setDeadline(e.target.value)} />
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prazo (opcional)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <select className="input" value={deadlineMonth} onChange={e => setDeadlineMonth(e.target.value)}>
+                  <option value="">Mês</option>
+                  {DEADLINE_MONTHS.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+                </select>
+                <input className="input" type="number" placeholder="Ano" min={new Date().getFullYear()} max={new Date().getFullYear() + 30}
+                  value={deadlineYear} onChange={e => setDeadlineYear(e.target.value)} />
+              </div>
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Nota</label>
@@ -555,7 +609,7 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
     setDrafts(d => d.filter((_, idx) => idx !== i))
   }
   function addCategory() {
-    if (!newName.trim() || !newBudget) return
+    if (!newName.trim()) return
     setDrafts(d => [...d, { name: newName.trim(), budget: newBudget, color: newColor }])
     setNewName(''); setNewBudget(0)
   }
@@ -577,6 +631,9 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
         </div>
 
         <div style={{ padding: '16px 26px', overflowY: 'auto', flex: 1 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-4)', marginBottom: 14, lineHeight: 1.5 }}>
+            O gasto de cada categoria é calculado automaticamente a partir das transações do mês. Defina um limite mensal para acompanhar o uso.
+          </div>
           {/* Lista existente */}
           {drafts.map((d, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -687,6 +744,8 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [upcomingModal, setUpcomingModal] = useState<{ payment: UpcomingPayment | null } | null>(null)
+  const [editSavingsPct, setEditSavingsPct] = useState(false)
+  const [savingsPctInput, setSavingsPctInput] = useState(savings_goal_pct)
 
   const filteredGoals = goalFilter === 'todas' ? goals : goals.filter(g => g.status === goalFilter)
   const totalCurrent  = goals.reduce((s, g) => s + g.current_amount, 0)
@@ -722,7 +781,6 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
             { label: 'Patrimônio Líquido', value: fmtBRL(net_worth), sub: 'acumulado', dir: 'up' },
             { label: `Receitas · ${month_label}`, value: fmtBRL(month_income), sub: 'este mês', dir: 'up' },
             { label: `Despesas · ${month_label}`, value: fmtBRL(month_expense), sub: 'este mês', dir: 'flat' },
-            { label: 'Taxa de poupança', value: savings_rate.toLocaleString('pt-BR') + '%', sub: `meta ${savings_goal_pct}%`, dir: savings_rate >= savings_goal_pct ? 'up' : 'flat' },
           ].map((s, i) => (
             <div key={i} className="stat" style={{ padding: '22px 24px' }}>
               <div className="stat-label">{s.label}</div>
@@ -730,6 +788,30 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
               <div className={`stat-delta ${s.dir}`} style={{ marginTop: 4 }}>{s.dir === 'up' && <Icons.ArrowUpRight size={11} />}{s.sub}</div>
             </div>
           ))}
+          {/* Savings rate — meta editável */}
+          <div className="stat" style={{ padding: '22px 24px' }}>
+            <div className="stat-label">Taxa de poupança</div>
+            <div className="stat-value" style={{ fontSize: 28 }}>{savings_rate.toLocaleString('pt-BR')}%</div>
+            <div className={`stat-delta ${savings_rate >= savings_goal_pct ? 'up' : 'flat'}`} style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+              {savings_rate >= savings_goal_pct && <Icons.ArrowUpRight size={11} />}
+              {editSavingsPct ? (
+                <form onSubmit={e => { e.preventDefault(); router.patch('/finance/settings', { savings_goal_pct: savingsPctInput }, { preserveScroll: true, onSuccess: () => setEditSavingsPct(false) }) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <span>meta</span>
+                  <input type="number" min="1" max="100" value={savingsPctInput} onChange={e => setSavingsPctInput(Number(e.target.value))}
+                    style={{ width: 42, fontFamily: 'var(--mono)', fontSize: 11, border: '1px solid var(--line)', borderRadius: 4, padding: '1px 5px', background: 'var(--surface)', color: 'var(--text)' }} autoFocus />
+                  <span>%</span>
+                  <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--green)', padding: 0, display: 'flex' }}><Icons.Check size={11} /></button>
+                  <button type="button" onClick={() => { setEditSavingsPct(false); setSavingsPctInput(savings_goal_pct) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0, display: 'flex' }}><Icons.X size={11} /></button>
+                </form>
+              ) : (
+                <button type="button" onClick={() => setEditSavingsPct(true)}
+                  title="Clique para editar a meta"
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', textDecoration: 'underline dotted', textUnderlineOffset: 2 }}>
+                  meta {savings_goal_pct}%
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Fluxo + Donut */}
@@ -786,10 +868,13 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
                       <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.name}</span>
                       <span className="mono" style={{ fontSize: 11, color: 'var(--text-4)', marginLeft: 6 }}>{c.pct}%</span>
                       <div className="mono" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>
-                        <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{fmtBRL(c.spent)}</span> / {fmtBRL(c.budget)}
+                        <span style={{ color: c.budget > 0 && c.pct >= 100 ? 'var(--rose)' : 'var(--text-2)', fontWeight: 500 }}>{fmtBRL(c.spent)}</span>
+                        {c.budget > 0 ? <> / {fmtBRL(c.budget)}</> : <span style={{ color: 'var(--text-4)' }}> · sem limite</span>}
                       </div>
                     </div>
-                    <div className="meter"><span style={{ width: Math.min(100, c.pct) + '%', background: c.color }} /></div>
+                    {c.budget > 0 && (
+                      <div className="meter"><span style={{ width: Math.min(100, c.pct) + '%', background: c.pct >= 100 ? 'var(--rose)' : c.color }} /></div>
+                    )}
                   </div>
                 ))}
               </div>

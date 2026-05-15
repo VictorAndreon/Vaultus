@@ -170,4 +170,11 @@ class FinanceController extends Controller
             'month_label'        => $ptMonths[$now->month - 1],
         ]);
     }
+
+    public function updateSettings(Request $request)
+    {
+        $request->validate(['savings_goal_pct' => 'required|integer|min:1|max:100']);
+        $request->user()->update(['savings_goal_pct' => $request->savings_goal_pct]);
+        return back();
+    }
 }

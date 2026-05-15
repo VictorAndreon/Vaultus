@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/upcoming-payments', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'store']);
     Route::patch('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'update']);
     Route::delete('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'destroy']);
+    Route::patch('/finance/settings', [\App\Domains\Finance\Controllers\FinanceController::class, 'updateSettings']);
 
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
