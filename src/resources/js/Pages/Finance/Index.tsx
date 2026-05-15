@@ -512,12 +512,79 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
   )
 }
 
+function UpcomingPaymentModal({ payment, goals, onClose }: {
+  payment: UpcomingPayment | null
+  goals: FinancialGoal[]
+  onClose: () => void
+}) {
+  const [description, setDescription] = useState(payment?.description ?? '')
+  const [amount, setAmount] = useState(payment ? String(payment.amount) : '')
+  const [dueDate, setDueDate] = useState(payment?.due_date ?? new Date().toISOString().slice(0, 10))
+  const [linkedGoalId, setLinkedGoalId] = useState<number | ''>(payment?.linked_goal_id ?? '')
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    const data = {
+      description,
+      amount: parseFloat(amount),
+      due_date: dueDate,
+      tag: linkedGoalId ? 'meta' : null,
+      linked_goal_id: linkedGoalId || null,
+    }
+    const opts = { preserveScroll: true, onSuccess: onClose }
+    if (payment) router.patch(`/finance/upcoming-payments/${payment.id}`, data, opts)
+    else router.post('/finance/upcoming-payments', data, opts)
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 420, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
+        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid var(--line-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div className="kicker">Finanças · Pagamentos</div>
+            <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', marginTop: 6 }}>{payment ? 'Editar pagamento' : 'Novo pagamento'}</div>
+          </div>
+          <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
+        </div>
+        <form onSubmit={submit} style={{ padding: '20px 26px' }}>
+          <div style={{ marginBottom: 12 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
+            <input className="input" style={{ width: '100%' }} value={description} onChange={e => setDescription(e.target.value)} required placeholder="Ex: Fatura Bradesco" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
+              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
+            </div>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data de vencimento</label>
+              <input className="input" style={{ width: '100%' }} type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} required />
+            </div>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Vincular à meta (opcional)</label>
+            <select className="input" style={{ width: '100%' }} value={linkedGoalId} onChange={e => setLinkedGoalId(e.target.value ? Number(e.target.value) : '')}>
+              <option value="">Sem vínculo</option>
+              {goals.map(g => <option key={g.id} value={g.id}>{g.icon} {g.name}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> {payment ? 'Salvar' : 'Adicionar'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, savings_goal_pct, flow_chart, donut, budgets, transactions, goals, month_label, accounts_list, upcoming_payments }: Props) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
   const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
   const [showTxModal, setShowTxModal] = useState(false)
   const [showBudgetModal, setShowBudgetModal] = useState(false)
+  const [upcomingModal, setUpcomingModal] = useState<{ payment: UpcomingPayment | null } | null>(null)
 
   const filteredGoals = goalFilter === 'todas' ? goals : goals.filter(g => g.status === goalFilter)
   const totalCurrent  = goals.reduce((s, g) => s + g.current_amount, 0)
@@ -553,7 +620,7 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
             { label: 'Patrimônio Líquido', value: fmtBRL(net_worth), sub: 'acumulado', dir: 'up' },
             { label: `Receitas · ${month_label}`, value: fmtBRL(month_income), sub: 'este mês', dir: 'up' },
             { label: `Despesas · ${month_label}`, value: fmtBRL(month_expense), sub: 'este mês', dir: 'flat' },
-            { label: 'Taxa de poupança', value: savings_rate.toLocaleString('pt-BR') + '%', sub: 'meta 40%', dir: savings_rate >= 20 ? 'up' : 'flat' },
+            { label: 'Taxa de poupança', value: savings_rate.toLocaleString('pt-BR') + '%', sub: `meta ${savings_goal_pct}%`, dir: savings_rate >= savings_goal_pct ? 'up' : 'flat' },
           ].map((s, i) => (
             <div key={i} className="stat" style={{ padding: '22px 24px' }}>
               <div className="stat-label">{s.label}</div>
@@ -589,35 +656,77 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
           </div>
         </div>
 
-        {/* Orçamentos */}
-        <div className="card">
-          <div className="card-head" style={{ marginBottom: 16 }}>
-            <div className="card-title">Orçamentos · <b>{month_label}</b></div>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowBudgetModal(true)}>
-              Ajustar
-            </button>
-          </div>
-          {budgets.length === 0 ? (
-            <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>
-              Nenhum orçamento. Clique em Ajustar para criar.
+        {/* Orçamentos + Próximos Pagamentos */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 16 }}>
+          {/* Orçamentos */}
+          <div className="card">
+            <div className="card-head" style={{ marginBottom: 16 }}>
+              <div className="card-title">Orçamentos · <b>{month_label}</b></div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowBudgetModal(true)}>
+                Ajustar
+              </button>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-              {budgets.map((c, i) => (
-                <div key={i}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flex: 'none', marginRight: 8 }} />
-                    <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.name}</span>
-                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-4)', marginLeft: 6 }}>{c.pct}%</span>
-                    <div className="mono" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>
-                      <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{fmtBRL(c.spent)}</span> / {fmtBRL(c.budget)}
+            {budgets.length === 0 ? (
+              <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>
+                Nenhum orçamento. Clique em Ajustar para criar.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+                {budgets.map((c, i) => (
+                  <div key={i}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flex: 'none', marginRight: 8 }} />
+                      <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.name}</span>
+                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-4)', marginLeft: 6 }}>{c.pct}%</span>
+                      <div className="mono" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>
+                        <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{fmtBRL(c.spent)}</span> / {fmtBRL(c.budget)}
+                      </div>
                     </div>
+                    <div className="meter"><span style={{ width: Math.min(100, c.pct) + '%', background: c.color }} /></div>
                   </div>
-                  <div className="meter"><span style={{ width: Math.min(100, c.pct) + '%', background: c.color }} /></div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Próximos Pagamentos */}
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '18px 22px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="card-title">Próximos Pagamentos</div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setUpcomingModal({ payment: null })}>
+                <Icons.Plus size={12} />
+              </button>
             </div>
-          )}
+            {upcoming_payments.length === 0 ? (
+              <div style={{ padding: '0 22px 20px', color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum pagamento agendado.</div>
+            ) : (
+              <div>
+                {upcoming_payments.map((p, i) => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 22px', borderTop: i ? '1px solid var(--line-soft)' : 'none' }}>
+                    <div className="mono muted" style={{ fontSize: 11, flex: 'none', width: 44 }}>{p.due_label}</div>
+                    <div style={{ flex: 1, fontSize: 13, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {p.description}
+                      {p.days_until <= 3 && (
+                        <span className="tag tag-rose" style={{ fontSize: 10 }}>{p.days_until}d</span>
+                      )}
+                      {p.tag === 'meta' && (
+                        <span className="tag tag-green" style={{ fontSize: 10 }}><span className="dot" />meta</span>
+                      )}
+                    </div>
+                    <div className="mono" style={{ fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500, flex: 'none' }}>{fmtBRL(p.amount)}</div>
+                    <button className="icon-btn" style={{ width: 24, height: 24, flex: 'none' }} onClick={() => setUpcomingModal({ payment: p })}>
+                      <Icons.Edit size={11} />
+                    </button>
+                    <button className="icon-btn" style={{ width: 24, height: 24, flex: 'none', color: 'var(--rose)' }} onClick={() => {
+                      if (confirm(`Remover "${p.description}"?`)) router.delete(`/finance/upcoming-payments/${p.id}`, { preserveScroll: true })
+                    }}>
+                      <Icons.Trash size={11} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Metas financeiras */}
@@ -719,6 +828,13 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
       {aporteGoal && <AporteModal goal={aporteGoal} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
       {showTxModal && <TransactionModal accounts={accounts_list} onClose={() => setShowTxModal(false)} />}
       {showBudgetModal && <BudgetModal budgets={budgets} onClose={() => setShowBudgetModal(false)} />}
+      {upcomingModal !== null && (
+        <UpcomingPaymentModal
+          payment={upcomingModal.payment}
+          goals={goals}
+          onClose={() => setUpcomingModal(null)}
+        />
+      )}
     </AppLayout>
   )
 }
