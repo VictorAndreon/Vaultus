@@ -20,8 +20,8 @@ class FinanceController extends Controller
         $netWorth = (float) $accounts->sum(fn($a) => $a->current_balance);
 
         // Transações do mês
-        $allTx    = collect();
-        $monthTx  = collect();
+        $allTx   = collect();
+        $monthTx = collect();
         foreach ($accounts as $account) {
             foreach ($account->transactions as $t) {
                 $allTx->push($t);
@@ -34,10 +34,10 @@ class FinanceController extends Controller
         $monthExpense = (float) $monthTx->where('type', 'expense')->sum(fn($t) => (float) $t->amount_encrypted);
         $savingsRate  = $monthIncome > 0 ? round(($monthIncome - $monthExpense) / $monthIncome * 100, 1) : 0.0;
 
-        // Flow chart (12 meses receita vs despesa)
+        // Flow chart (12 meses)
         $incomeByMonth = []; $expenseByMonth = [];
         foreach ($allTx as $t) {
-            $key = \Carbon\Carbon::parse($t->occurred_at)->format('Y-m');
+            $key    = \Carbon\Carbon::parse($t->occurred_at)->format('Y-m');
             $amount = (float) $t->amount_encrypted;
             if ($t->type === 'income') $incomeByMonth[$key] = ($incomeByMonth[$key] ?? 0) + $amount;
             else $expenseByMonth[$key] = ($expenseByMonth[$key] ?? 0) + $amount;
@@ -68,22 +68,22 @@ class FinanceController extends Controller
             $donutGroups[$label]['amount'] = ($donutGroups[$label]['amount'] ?? 0) + (float) $account->current_balance;
         }
         $donut = $netWorth > 0 ? array_values(array_map(fn($g) => [
-            'label' => $g['label'], 'color' => $g['color'],
-            'amount'=> round($g['amount'], 2),
-            'pct'   => (int) round($g['amount'] / $netWorth * 100),
+            'label'  => $g['label'], 'color' => $g['color'],
+            'amount' => round($g['amount'], 2),
+            'pct'    => (int) round($g['amount'] / $netWorth * 100),
         ], $donutGroups)) : [];
 
         // Orçamentos
         $budgetCategories = $user->budgetCategories()->get();
         $spendingByCategory = $monthTx->where('type', 'expense')->groupBy('category')
-            ->map(fn($txs, $cat) => (float) $txs->sum(fn($t) => (float) $t->amount_encrypted));
+            ->map(fn($txs) => (float) $txs->sum(fn($t) => (float) $t->amount_encrypted));
         $budgets = $budgetCategories->map(function ($bc) use ($spendingByCategory) {
             $spent  = (float) ($spendingByCategory->get($bc->name) ?? 0);
             $budget = (float) $bc->budget_amount_encrypted;
             return [
-                'id' => $bc->id, 'name' => $bc->name, 'color' => $bc->color,
-                'spent' => $spent, 'budget' => $budget,
-                'pct'   => $budget > 0 ? (int) round($spent / $budget * 100) : 0,
+                'id'     => $bc->id, 'name' => $bc->name, 'color' => $bc->color,
+                'spent'  => $spent, 'budget' => $budget,
+                'pct'    => $budget > 0 ? (int) round($spent / $budget * 100) : 0,
             ];
         })->values()->toArray();
 
@@ -99,40 +99,75 @@ class FinanceController extends Controller
                 'type'        => $t->type,
             ])->values()->toArray();
 
-        // Metas financeiras com campos extras
+        // Metas financeiras
         $goals = $user->financialGoals()->where('is_archived', false)
             ->with('transactionGoals')
             ->get()
             ->map(fn($g) => [
-                'id'               => $g->id,
-                'name'             => $g->name,
-                'note'             => $g->note,
-                'icon'             => $g->icon ?? 'Shield',
-                'color'            => $g->color ?? 'var(--green)',
-                'status'           => $g->status ?? 'no-prazo',
-                'category'         => $g->category,
-                'target_amount'    => (float) $g->target_amount_encrypted,
-                'current_amount'   => $g->current_amount,
-                'monthly_amount'   => $g->monthly_amount,
-                'suggested_monthly'=> $g->suggested_monthly,
-                'progress_percent' => $g->progress_percent,
-                'deadline'         => $g->deadline ? $ptMonths[$g->deadline->month - 1] . ' ' . $g->deadline->year : null,
-                'months_left'      => $g->months_left,
-                'is_completed'     => $g->is_completed,
-                'history'          => array_fill(0, 12, 0), // sparkline placeholder
+                'id'                => $g->id,
+                'name'              => $g->name,
+                'note'              => $g->note,
+                'icon'              => $g->icon ?? 'Shield',
+                'color'             => $g->color ?? 'var(--green)',
+                'status'            => $g->status ?? 'no-prazo',
+                'category'          => $g->category,
+                'target_amount'     => (float) $g->target_amount_encrypted,
+                'current_amount'    => $g->current_amount,
+                'monthly_amount'    => $g->monthly_amount,
+                'suggested_monthly' => $g->suggested_monthly,
+                'progress_percent'  => $g->progress_percent,
+                'deadline'          => $g->deadline ? $g->deadline->format('Y-m') : null,
+                'deadline_label'    => $g->deadline ? ($ptMonths[$g->deadline->month - 1] . ' ' . $g->deadline->year) : null,
+                'months_left'       => $g->months_left,
+                'is_completed'      => $g->is_completed,
+                'history'           => array_fill(0, 12, 0),
             ])->toArray();
 
+        // NOVO: Lista de contas para o modal de lançamento
+        $accountsList = $accounts->map(fn($a) => [
+            'id'   => $a->id,
+            'name' => $a->name,
+            'type' => $a->type,
+        ])->values()->toArray();
+
+        // NOVO: Próximos pagamentos (próximos 30 dias)
+        $upcomingPayments = $user->upcomingPayments()
+            ->where('due_date', '>=', $now->toDateString())
+            ->where('due_date', '<=', $now->copy()->addDays(30)->toDateString())
+            ->orderBy('due_date')
+            ->get()
+            ->map(function ($p) use ($now, $ptMonths) {
+                $dueDate   = \Carbon\Carbon::parse($p->due_date);
+                $daysUntil = (int) $now->copy()->startOfDay()->diffInDays($dueDate->copy()->startOfDay(), false);
+                return [
+                    'id'          => $p->id,
+                    'description' => $p->description,
+                    'amount'      => (float) $p->amount_encrypted,
+                    'due_date'    => $p->due_date->toDateString(),
+                    'due_label'   => $dueDate->day . ' ' . $ptMonths[$dueDate->month - 1],
+                    'days_until'  => $daysUntil,
+                    'tag'         => $p->tag,
+                    'linked_goal_id' => $p->linked_goal_id,
+                ];
+            })->values()->toArray();
+
+        // NOVO: Meta de poupança do usuário
+        $savingsGoalPct = $user->savings_goal_pct ?? 20;
+
         return \Inertia\Inertia::render('Finance/Index', [
-            'net_worth'     => $netWorth,
-            'month_income'  => $monthIncome,
-            'month_expense' => $monthExpense,
-            'savings_rate'  => $savingsRate,
-            'flow_chart'    => ['labels' => $flowLabels, 'income' => $flowIncome, 'expense' => $flowExpense],
-            'donut'         => $donut,
-            'budgets'       => $budgets,
-            'transactions'  => $recentTx,
-            'goals'         => $goals,
-            'month_label'   => $ptMonths[$now->month - 1],
+            'net_worth'          => $netWorth,
+            'month_income'       => $monthIncome,
+            'month_expense'      => $monthExpense,
+            'savings_rate'       => $savingsRate,
+            'savings_goal_pct'   => $savingsGoalPct,
+            'flow_chart'         => ['labels' => $flowLabels, 'income' => $flowIncome, 'expense' => $flowExpense],
+            'donut'              => $donut,
+            'budgets'            => $budgets,
+            'transactions'       => $recentTx,
+            'goals'              => $goals,
+            'accounts_list'      => $accountsList,
+            'upcoming_payments'  => $upcomingPayments,
+            'month_label'        => $ptMonths[$now->month - 1],
         ]);
     }
 }
