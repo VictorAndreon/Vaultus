@@ -28,6 +28,20 @@ function todayStr() {
 }
 
 export default function TransactionForm({ accountId, transaction, onClose, accounts = [], budgetCategories = [] }: Props) {
+    // Modo edição: transferências não são editáveis
+    if (transaction !== null && transaction.type === 'transfer') {
+        return (
+            <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+                <p style={{ color: 'var(--text-2)', fontSize: 13 }}>
+                    Transferências não podem ser editadas. Para corrigir, exclua e recrie a transferência.
+                </p>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} style={{ marginTop: 8 }}>
+                    Fechar
+                </button>
+            </div>
+        )
+    }
+
     const [type, setType] = useState<'income' | 'expense' | 'transfer'>(transaction?.type ?? 'expense')
     const [amount, setAmount] = useState<number>(transaction?.amount ?? 0)
     const [description, setDescription] = useState(transaction?.description ?? '')

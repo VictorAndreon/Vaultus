@@ -79,6 +79,30 @@ class TransferTransactionTest extends TestCase
         );
     }
 
+    public function test_transfer_from_asset_to_liability_reduces_debt()
+    {
+        $user    = User::factory()->create();
+        $checking = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 5000]);
+        $credit   = Account::factory()->create(['user_id' => $user->id, 'type' => 'credit',   'balance_encrypted' => 2000]);
+
+        $this->actingAs($user)->post('/finance/accounts/' . $checking->id . '/transactions', [
+            'type'                   => 'transfer',
+            'amount_encrypted'       => 1000,
+            'description'            => 'Pagamento fatura',
+            'occurred_at'            => now()->format('Y-m-d'),
+            'transfer_to_account_id' => $credit->id,
+        ]);
+
+        $response = $this->actingAs($user)->get('/finance');
+
+        // checking: 5000 - 1000 = 4000
+        // credit (passivo): 2000 - 1000 = 1000 de dívida
+        // net_worth = 4000 - 1000 = 3000 (igual ao antes: 5000 - 2000 = 3000)
+        $response->assertInertia(fn ($page) =>
+            $page->where('net_worth', 3000)
+        );
+    }
+
     public function test_transfer_to_another_users_account_is_forbidden()
     {
         $user1  = User::factory()->create();

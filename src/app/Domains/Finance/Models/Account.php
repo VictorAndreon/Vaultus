@@ -58,7 +58,14 @@ class Account extends Model
             ->filter(fn($t) => is_null($t->transfer_to_account_id))
             ->sum(fn($t) => (float) $t->amount_encrypted);
 
-        return (float) ($this->balance_encrypted ?? 0) + $income - $expense + $transferIn - $transferOut;
+        $base = (float) ($this->balance_encrypted ?? 0);
+
+        if ($this->is_liability) {
+            // Para passivos: o saldo devedor aumenta com despesas e diminui com pagamentos (transferências recebidas)
+            return $base + $expense - $income - $transferIn + $transferOut;
+        }
+
+        return $base + $income - $expense + $transferIn - $transferOut;
     }
 
     public function user()

@@ -73,7 +73,7 @@ class DashboardAggregator
             'journal_entries_this_month' => $journalThisMonth,
             'open_projects'              => $user->projects()->where('status', 'active')->count(),
             'net_worth'                  => (float) $user->accounts()->with('transactions')->get()
-                                               ->sum(fn($a) => $a->current_balance),
+                                               ->sum(fn($a) => $a->is_liability ? -((float) $a->current_balance) : (float) $a->current_balance),
             'habit_streak'               => $maxStreak,
             'habit_rate'                 => $habitRate,
             'habit_top'                  => $topHabit?->name,
@@ -160,12 +160,13 @@ class DashboardAggregator
         $now      = Carbon::now($user->timezone);
 
         $accounts  = $user->accounts()->with('transactions')->get();
-        $netWorth  = (float) $accounts->sum(fn($a) => $a->current_balance);
+        $netWorth  = (float) $accounts->sum(fn($a) => $a->is_liability ? -((float) $a->current_balance) : (float) $a->current_balance);
 
         // Monthly deltas (income - expense) keyed by 'Y-m'
         $deltas = [];
         foreach ($accounts as $account) {
             foreach ($account->transactions as $t) {
+                if ($t->type === 'transfer') continue;
                 $key    = Carbon::parse($t->occurred_at)->format('Y-m');
                 $amount = (float) $t->amount_encrypted;
                 $deltas[$key] = ($deltas[$key] ?? 0.0)
