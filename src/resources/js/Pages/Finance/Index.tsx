@@ -8,19 +8,33 @@ interface FinancialGoal {
   icon: string; color: string; status: string
   target_amount: number; current_amount: number
   monthly_amount: number; suggested_monthly: number
-  progress_percent: number; deadline: string | null
+  progress_percent: number
+  deadline: string | null      // formato 'Y-m', ex: '2026-12'
+  deadline_label: string | null // ex: 'Dez 2026'
   months_left: number; is_completed: boolean; history: number[]
   category: string | null
 }
+
+interface AccountItem { id: number; name: string; type: string }
+
 interface BudgetEntry { id: number; name: string; color: string; spent: number; budget: number; pct: number }
 interface FinanceTransaction { id: number; date: string; description: string; category: string; method: string; amount: number; type: 'income' | 'expense' }
 interface DonutSegment { label: string; color: string; amount: number; pct: number }
 interface FlowChart { labels: string[]; income: number[]; expense: number[] }
 
+interface UpcomingPayment {
+  id: number; description: string; amount: number
+  due_date: string; due_label: string; days_until: number
+  tag: string | null; linked_goal_id: number | null
+}
+
 interface Props {
   net_worth: number; month_income: number; month_expense: number; savings_rate: number
+  savings_goal_pct: number
   flow_chart: FlowChart; donut: DonutSegment[]; budgets: BudgetEntry[]
   transactions: FinanceTransaction[]; goals: FinancialGoal[]; month_label: string
+  accounts_list: AccountItem[]
+  upcoming_payments: UpcomingPayment[]
 }
 
 function fmtBRL(v: number, compact = false) {
@@ -108,41 +122,111 @@ const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   'concluida': { label: 'Concluída', cls: 'tag-sky'   },
 }
 
-function GoalCard({ g, onAporte }: { g: FinancialGoal; onAporte: () => void }) {
+const GOAL_ICONS = ['🏠','✈️','🚗','🎓','💍','🏖','💼','🏥','📱','🐶','🌱','🛡','⭐','🎮','🔧','💰']
+const GOAL_COLORS = [
+  { label: 'Verde',  value: 'var(--green)'  },
+  { label: 'Dourado',value: 'var(--gold)'   },
+  { label: 'Azul',   value: 'var(--sky)'    },
+  { label: 'Rosa',   value: 'var(--rose)'   },
+  { label: 'Roxo',   value: 'var(--purple, oklch(72% 0.12 290))' },
+  { label: 'Teal',   value: 'var(--teal, oklch(76% 0.12 195))'   },
+]
+
+function GoalCard({ g, onAporte, onEdit, onDelete }: {
+  g: FinancialGoal
+  onAporte: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const pct = Math.min(100, Math.round((g.current_amount / g.target_amount) * 100))
   const remaining = g.target_amount - g.current_amount
   const monthsToFinish = g.monthly_amount > 0 ? Math.ceil(remaining / g.monthly_amount) : null
   const status = STATUS_MAP[g.status] ?? STATUS_MAP['no-prazo']
+  const isOnPlan = g.monthly_amount >= g.suggested_monthly || g.suggested_monthly === 0
+
   return (
-    <div className="card" style={{ padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: `color-mix(in oklab, ${g.color} 16%, transparent)`, color: g.color, display: 'grid', placeItems: 'center', border: `1px solid color-mix(in oklab, ${g.color} 32%, transparent)`, flex: 'none' }}>
-          <GoalIcon name={g.icon} size={20} />
+    <div className="card" style={{ padding: 22, position: 'relative' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: `color-mix(in oklab, ${g.color} 16%, transparent)`, color: g.color, display: 'grid', placeItems: 'center', fontSize: 20, border: `1px solid color-mix(in oklab, ${g.color} 32%, transparent)`, flex: 'none' }}>
+          {GOAL_ICONS.includes(g.icon) ? g.icon : '🛡'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{g.name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{g.name}</span>
             <span className={`tag ${status.cls}`}><span className="dot" />{status.label}</span>
           </div>
           {g.note && <div className="muted" style={{ fontSize: 12 }}>{g.note}</div>}
         </div>
+        {/* Kebab menu */}
+        <div style={{ position: 'relative', flex: 'none' }}>
+          <button
+            className="icon-btn"
+            style={{ width: 28, height: 28, fontSize: 14, letterSpacing: 1 }}
+            onClick={() => setMenuOpen(o => !o)}
+          >···</button>
+          {menuOpen && (
+            <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
+          )}
+          {menuOpen && (
+            <div style={{ position: 'absolute', right: 0, top: 34, background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden', zIndex: 20, minWidth: 110, boxShadow: 'var(--shadow-2)' }}>
+              <button className="btn btn-ghost btn-sm" style={{ width: '100%', borderRadius: 0, justifyContent: 'flex-start', padding: '9px 14px' }} onClick={() => { setMenuOpen(false); onEdit() }}>
+                <Icons.Edit size={12} /> Editar
+              </button>
+              <button className="btn btn-ghost btn-sm" style={{ width: '100%', borderRadius: 0, justifyContent: 'flex-start', padding: '9px 14px', color: 'var(--rose)' }} onClick={() => { setMenuOpen(false); onDelete() }}>
+                <Icons.Trash size={12} /> Excluir
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-        <div style={{ fontFamily: 'var(--serif)', fontSize: 28, color: 'var(--text)', letterSpacing: '-0.015em', lineHeight: 1 }}>{fmtBRL(g.current_amount)}</div>
+
+      {/* Amount */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
+        <div style={{ fontFamily: 'var(--serif)', fontSize: 32, color: 'var(--text)', letterSpacing: '-0.02em', lineHeight: 1 }}>{fmtBRL(g.current_amount)}</div>
         <div className="mono muted" style={{ fontSize: 13 }}>de {fmtBRL(g.target_amount)}</div>
       </div>
+
+      {/* Progress */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-        <div className="meter" style={{ flex: 1, height: 6 }}><span style={{ width: pct + '%', background: g.color }} /></div>
-        <span className="mono" style={{ fontSize: 13, color: g.color }}>{pct}%</span>
+        <div className="meter" style={{ flex: 1, height: 5 }}><span style={{ width: pct + '%', background: g.color }} /></div>
+        <span className="mono" style={{ fontSize: 13, color: g.color, fontWeight: 500 }}>{pct}%</span>
       </div>
+
+      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, paddingTop: 14, paddingBottom: 14, borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)', marginBottom: 14 }}>
-        <div><div className="kicker" style={{ fontSize: 9.5 }}>Aporte mensal</div><div className="mono" style={{ fontSize: 13, color: 'var(--text)', marginTop: 4 }}>{fmtBRL(g.monthly_amount)}</div>{g.suggested_monthly > g.monthly_amount && <div className="muted" style={{ fontSize: 10.5, marginTop: 2, color: 'var(--gold)' }}>↑ ideal {fmtBRL(g.suggested_monthly)}</div>}</div>
-        <div><div className="kicker" style={{ fontSize: 9.5 }}>Falta</div><div className="mono" style={{ fontSize: 13, color: 'var(--text)', marginTop: 4 }}>{fmtBRL(remaining, true)}</div>{monthsToFinish && <div className="muted" style={{ fontSize: 10.5, marginTop: 2 }}>{monthsToFinish} meses</div>}</div>
-        <div><div className="kicker" style={{ fontSize: 9.5 }}>Prazo</div><div className="mono" style={{ fontSize: 13, color: 'var(--text)', marginTop: 4 }}>{g.deadline ?? '—'}</div>{g.months_left > 0 && <div className="muted" style={{ fontSize: 10.5, marginTop: 2 }}>{g.months_left} meses</div>}</div>
+        <div>
+          <div className="kicker" style={{ fontSize: 9.5 }}>Aporte mensal</div>
+          <div className="mono" style={{ fontSize: 13, color: 'var(--text)', marginTop: 4 }}>{fmtBRL(g.monthly_amount)}</div>
+          <div style={{ fontSize: 10.5, marginTop: 2, color: isOnPlan ? 'var(--green)' : 'var(--gold)' }}>
+            {isOnPlan ? 'no plano' : `↑ ideal ${fmtBRL(g.suggested_monthly)}`}
+          </div>
+        </div>
+        <div>
+          <div className="kicker" style={{ fontSize: 9.5 }}>Falta</div>
+          <div className="mono" style={{ fontSize: 13, color: 'var(--text)', marginTop: 4 }}>{fmtBRL(remaining, true)}</div>
+          {monthsToFinish && <div className="muted" style={{ fontSize: 10.5, marginTop: 2 }}>{monthsToFinish} meses no ritmo</div>}
+        </div>
+        <div>
+          <div className="kicker" style={{ fontSize: 9.5 }}>Prazo</div>
+          <div className="mono" style={{ fontSize: 13, color: 'var(--text)', marginTop: 4 }}>{g.deadline_label ?? '—'}</div>
+          {g.months_left > 0 && <div className="muted" style={{ fontSize: 10.5, marginTop: 2 }}>{g.months_left} meses restantes</div>}
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ flex: 1 }}><div className="kicker" style={{ fontSize: 9.5, marginBottom: 4 }}>Evolução · 12 meses</div><Sparkline data={g.history.length > 1 ? g.history : [0, g.current_amount / 1000]} color={g.color} /></div>
-        <button className="btn btn-primary btn-sm" onClick={onAporte}><Icons.Plus size={12} /> Aportar</button>
+
+      {/* Footer: sparkline + lápis + aportar */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <div className="kicker" style={{ fontSize: 9.5, marginBottom: 6 }}>Evolução · 12 meses</div>
+          <Sparkline data={g.history.length > 1 ? g.history : [0, g.current_amount / 1000]} color={g.color} />
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button className="icon-btn" style={{ width: 32, height: 32 }} onClick={onEdit}>
+            <Icons.Edit size={13} />
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={onAporte}><Icons.Plus size={12} /> Aportar</button>
+        </div>
       </div>
     </div>
   )
@@ -171,9 +255,107 @@ function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: 
   )
 }
 
-export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, flow_chart, donut, budgets, transactions, goals, month_label }: Props) {
+function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () => void }) {
+  const [name, setName] = useState(goal?.name ?? '')
+  const [icon, setIcon] = useState(goal?.icon ?? '🛡')
+  const [color, setColor] = useState(goal?.color ?? 'var(--green)')
+  const [targetAmount, setTargetAmount] = useState(goal ? String(goal.target_amount) : '')
+  const [monthlyAmount, setMonthlyAmount] = useState(goal ? String(goal.monthly_amount) : '')
+  const [deadline, setDeadline] = useState(goal?.deadline ?? '')
+  const [note, setNote] = useState(goal?.note ?? '')
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    const data = {
+      name, icon, color, note: note || null,
+      target_amount: parseFloat(targetAmount),
+      monthly_amount: parseFloat(monthlyAmount) || 0,
+      deadline: deadline || null,
+    }
+    const opts = { preserveScroll: true, onSuccess: onClose }
+    if (goal) router.patch(`/finance/goals/${goal.id}`, data, opts)
+    else router.post('/finance/goals', data, opts)
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 480, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
+        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid var(--line-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div className="kicker">Metas · {goal ? 'Editar' : 'Nova meta'}</div>
+            <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', marginTop: 6 }}>{goal ? goal.name : 'Criar meta'}</div>
+          </div>
+          <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
+        </div>
+        <form onSubmit={submit} style={{ padding: '20px 26px' }}>
+          {/* Nome */}
+          <div style={{ marginBottom: 14 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Nome</label>
+            <input className="input" style={{ width: '100%' }} value={name} onChange={e => setName(e.target.value)} required placeholder="Ex: Casa própria" />
+          </div>
+
+          {/* Ícone */}
+          <div style={{ marginBottom: 14 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Ícone</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
+              {GOAL_ICONS.map(ic => (
+                <button key={ic} type="button" onClick={() => setIcon(ic)}
+                  style={{ height: 36, borderRadius: 8, border: `1px solid ${icon === ic ? 'color-mix(in oklab, var(--green) 50%, transparent)' : 'var(--line)'}`, background: icon === ic ? 'color-mix(in oklab, var(--green) 12%, transparent)' : 'var(--surface-2)', fontSize: 16, cursor: 'pointer' }}>
+                  {ic}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cor */}
+          <div style={{ marginBottom: 14 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Cor</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {GOAL_COLORS.map(c => (
+                <button key={c.value} type="button" onClick={() => setColor(c.value)}
+                  style={{ width: 28, height: 28, borderRadius: '50%', background: c.value, border: color === c.value ? '2px solid var(--text)' : '2px solid transparent', cursor: 'pointer' }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Valor alvo + aporte mensal */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor alvo (R$)</label>
+              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} required />
+            </div>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Aporte mensal (R$)</label>
+              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0" value={monthlyAmount} onChange={e => setMonthlyAmount(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Prazo + nota */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Prazo (mês/ano)</label>
+              <input className="input" style={{ width: '100%' }} type="month" value={deadline} onChange={e => setDeadline(e.target.value)} />
+            </div>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Nota</label>
+              <input className="input" style={{ width: '100%' }} value={note} onChange={e => setNote(e.target.value)} placeholder="Opcional" />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> {goal ? 'Salvar' : 'Criar meta'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, savings_goal_pct, flow_chart, donut, budgets, transactions, goals, month_label, accounts_list, upcoming_payments }: Props) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
+  const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
 
   const filteredGoals = goalFilter === 'todas' ? goals : goals.filter(g => g.status === goalFilter)
   const totalCurrent  = goals.reduce((s, g) => s + g.current_amount, 0)
@@ -186,6 +368,11 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
     router.post(`/finance/goals/${aporteGoal.id}/deposit`, { amount }, {
       preserveScroll: true, onSuccess: () => setAporteGoal(null),
     })
+  }
+
+  function handleDeleteGoal(g: FinancialGoal) {
+    if (!confirm(`Excluir a meta "${g.name}"?`)) return
+    router.delete(`/finance/goals/${g.id}`, { preserveScroll: true })
   }
 
   return (
@@ -272,12 +459,17 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
               <span style={{ color: 'var(--text-4)' }}>·</span>
               <span>Aporte mensal <b className="mono" style={{ color: 'var(--green)' }}>{fmtBRL(totalMonthly)}</b></span>
             </div>
-            <div className="seg">
-              {(['todas', 'no-prazo', 'atencao', 'atrasado'] as const).map(f => (
-                <button key={f} data-active={goalFilter === f} onClick={() => setGoalFilter(f)}>
-                  {f === 'todas' ? 'Todas' : f === 'no-prazo' ? 'No prazo' : f === 'atencao' ? 'Atenção' : 'Atrasado'}
-                </button>
-              ))}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setGoalModal({ goal: null })}>
+                <Icons.Plus size={12} /> Nova Meta
+              </button>
+              <div className="seg">
+                {(['todas', 'no-prazo', 'atencao', 'atrasado'] as const).map(f => (
+                  <button key={f} data-active={goalFilter === f} onClick={() => setGoalFilter(f)}>
+                    {f === 'todas' ? 'Todas' : f === 'no-prazo' ? 'No prazo' : f === 'atencao' ? 'Atenção' : 'Atrasado'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -314,7 +506,15 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
           </div>
 
           <div className="grid g-2">
-            {filteredGoals.map(g => <GoalCard key={g.id} g={g} onAporte={() => setAporteGoal(g)} />)}
+            {filteredGoals.map(g => (
+              <GoalCard
+                key={g.id}
+                g={g}
+                onAporte={() => setAporteGoal(g)}
+                onEdit={() => setGoalModal({ goal: g })}
+                onDelete={() => handleDeleteGoal(g)}
+              />
+            ))}
           </div>
         </section>
 
@@ -344,6 +544,9 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
 
       </div>
 
+      {goalModal !== null && (
+        <GoalModal goal={goalModal.goal} onClose={() => setGoalModal(null)} />
+      )}
       {aporteGoal && <AporteModal goal={aporteGoal} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
     </AppLayout>
   )
