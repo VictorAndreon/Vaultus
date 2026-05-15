@@ -30,7 +30,13 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function FinanceAccount({ account, transactions }: Props) {
     const [showTransactionForm, setShowTransactionForm] = useState(false)
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
     const acc = account.data
+
+    function handleEdit(t: Transaction) {
+        setEditingTransaction(t)
+        setShowTransactionForm(false)
+    }
 
     return (
         <AppLayout title={acc.name}>
@@ -59,9 +65,9 @@ export default function FinanceAccount({ account, transactions }: Props) {
                     <div style={{ fontFamily: 'var(--serif)', fontSize: 30, color: 'var(--text)', letterSpacing: '-0.015em' }}>{fmtBRL(acc.current_balance)}</div>
                 </div>
 
-                {/* Nova transação */}
+                {/* Nova transação / Editar transação */}
                 <div>
-                    {!showTransactionForm && (
+                    {!showTransactionForm && !editingTransaction && (
                         <Button
                             variant="primary"
                             size="sm"
@@ -78,10 +84,18 @@ export default function FinanceAccount({ account, transactions }: Props) {
                             onClose={() => setShowTransactionForm(false)}
                         />
                     )}
+
+                    {editingTransaction && (
+                        <TransactionForm
+                            accountId={acc.id}
+                            transaction={editingTransaction}
+                            onClose={() => setEditingTransaction(null)}
+                        />
+                    )}
                 </div>
 
                 {/* Transaction list */}
-                <TransactionList transactions={transactions} accountId={acc.id} />
+                <TransactionList transactions={transactions} accountId={acc.id} onEdit={handleEdit} />
             </div>
         </AppLayout>
     )
