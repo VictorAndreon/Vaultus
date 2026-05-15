@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
+import CurrencyInput from '@/Components/CurrencyInput'
 import { Account, Transaction, PaginatedResponse } from '@/types'
 import TransactionList from './components/TransactionList'
 
@@ -34,14 +35,14 @@ function TransactionModal({ accountId, transaction, onClose }: {
   onClose: () => void
 }) {
   const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
-  const [amount, setAmount] = useState(transaction ? String(transaction.amount) : '')
+  const [amount, setAmount] = useState<number>(transaction?.amount ?? 0)
   const [description, setDescription] = useState(transaction?.description ?? '')
   const [category, setCategory] = useState(transaction?.category ?? '')
   const [occurred_at, setOccurredAt] = useState(transaction?.occurred_at ?? new Date().toISOString().slice(0, 10))
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    const data = { type, amount_encrypted: parseFloat(amount), description, category: category || null, occurred_at }
+    const data = { type, amount_encrypted: amount, description, category: category || null, occurred_at }
     const opts = { preserveScroll: true, onSuccess: onClose }
     if (transaction === null) router.post(`/finance/accounts/${accountId}/transactions`, data, opts)
     else router.patch(`/finance/transactions/${transaction.id}`, data, opts)
@@ -67,7 +68,7 @@ function TransactionModal({ accountId, transaction, onClose }: {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
-              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} autoFocus required />
+              <CurrencyInput className="input" style={{ width: '100%' }} value={amount} onValueChange={setAmount} autoFocus required />
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data</label>

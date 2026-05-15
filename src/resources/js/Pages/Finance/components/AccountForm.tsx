@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
+import CurrencyInput from '@/Components/CurrencyInput'
 import { Account } from '@/types'
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 export default function AccountForm({ account, onClose }: Props) {
     const [name, setName] = useState(account?.name ?? '')
     const [type, setType] = useState(account?.type ?? 'checking')
-    const [balance, setBalance] = useState('')
+    const [balance, setBalance] = useState<number>(0)
     const [currency, setCurrency] = useState(account?.currency ?? 'BRL')
 
     function handleSubmit(e: React.FormEvent) {
@@ -60,13 +61,7 @@ export default function AccountForm({ account, onClose }: Props) {
                     {!account && (
                         <div>
                             <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Saldo inicial</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={balance}
-                                onChange={e => setBalance(e.target.value)}
-                                className="input"
-                            />
+                            <CurrencyInput className="input" value={balance} onValueChange={setBalance} />
                         </div>
                     )}
 

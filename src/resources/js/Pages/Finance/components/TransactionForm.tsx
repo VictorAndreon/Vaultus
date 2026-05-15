@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
+import CurrencyInput from '@/Components/CurrencyInput'
 import { Transaction } from '@/types'
 
 export const TRANSACTION_CATEGORIES = [
@@ -20,7 +21,7 @@ function todayStr() {
 
 export default function TransactionForm({ accountId, transaction, onClose }: Props) {
     const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
-    const [amount, setAmount] = useState(transaction ? String(transaction.amount) : '')
+    const [amount, setAmount] = useState<number>(transaction?.amount ?? 0)
     const [description, setDescription] = useState(transaction?.description ?? '')
     const [category, setCategory] = useState(transaction?.category ?? '')
     const [occurred_at, setOccurredAt] = useState(transaction?.occurred_at ?? todayStr())
@@ -29,7 +30,7 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
         e.preventDefault()
         const data = {
             type,
-            amount_encrypted: parseFloat(amount),
+            amount_encrypted: amount,
             description,
             category: category || null,
             occurred_at,
@@ -90,16 +91,7 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                     {/* Amount */}
                     <div style={{ width: 128 }}>
                         <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={amount}
-                            onChange={e => setAmount(e.target.value)}
-                            placeholder="0,00"
-                            required
-                            className="input"
-                        />
+                        <CurrencyInput className="input" value={amount} onValueChange={setAmount} required />
                     </div>
 
                     {/* Category */}

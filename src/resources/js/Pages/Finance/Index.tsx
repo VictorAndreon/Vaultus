@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { router, Link } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
+import CurrencyInput from '@/Components/CurrencyInput'
 
 interface FinancialGoal {
   id: number; name: string; note: string | null
@@ -233,8 +234,8 @@ function GoalCard({ g, onAporte, onEdit, onDelete }: {
 }
 
 function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: () => void; onSave: (v: number) => void }) {
-  const [amount, setAmount] = useState(goal.monthly_amount > 0 ? String(goal.monthly_amount) : '')
-  function submit(e: React.FormEvent) { e.preventDefault(); const v = parseFloat(amount.replace(',', '.')); if (!isNaN(v) && v > 0) onSave(v) }
+  const [amount, setAmount] = useState(goal.monthly_amount > 0 ? goal.monthly_amount : 0)
+  function submit(e: React.FormEvent) { e.preventDefault(); if (amount > 0) onSave(amount) }
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 400, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
@@ -244,7 +245,7 @@ function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: 
         </div>
         <form onSubmit={submit} style={{ padding: '22px 26px' }}>
           <label className="kicker" style={{ display: 'block', marginBottom: 8 }}>Valor do aporte (R$)</label>
-          <input type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} autoFocus style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-3)', color: 'var(--text)', fontSize: 15, fontFamily: 'var(--mono)' }} />
+          <CurrencyInput value={amount} onValueChange={setAmount} autoFocus style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-3)', color: 'var(--text)', fontSize: 15, fontFamily: 'var(--mono)' }} />
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
             <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> Confirmar aporte</button>
@@ -259,8 +260,8 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
   const [name, setName] = useState(goal?.name ?? '')
   const [icon, setIcon] = useState(goal?.icon ?? '🛡')
   const [color, setColor] = useState(goal?.color ?? 'var(--green)')
-  const [targetAmount, setTargetAmount] = useState(goal ? String(goal.target_amount) : '')
-  const [monthlyAmount, setMonthlyAmount] = useState(goal ? String(goal.monthly_amount) : '')
+  const [targetAmount, setTargetAmount] = useState(goal ? goal.target_amount : 0)
+  const [monthlyAmount, setMonthlyAmount] = useState(goal ? goal.monthly_amount : 0)
   const [deadline, setDeadline] = useState(goal?.deadline ?? '')
   const [note, setNote] = useState(goal?.note ?? '')
 
@@ -268,8 +269,8 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
     e.preventDefault()
     const data = {
       name, icon, color, note: note || null,
-      target_amount: parseFloat(targetAmount),
-      monthly_amount: parseFloat(monthlyAmount) || 0,
+      target_amount: targetAmount,
+      monthly_amount: monthlyAmount,
       deadline: deadline || null,
     }
     const opts = { preserveScroll: true, onSuccess: onClose }
@@ -322,11 +323,11 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor alvo (R$)</label>
-              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} required />
+              <CurrencyInput className="input" style={{ width: '100%' }} value={targetAmount} onValueChange={setTargetAmount} required />
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Aporte mensal (R$)</label>
-              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0" value={monthlyAmount} onChange={e => setMonthlyAmount(e.target.value)} />
+              <CurrencyInput className="input" style={{ width: '100%' }} value={monthlyAmount} onValueChange={setMonthlyAmount} />
             </div>
           </div>
 
@@ -362,7 +363,7 @@ const ACCOUNT_TYPES = [
 function AccountModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [type, setType] = useState('checking')
-  const [balance, setBalance] = useState('0')
+  const [balance, setBalance] = useState(0)
   const [currency, setCurrency] = useState('BRL')
 
   function submit(e: React.FormEvent) {
@@ -370,7 +371,7 @@ function AccountModal({ onClose }: { onClose: () => void }) {
     router.post('/finance/accounts', {
       name,
       type,
-      balance_encrypted: parseFloat(balance),
+      balance_encrypted: balance,
       currency,
     }, { preserveScroll: true, onSuccess: onClose })
   }
@@ -404,7 +405,7 @@ function AccountModal({ onClose }: { onClose: () => void }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 12, marginBottom: 20 }}>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Saldo inicial (R$)</label>
-              <input className="input" style={{ width: '100%' }} type="number" step="0.01" value={balance} onChange={e => setBalance(e.target.value)} required />
+              <CurrencyInput className="input" style={{ width: '100%' }} value={balance} onValueChange={setBalance} required />
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Moeda</label>
@@ -424,7 +425,7 @@ function AccountModal({ onClose }: { onClose: () => void }) {
 function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onClose: () => void }) {
   const [type, setType] = useState<'expense' | 'income'>('expense')
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 0)
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState(0)
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [occurred_at, setOccurredAt] = useState(new Date().toISOString().slice(0, 10))
@@ -433,7 +434,7 @@ function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onCl
     e.preventDefault()
     router.post(`/finance/accounts/${accountId}/transactions`, {
       type,
-      amount_encrypted: parseFloat(amount),
+      amount_encrypted: amount,
       description,
       category: category || null,
       occurred_at,
@@ -467,7 +468,7 @@ function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onCl
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
-              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} autoFocus required />
+              <CurrencyInput className="input" style={{ width: '100%' }} value={amount} onValueChange={setAmount} autoFocus required />
             </div>
           </div>
 
@@ -513,7 +514,7 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
     budgets.map(b => ({ id: b.id, name: b.name, budget: b.budget, color: b.color }))
   )
   const [newName, setNewName] = useState('')
-  const [newBudget, setNewBudget] = useState('')
+  const [newBudget, setNewBudget] = useState(0)
   const [newColor, setNewColor] = useState(BUDGET_COLORS[0])
 
   function updateDraft(i: number, field: keyof BudgetDraft, value: string | number) {
@@ -524,8 +525,8 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
   }
   function addCategory() {
     if (!newName.trim() || !newBudget) return
-    setDrafts(d => [...d, { name: newName.trim(), budget: parseFloat(newBudget), color: newColor }])
-    setNewName(''); setNewBudget('')
+    setDrafts(d => [...d, { name: newName.trim(), budget: newBudget, color: newColor }])
+    setNewName(''); setNewBudget(0)
   }
   function save() {
     router.put('/finance/budget-categories/batch', { categories: drafts }, {
@@ -550,7 +551,7 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color, flex: 'none' }} />
               <input className="input" style={{ flex: 1 }} value={d.name} onChange={e => updateDraft(i, 'name', e.target.value)} />
-              <input className="input" style={{ width: 110 }} type="number" step="0.01" min="0" value={d.budget} onChange={e => updateDraft(i, 'budget', parseFloat(e.target.value))} />
+              <CurrencyInput className="input" style={{ width: 130 }} value={d.budget} onValueChange={v => updateDraft(i, 'budget', v)} />
               <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--rose)', padding: '5px 8px' }} onClick={() => removeDraft(i)}><Icons.X size={12} /></button>
             </div>
           ))}
@@ -566,7 +567,7 @@ function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: ()
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input className="input" style={{ flex: 1 }} placeholder="Nome" value={newName} onChange={e => setNewName(e.target.value)} />
-              <input className="input" style={{ width: 110 }} type="number" step="0.01" min="0" placeholder="Limite R$" value={newBudget} onChange={e => setNewBudget(e.target.value)} />
+              <CurrencyInput className="input" style={{ width: 110 }} value={newBudget} onValueChange={v => setNewBudget(v)} placeholder="Limite R$" />
               <button type="button" className="btn btn-ghost btn-sm" onClick={addCategory}><Icons.Plus size={13} /></button>
             </div>
           </div>
@@ -587,7 +588,7 @@ function UpcomingPaymentModal({ payment, goals, onClose }: {
   onClose: () => void
 }) {
   const [description, setDescription] = useState(payment?.description ?? '')
-  const [amount, setAmount] = useState(payment ? String(payment.amount) : '')
+  const [amount, setAmount] = useState<number>(payment?.amount ?? 0)
   const [dueDate, setDueDate] = useState(payment?.due_date ?? new Date().toISOString().slice(0, 10))
   const [linkedGoalId, setLinkedGoalId] = useState<number | ''>(payment?.linked_goal_id ?? '')
 
@@ -595,7 +596,7 @@ function UpcomingPaymentModal({ payment, goals, onClose }: {
     e.preventDefault()
     const data = {
       description,
-      amount: parseFloat(amount),
+      amount: amount,
       due_date: dueDate,
       tag: linkedGoalId ? 'meta' : null,
       linked_goal_id: linkedGoalId || null,
@@ -623,7 +624,7 @@ function UpcomingPaymentModal({ payment, goals, onClose }: {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
-              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
+              <CurrencyInput className="input" style={{ width: '100%' }} value={amount} onValueChange={setAmount} required />
             </div>
             <div>
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data de vencimento</label>

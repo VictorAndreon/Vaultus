@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
+import CurrencyInput from '@/Components/CurrencyInput'
 import { FinancialGoal } from '@/types'
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 
 export default function GoalForm({ goal, onClose }: Props) {
     const [name, setName] = useState(goal?.name ?? '')
-    const [targetAmount, setTargetAmount] = useState(goal ? String(goal.target_amount) : '')
+    const [targetAmount, setTargetAmount] = useState<number>(goal?.target_amount ?? 0)
     const [category, setCategory] = useState(goal?.category ?? '')
     const [deadline, setDeadline] = useState(goal?.deadline ?? '')
     const [isCompleted, setIsCompleted] = useState(goal?.is_completed ?? false)
@@ -57,14 +58,7 @@ export default function GoalForm({ goal, onClose }: Props) {
 
                     <div>
                         <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Meta (R$)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={targetAmount}
-                            onChange={e => setTargetAmount(e.target.value)}
-                            required
-                            className="input"
-                        />
+                        <CurrencyInput className="input" value={targetAmount} onValueChange={setTargetAmount} required />
                     </div>
 
                     <div>
