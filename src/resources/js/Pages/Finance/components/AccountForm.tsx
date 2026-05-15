@@ -23,7 +23,10 @@ export default function AccountForm({ account, onClose }: Props) {
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (account) {
-            router.patch('/finance/accounts/' + account.id, { name, currency }, { preserveScroll: true })
+            router.patch('/finance/accounts/' + account.id, { name, currency }, {
+                preserveScroll: true,
+                onSuccess: () => onClose(),
+            })
         } else {
             router.post('/finance/accounts', {
                 name,
@@ -32,9 +35,11 @@ export default function AccountForm({ account, onClose }: Props) {
                 currency,
                 ...(type === 'credit' && { credit_limit_encrypted: creditLimit }),
                 ...(isLiability && interestRate !== '' && { interest_rate: interestRate }),
-            }, { preserveScroll: true })
+            }, {
+                preserveScroll: true,
+                onSuccess: () => onClose(),
+            })
         }
-        onClose()
     }
 
     return (
