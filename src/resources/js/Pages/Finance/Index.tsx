@@ -435,11 +435,89 @@ function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onCl
   )
 }
 
+interface BudgetDraft { id?: number; name: string; budget: number; color: string }
+
+const BUDGET_COLORS = ['var(--green)','var(--gold)','var(--sky)','var(--purple, oklch(72% 0.12 290))','var(--pink, oklch(74% 0.14 340))','var(--teal, oklch(76% 0.12 195))']
+
+function BudgetModal({ budgets, onClose }: { budgets: BudgetEntry[]; onClose: () => void }) {
+  const [drafts, setDrafts] = useState<BudgetDraft[]>(
+    budgets.map(b => ({ id: b.id, name: b.name, budget: b.budget, color: b.color }))
+  )
+  const [newName, setNewName] = useState('')
+  const [newBudget, setNewBudget] = useState('')
+  const [newColor, setNewColor] = useState(BUDGET_COLORS[0])
+
+  function updateDraft(i: number, field: keyof BudgetDraft, value: string | number) {
+    setDrafts(d => d.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
+  }
+  function removeDraft(i: number) {
+    setDrafts(d => d.filter((_, idx) => idx !== i))
+  }
+  function addCategory() {
+    if (!newName.trim() || !newBudget) return
+    setDrafts(d => [...d, { name: newName.trim(), budget: parseFloat(newBudget), color: newColor }])
+    setNewName(''); setNewBudget('')
+  }
+  function save() {
+    router.put('/finance/budget-categories/batch', { categories: drafts }, {
+      preserveScroll: true, onSuccess: onClose,
+    })
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 480, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-2)' }}>
+        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid var(--line-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <div className="kicker">Finanças · Orçamentos</div>
+            <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', marginTop: 6 }}>Ajustar orçamentos</div>
+          </div>
+          <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
+        </div>
+
+        <div style={{ padding: '16px 26px', overflowY: 'auto', flex: 1 }}>
+          {/* Lista existente */}
+          {drafts.map((d, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color, flex: 'none' }} />
+              <input className="input" style={{ flex: 1 }} value={d.name} onChange={e => updateDraft(i, 'name', e.target.value)} />
+              <input className="input" style={{ width: 110 }} type="number" step="0.01" min="0" value={d.budget} onChange={e => updateDraft(i, 'budget', parseFloat(e.target.value))} />
+              <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--rose)', padding: '5px 8px' }} onClick={() => removeDraft(i)}><Icons.X size={12} /></button>
+            </div>
+          ))}
+
+          {/* Nova categoria */}
+          <div style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14, marginTop: 4 }}>
+            <div className="kicker" style={{ marginBottom: 10 }}>Nova categoria</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+              {BUDGET_COLORS.map(c => (
+                <button key={c} type="button" onClick={() => setNewColor(c)}
+                  style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: newColor === c ? '2px solid var(--text)' : '2px solid transparent', cursor: 'pointer' }} />
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input className="input" style={{ flex: 1 }} placeholder="Nome" value={newName} onChange={e => setNewName(e.target.value)} />
+              <input className="input" style={{ width: 110 }} type="number" step="0.01" min="0" placeholder="Limite R$" value={newBudget} onChange={e => setNewBudget(e.target.value)} />
+              <button type="button" className="btn btn-ghost btn-sm" onClick={addCategory}><Icons.Plus size={13} /></button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '14px 26px', borderTop: '1px solid var(--line-soft)', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={save}><Icons.Check size={13} /> Salvar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, savings_goal_pct, flow_chart, donut, budgets, transactions, goals, month_label, accounts_list, upcoming_payments }: Props) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
   const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
   const [showTxModal, setShowTxModal] = useState(false)
+  const [showBudgetModal, setShowBudgetModal] = useState(false)
 
   const filteredGoals = goalFilter === 'todas' ? goals : goals.filter(g => g.status === goalFilter)
   const totalCurrent  = goals.reduce((s, g) => s + g.current_amount, 0)
@@ -512,30 +590,35 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
         </div>
 
         {/* Orçamentos */}
-        {budgets.length > 0 && (
-          <div className="card">
-            <div className="card-head">
-              <div className="card-title">Orçamentos · <b>{month_label}</b></div>
+        <div className="card">
+          <div className="card-head" style={{ marginBottom: 16 }}>
+            <div className="card-title">Orçamentos · <b>{month_label}</b></div>
+            <button className="btn btn-ghost btn-sm" onClick={() => setShowBudgetModal(true)}>
+              Ajustar
+            </button>
+          </div>
+          {budgets.length === 0 ? (
+            <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>
+              Nenhum orçamento. Clique em Ajustar para criar.
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
               {budgets.map((c, i) => (
                 <div key={i}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.color }} />
-                      <span style={{ fontSize: 13.5 }}>{c.name}</span>
-                      <span className="mono" style={{ fontSize: 11, color: c.pct > 90 ? 'var(--rose)' : 'var(--text-4)' }}>{c.pct}%</span>
-                    </div>
-                    <div className="mono" style={{ fontSize: 12, color: 'var(--text-3)' }}>
-                      <span style={{ color: 'var(--text)' }}>{fmtBRL(c.spent)}</span> / {fmtBRL(c.budget)}
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flex: 'none', marginRight: 8 }} />
+                    <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.name}</span>
+                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-4)', marginLeft: 6 }}>{c.pct}%</span>
+                    <div className="mono" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>
+                      <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{fmtBRL(c.spent)}</span> / {fmtBRL(c.budget)}
                     </div>
                   </div>
                   <div className="meter"><span style={{ width: Math.min(100, c.pct) + '%', background: c.color }} /></div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Metas financeiras */}
         <section>
@@ -635,6 +718,7 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
       )}
       {aporteGoal && <AporteModal goal={aporteGoal} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
       {showTxModal && <TransactionModal accounts={accounts_list} onClose={() => setShowTxModal(false)} />}
+      {showBudgetModal && <BudgetModal budgets={budgets} onClose={() => setShowBudgetModal(false)} />}
     </AppLayout>
   )
 }
