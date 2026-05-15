@@ -123,7 +123,31 @@ const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   'concluida': { label: 'Concluída', cls: 'tag-sky'   },
 }
 
-const GOAL_ICONS = ['🏠','✈️','🚗','🎓','💍','🏖','💼','🏥','📱','🐶','🌱','🛡','⭐','🎮','🔧','💰']
+const GOAL_ICON_KEYS = ['shield','home','plane','car','graduation','heart','briefcase','smartphone','leaf','coin','wrench','gamepad','star','flag','trend','finance'] as const
+type GoalIconKey = typeof GOAL_ICON_KEYS[number]
+const GOAL_ICON_MAP: Record<GoalIconKey, (p: { size?: number; strokeWidth?: number }) => JSX.Element> = {
+  shield: Icons.Shield, home: Icons.Home, plane: Icons.Plane, car: Icons.Car,
+  graduation: Icons.GraduationCap, heart: Icons.Heart, briefcase: Icons.Briefcase,
+  smartphone: Icons.Smartphone, leaf: Icons.Leaf, coin: Icons.Coin,
+  wrench: Icons.Wrench, gamepad: Icons.GamePad, star: Icons.Star,
+  flag: Icons.Flag, trend: Icons.Trend, finance: Icons.Finance,
+}
+function GoalIconBadge({ iconKey, color, size = 44 }: { iconKey: string; color: string; size?: number }) {
+  const Comp = GOAL_ICON_MAP[iconKey as GoalIconKey] ?? Icons.Shield
+  return (
+    <div style={{
+      width: size, height: size,
+      borderRadius: Math.round(size * 0.28),
+      background: `color-mix(in oklab, ${color} 16%, var(--surface-2))`,
+      border: `1px solid color-mix(in oklab, ${color} 32%, transparent)`,
+      color: color,
+      display: 'grid', placeItems: 'center',
+      flexShrink: 0,
+    }}>
+      <Comp size={Math.round(size * 0.46)} strokeWidth={1.5} />
+    </div>
+  )
+}
 const GOAL_COLORS = [
   { label: 'Verde',  value: 'var(--green)'  },
   { label: 'Dourado',value: 'var(--gold)'   },
@@ -150,9 +174,7 @@ function GoalCard({ g, onAporte, onEdit, onDelete }: {
     <div className="card" style={{ padding: 22, position: 'relative' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: `color-mix(in oklab, ${g.color} 16%, transparent)`, color: g.color, display: 'grid', placeItems: 'center', fontSize: 20, border: `1px solid color-mix(in oklab, ${g.color} 32%, transparent)`, flex: 'none' }}>
-          {GOAL_ICONS.includes(g.icon) ? g.icon : '🛡'}
-        </div>
+        <GoalIconBadge iconKey={g.icon} color={g.color} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
             <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{g.name}</span>
@@ -258,7 +280,7 @@ function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: 
 
 function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () => void }) {
   const [name, setName] = useState(goal?.name ?? '')
-  const [icon, setIcon] = useState(goal?.icon ?? '🛡')
+  const [icon, setIcon] = useState(goal?.icon ?? 'shield')
   const [color, setColor] = useState(goal?.color ?? 'var(--green)')
   const [targetAmount, setTargetAmount] = useState(goal ? goal.target_amount : 0)
   const [monthlyAmount, setMonthlyAmount] = useState(goal ? goal.monthly_amount : 0)
@@ -299,12 +321,21 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
           <div style={{ marginBottom: 14 }}>
             <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Ícone</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
-              {GOAL_ICONS.map(ic => (
-                <button key={ic} type="button" onClick={() => setIcon(ic)}
-                  style={{ height: 36, borderRadius: 8, border: `1px solid ${icon === ic ? 'color-mix(in oklab, var(--green) 50%, transparent)' : 'var(--line)'}`, background: icon === ic ? 'color-mix(in oklab, var(--green) 12%, transparent)' : 'var(--surface-2)', fontSize: 16, cursor: 'pointer' }}>
-                  {ic}
-                </button>
-              ))}
+              {GOAL_ICON_KEYS.map(key => {
+                const Ic = GOAL_ICON_MAP[key]
+                const active = icon === key
+                return (
+                  <button key={key} type="button" onClick={() => setIcon(key)} style={{
+                    height: 38, borderRadius: 10, cursor: 'pointer',
+                    border: `1px solid ${active ? 'color-mix(in oklab, var(--green) 50%, transparent)' : 'var(--line)'}`,
+                    background: active ? 'color-mix(in oklab, var(--green) 12%, var(--surface-2))' : 'var(--surface-2)',
+                    color: active ? 'var(--green)' : 'var(--text-3)',
+                    display: 'grid', placeItems: 'center',
+                  }}>
+                    <Ic size={16} strokeWidth={1.5} />
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -635,7 +666,7 @@ function UpcomingPaymentModal({ payment, goals, onClose }: {
             <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Vincular à meta (opcional)</label>
             <select className="input" style={{ width: '100%' }} value={linkedGoalId} onChange={e => setLinkedGoalId(e.target.value ? Number(e.target.value) : '')}>
               <option value="">Sem vínculo</option>
-              {goals.map(g => <option key={g.id} value={g.id}>{g.icon} {g.name}</option>)}
+              {goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
