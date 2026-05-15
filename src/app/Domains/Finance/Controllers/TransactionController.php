@@ -6,6 +6,7 @@ use App\Domains\Finance\Models\Account;
 use App\Domains\Finance\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -38,23 +39,25 @@ class TransactionController extends Controller
 
         abort_if($dest->user_id !== $user->id, 422, 'Conta destino não pertence ao usuário.');
 
-        $shared = [
-            'type'             => 'transfer',
-            'amount_encrypted' => $data['amount_encrypted'],
-            'description'      => $data['description'],
-            'occurred_at'      => $data['occurred_at'],
-            'category'         => null,
-        ];
+        DB::transaction(function () use ($source, $dest, $destId, $data) {
+            $shared = [
+                'type'             => 'transfer',
+                'amount_encrypted' => $data['amount_encrypted'],
+                'description'      => $data['description'],
+                'occurred_at'      => $data['occurred_at'],
+                'category'         => null,
+            ];
 
-        $outgoing = $source->transactions()->create(array_merge($shared, [
-            'transfer_to_account_id' => $destId,
-        ]));
+            $outgoing = $source->transactions()->create(array_merge($shared, [
+                'transfer_to_account_id' => $destId,
+            ]));
 
-        $incoming = $dest->transactions()->create(array_merge($shared, [
-            'transfer_pair_id' => $outgoing->id,
-        ]));
+            $incoming = $dest->transactions()->create(array_merge($shared, [
+                'transfer_pair_id' => $outgoing->id,
+            ]));
 
-        $outgoing->update(['transfer_pair_id' => $incoming->id]);
+            $outgoing->update(['transfer_pair_id' => $incoming->id]);
+        });
     }
 
     public function update(Request $request, Transaction $transaction)
@@ -79,7 +82,10 @@ class TransactionController extends Controller
         abort_if($transaction->account->user_id !== $request->user()->id, 403);
 
         if ($transaction->transfer_pair_id) {
-            Transaction::find($transaction->transfer_pair_id)?->delete();
+            $pair = Transaction::find($transaction->transfer_pair_id);
+            if ($pair && $pair->account->user_id === $request->user()->id) {
+                $pair->delete();
+            }
         }
 
         $transaction->delete();

@@ -41,6 +41,8 @@ export default function TransactionForm({ accountId, transaction, onClose, accou
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
+        if (type === 'transfer' && transferToAccountId === '') return
+
         const data: Record<string, unknown> = {
             type,
             amount_encrypted: amount,
@@ -129,7 +131,7 @@ export default function TransactionForm({ accountId, transaction, onClose, accou
                             <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Conta destino</label>
                             <select
                                 value={transferToAccountId}
-                                onChange={e => setTransferToAccountId(Number(e.target.value))}
+                                onChange={e => setTransferToAccountId(e.target.value === '' ? '' : Number(e.target.value))}
                                 className="input"
                                 required
                             >
