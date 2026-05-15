@@ -36,6 +36,7 @@ interface Props {
   transactions: FinanceTransaction[]; goals: FinancialGoal[]; month_label: string
   accounts_list: AccountItem[]
   upcoming_payments: UpcomingPayment[]
+  budget_category_names: string[]
 }
 
 function fmtBRL(v: number, compact = false) {
@@ -507,7 +508,7 @@ function AccountModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onClose: () => void }) {
+function TransactionModal({ accounts, budgetCategories, onClose }: { accounts: AccountItem[]; budgetCategories: string[]; onClose: () => void }) {
   const [type, setType] = useState<'expense' | 'income'>('expense')
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 0)
   const [amount, setAmount] = useState(0)
@@ -563,7 +564,7 @@ function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onCl
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
               <select className="input" style={{ width: '100%' }} value={category} onChange={e => setCategory(e.target.value)}>
                 <option value="">Sem categoria</option>
-                {['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Salário','Freelance','Investimento','Outros'].map(c => (
+                {(budgetCategories.length > 0 ? budgetCategories : ['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Salário','Freelance','Investimento','Outros']).map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -736,7 +737,7 @@ function UpcomingPaymentModal({ payment, goals, onClose }: {
   )
 }
 
-export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, savings_goal_pct, flow_chart, donut, budgets, transactions, goals, month_label, accounts_list, upcoming_payments }: Props) {
+export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, savings_goal_pct, flow_chart, donut, budgets, transactions, goals, month_label, accounts_list, upcoming_payments, budget_category_names }: Props) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
   const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
@@ -1019,7 +1020,7 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
       )}
       {aporteGoal && <AporteModal goal={aporteGoal} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
       {showAccountModal && <AccountModal onClose={() => setShowAccountModal(false)} />}
-      {showTxModal && <TransactionModal accounts={accounts_list} onClose={() => setShowTxModal(false)} />}
+      {showTxModal && <TransactionModal accounts={accounts_list} budgetCategories={budget_category_names} onClose={() => setShowTxModal(false)} />}
       {showBudgetModal && <BudgetModal budgets={budgets} onClose={() => setShowBudgetModal(false)} />}
       {upcomingModal !== null && (
         <UpcomingPaymentModal

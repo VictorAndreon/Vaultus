@@ -172,6 +172,7 @@ class FinanceController extends Controller
             'flow_chart'         => ['labels' => $flowLabels, 'income' => $flowIncome, 'expense' => $flowExpense],
             'donut'              => $donut,
             'budgets'            => $budgets,
+            'budget_category_names' => $budgetCategories->pluck('name')->values()->toArray(),
             'transactions'       => $recentTx,
             'goals'              => $goals,
             'accounts_list'      => $accountsList,
