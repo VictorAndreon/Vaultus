@@ -44,4 +44,46 @@ class BudgetCategoryController extends Controller
         $category->delete();
         return back();
     }
+
+    public function batch(Request $request)
+    {
+        $data = $request->validate([
+            'categories'              => 'required|array',
+            'categories.*.id'         => 'nullable|integer',
+            'categories.*.name'       => 'required|string|max:100',
+            'categories.*.budget'     => 'required|numeric|min:0',
+            'categories.*.color'      => 'nullable|string|max:60',
+        ]);
+
+        $user = $request->user();
+        $incoming = collect($data['categories']);
+        $incomingIds = $incoming->pluck('id')->filter()->values();
+
+        // Excluir categorias removidas
+        $user->budgetCategories()
+            ->whereNotIn('id', $incomingIds)
+            ->delete();
+
+        // Upsert das categorias
+        foreach ($incoming as $cat) {
+            if (!empty($cat['id'])) {
+                $existing = $user->budgetCategories()->find($cat['id']);
+                if ($existing) {
+                    $existing->update([
+                        'name'                    => $cat['name'],
+                        'budget_amount_encrypted' => $cat['budget'],
+                        'color'                   => $cat['color'] ?? 'var(--green)',
+                    ]);
+                }
+            } else {
+                $user->budgetCategories()->create([
+                    'name'                    => $cat['name'],
+                    'budget_amount_encrypted' => $cat['budget'],
+                    'color'                   => $cat['color'] ?? 'var(--green)',
+                ]);
+            }
+        }
+
+        return back();
+    }
 }

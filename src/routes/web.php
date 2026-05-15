@@ -73,6 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/transactions/{transaction}/allocations', [TransactionGoalController::class, 'store']);
     Route::delete('/finance/allocations/{allocation}', [TransactionGoalController::class, 'destroy']);
     Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
+    Route::put('/finance/budget-categories/batch', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'batch']);
     Route::patch('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'update']);
     Route::delete('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'destroy']);
     Route::post('/finance/upcoming-payments', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'store']);
