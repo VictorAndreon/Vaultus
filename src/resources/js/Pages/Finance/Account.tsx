@@ -1,102 +1,176 @@
 import { useState } from 'react'
+import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
-import Button from '@/Components/ui/Button'
+import { Icons } from '@/Components/Icons'
 import { Account, Transaction, PaginatedResponse } from '@/types'
-import TransactionForm from './components/TransactionForm'
 import TransactionList from './components/TransactionList'
 
 interface Props {
-    account: { data: Account }
-    transactions: PaginatedResponse<Transaction>
-}
-
-function fmtBRL(v: number) {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+  account: { data: Account }
+  transactions: PaginatedResponse<Transaction>
+  month_income: number
+  month_expense: number
+  month_count: number
+  peak_balance: number
 }
 
 const TYPE_LABELS: Record<string, string> = {
-    checking: 'Corrente',
-    savings: 'Poupança',
-    investment: 'Investimento',
-    cash: 'Dinheiro',
+  checking: 'Conta Corrente', savings: 'Poupança',
+  investment: 'Investimento', cash: 'Dinheiro',
 }
 
 const TYPE_COLORS: Record<string, string> = {
-    checking: 'var(--sky)',
-    savings: 'var(--green)',
-    investment: 'var(--purple, var(--sky))',
-    cash: 'var(--text-4)',
+  checking: 'var(--sky)', savings: 'var(--green)',
+  investment: 'var(--purple, oklch(72% 0.12 290))', cash: 'var(--text-4)',
 }
 
-export default function FinanceAccount({ account, transactions }: Props) {
-    const [showTransactionForm, setShowTransactionForm] = useState(false)
-    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
-    const acc = account.data
+function fmtBRL(v: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+}
 
-    function handleEdit(t: Transaction) {
-        setEditingTransaction(t)
-        setShowTransactionForm(false)
-    }
+function TransactionModal({ accountId, transaction, onClose }: {
+  accountId: number
+  transaction: Transaction | null
+  onClose: () => void
+}) {
+  const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
+  const [amount, setAmount] = useState(transaction ? String(transaction.amount) : '')
+  const [description, setDescription] = useState(transaction?.description ?? '')
+  const [category, setCategory] = useState(transaction?.category ?? '')
+  const [occurred_at, setOccurredAt] = useState(transaction?.occurred_at ?? new Date().toISOString().slice(0, 10))
 
-    return (
-        <AppLayout title={acc.name}>
-            <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {/* Header card */}
-                <div className="card" style={{ padding: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div>
-                            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>{acc.name}</h1>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{
-                                    fontSize: 11,
-                                    padding: '2px 8px',
-                                    borderRadius: 99,
-                                    fontWeight: 500,
-                                    background: `color-mix(in oklab, ${TYPE_COLORS[acc.type] ?? 'var(--text-4)'} 16%, transparent)`,
-                                    color: TYPE_COLORS[acc.type] ?? 'var(--text-4)',
-                                    border: `1px solid color-mix(in oklab, ${TYPE_COLORS[acc.type] ?? 'var(--text-4)'} 28%, transparent)`,
-                                }}>
-                                    {TYPE_LABELS[acc.type] ?? acc.type}
-                                </span>
-                                <span className="muted" style={{ fontSize: 12 }}>{acc.currency}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div style={{ fontFamily: 'var(--serif)', fontSize: 30, color: 'var(--text)', letterSpacing: '-0.015em' }}>{fmtBRL(acc.current_balance)}</div>
-                </div>
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    const data = { type, amount_encrypted: parseFloat(amount), description, category: category || null, occurred_at }
+    const opts = { preserveScroll: true, onSuccess: onClose }
+    if (transaction === null) router.post(`/finance/accounts/${accountId}/transactions`, data, opts)
+    else router.patch(`/finance/transactions/${transaction.id}`, data, opts)
+  }
 
-                {/* Nova transação / Editar transação */}
-                <div>
-                    {!showTransactionForm && !editingTransaction && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setShowTransactionForm(true)}
-                        >
-                            + Nova transação
-                        </Button>
-                    )}
-
-                    {showTransactionForm && (
-                        <TransactionForm
-                            accountId={acc.id}
-                            transaction={null}
-                            onClose={() => setShowTransactionForm(false)}
-                        />
-                    )}
-
-                    {editingTransaction && (
-                        <TransactionForm
-                            accountId={acc.id}
-                            transaction={editingTransaction}
-                            onClose={() => setEditingTransaction(null)}
-                        />
-                    )}
-                </div>
-
-                {/* Transaction list */}
-                <TransactionList transactions={transactions} accountId={acc.id} onEdit={handleEdit} />
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 440, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
+        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid var(--line-soft)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div className="kicker">{transaction ? 'Editar lançamento' : 'Novo lançamento'}</div>
+            <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', marginTop: 6 }}>
+              {transaction ? transaction.description : 'Registrar transação'}
             </div>
-        </AppLayout>
-    )
+          </div>
+          <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
+        </div>
+        <form onSubmit={submit} style={{ padding: '20px 26px' }}>
+          <div className="seg" style={{ marginBottom: 14 }}>
+            <button type="button" data-active={type === 'expense'} onClick={() => setType('expense')}>Despesa</button>
+            <button type="button" data-active={type === 'income'} onClick={() => setType('income')}>Receita</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
+              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} autoFocus required />
+            </div>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data</label>
+              <input className="input" style={{ width: '100%' }} type="date" value={occurred_at} onChange={e => setOccurredAt(e.target.value)} required />
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
+            <input className="input" style={{ width: '100%' }} value={description} onChange={e => setDescription(e.target.value)} required />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
+            <select className="input" style={{ width: '100%' }} value={category} onChange={e => setCategory(e.target.value)}>
+              <option value="">Sem categoria</option>
+              {['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Salário','Freelance','Investimento','Outros'].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> {transaction ? 'Salvar' : 'Registrar'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default function FinanceAccount({ account, transactions, month_income, month_expense, month_count, peak_balance }: Props) {
+  const [txModal, setTxModal] = useState<{ tx: Transaction | null } | null>(null)
+  const acc = account.data
+  const color = TYPE_COLORS[acc.type] ?? 'var(--text-4)'
+  const balance = acc.current_balance
+  const peakPct = peak_balance > 0 ? Math.round((balance / peak_balance) * 100) : 100
+
+  return (
+    <AppLayout
+      title={acc.name}
+      eyebrow={TYPE_LABELS[acc.type] ?? acc.type}
+      subtitle="Histórico e lançamentos desta conta"
+      actions={
+        <button className="btn btn-primary btn-sm" onClick={() => setTxModal({ tx: null })}>
+          <Icons.Plus size={13} /> Nova Transação
+        </button>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Stat cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 14 }}>
+          {/* Saldo */}
+          <div className="stat" style={{ padding: '20px 24px' }}>
+            <div className="stat-label">Saldo atual</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+              <span className="tag" style={{ background: `color-mix(in oklab, ${color} 16%, transparent)`, color, border: `1px solid color-mix(in oklab, ${color} 30%, transparent)` }}>
+                <span className="dot" style={{ background: color }} />{TYPE_LABELS[acc.type] ?? acc.type}
+              </span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-4)' }}>{acc.currency}</span>
+            </div>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: 34, color: 'var(--text)', letterSpacing: '-.015em', marginTop: 10 }}>{fmtBRL(balance)}</div>
+            <div className="meter" style={{ marginTop: 10 }}><span style={{ width: peakPct + '%' }} /></div>
+            <div className="stat-delta flat" style={{ marginTop: 5 }}>{peakPct}% do pico histórico</div>
+          </div>
+
+          {/* Receitas */}
+          <div className="stat" style={{ padding: '20px 24px' }}>
+            <div className="stat-label">Receitas · mês</div>
+            <div className="stat-value" style={{ fontSize: 22, color: 'var(--green)', marginTop: 6 }}>{fmtBRL(month_income)}</div>
+            <div className="stat-delta up" style={{ marginTop: 4 }}><Icons.ArrowUpRight size={11} />este mês</div>
+          </div>
+
+          {/* Despesas */}
+          <div className="stat" style={{ padding: '20px 24px' }}>
+            <div className="stat-label">Despesas · mês</div>
+            <div className="stat-value" style={{ fontSize: 22, color: 'var(--rose)', marginTop: 6 }}>{fmtBRL(month_expense)}</div>
+            <div className="stat-delta flat" style={{ marginTop: 4 }}>este mês</div>
+          </div>
+
+          {/* Contagem */}
+          <div className="stat" style={{ padding: '20px 24px' }}>
+            <div className="stat-label">Transações</div>
+            <div className="stat-value" style={{ fontSize: 22, marginTop: 6 }}>{month_count}</div>
+            <div className="stat-delta flat" style={{ marginTop: 4 }}>este mês</div>
+          </div>
+        </div>
+
+        {/* Tabela de transações */}
+        <TransactionList
+          transactions={transactions}
+          accountId={acc.id}
+          onEdit={t => setTxModal({ tx: t })}
+        />
+
+      </div>
+
+      {txModal !== null && (
+        <TransactionModal
+          accountId={acc.id}
+          transaction={txModal.tx}
+          onClose={() => setTxModal(null)}
+        />
+      )}
+    </AppLayout>
+  )
 }
