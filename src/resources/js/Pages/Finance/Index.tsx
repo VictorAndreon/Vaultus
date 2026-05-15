@@ -352,10 +352,94 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
   )
 }
 
+function TransactionModal({ accounts, onClose }: { accounts: AccountItem[]; onClose: () => void }) {
+  const [type, setType] = useState<'expense' | 'income'>('expense')
+  const [accountId, setAccountId] = useState(accounts[0]?.id ?? 0)
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState('')
+  const [occurred_at, setOccurredAt] = useState(new Date().toISOString().slice(0, 10))
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    router.post(`/finance/accounts/${accountId}/transactions`, {
+      type,
+      amount_encrypted: parseFloat(amount),
+      description,
+      category: category || null,
+      occurred_at,
+    }, { preserveScroll: true, onSuccess: onClose })
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 440, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
+        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid var(--line-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div className="kicker">Finanças · Novo lançamento</div>
+            <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', marginTop: 6 }}>Registrar transação</div>
+          </div>
+          <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
+        </div>
+        <form onSubmit={submit} style={{ padding: '20px 26px' }}>
+          {/* Tipo */}
+          <div className="seg" style={{ marginBottom: 14 }}>
+            <button type="button" data-active={type === 'expense'} onClick={() => setType('expense')}>Despesa</button>
+            <button type="button" data-active={type === 'income'} onClick={() => setType('income')}>Receita</button>
+          </div>
+
+          {/* Conta + Valor */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Conta</label>
+              <select className="input" style={{ width: '100%' }} value={accountId} onChange={e => setAccountId(Number(e.target.value))} required>
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
+              <input className="input" style={{ width: '100%' }} type="number" step="0.01" min="0.01" value={amount} onChange={e => setAmount(e.target.value)} autoFocus required />
+            </div>
+          </div>
+
+          {/* Categoria + Data */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
+              <select className="input" style={{ width: '100%' }} value={category} onChange={e => setCategory(e.target.value)}>
+                <option value="">Sem categoria</option>
+                {['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Salário','Freelance','Investimento','Outros'].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data</label>
+              <input className="input" style={{ width: '100%' }} type="date" value={occurred_at} onChange={e => setOccurredAt(e.target.value)} required />
+            </div>
+          </div>
+
+          {/* Descrição */}
+          <div style={{ marginBottom: 20 }}>
+            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
+            <input className="input" style={{ width: '100%' }} value={description} onChange={e => setDescription(e.target.value)} required placeholder="Ex: iFood — jantar" />
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> Registrar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function FinanceIndex({ net_worth, month_income, month_expense, savings_rate, savings_goal_pct, flow_chart, donut, budgets, transactions, goals, month_label, accounts_list, upcoming_payments }: Props) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
   const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
+  const [showTxModal, setShowTxModal] = useState(false)
 
   const filteredGoals = goalFilter === 'todas' ? goals : goals.filter(g => g.status === goalFilter)
   const totalCurrent  = goals.reduce((s, g) => s + g.current_amount, 0)
@@ -378,7 +462,9 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
   return (
     <AppLayout title="Finanças" eyebrow="Patrimônio" subtitle="Saldo, fluxo, orçamento e metas."
       actions={
-        <button className="btn btn-primary btn-sm"><Icons.Plus size={13} /> Lançamento</button>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowTxModal(true)}>
+          <Icons.Plus size={13} /> Lançamento
+        </button>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -548,6 +634,7 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
         <GoalModal goal={goalModal.goal} onClose={() => setGoalModal(null)} />
       )}
       {aporteGoal && <AporteModal goal={aporteGoal} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
+      {showTxModal && <TransactionModal accounts={accounts_list} onClose={() => setShowTxModal(false)} />}
     </AppLayout>
   )
 }
