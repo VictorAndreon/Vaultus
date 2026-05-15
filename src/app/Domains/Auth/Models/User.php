@@ -84,6 +84,11 @@ class User extends Authenticatable
         return $this->hasMany(\App\Domains\Finance\Models\BudgetCategory::class)->orderBy('position');
     }
 
+    public function upcomingPayments()
+    {
+        return $this->hasMany(\App\Domains\Finance\Models\UpcomingPayment::class);
+    }
+
     public function projects()
     {
         return $this->hasMany(\App\Domains\Projects\Models\Project::class);
