@@ -47,10 +47,12 @@ class AccountController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'              => 'required|string|max:255',
-            'type'              => 'required|in:checking,savings,investment,cash',
-            'balance_encrypted' => 'required|numeric',
-            'currency'          => 'required|string|size:3',
+            'name'                   => 'required|string|max:255',
+            'type'                   => 'required|in:checking,savings,investment,cash,credit,loan',
+            'balance_encrypted'      => 'required|numeric',
+            'currency'               => 'required|string|size:3',
+            'credit_limit_encrypted' => 'nullable|numeric|min:0',
+            'interest_rate'          => 'nullable|numeric|min:0|max:999',
         ]);
 
         $request->user()->accounts()->create($validated);

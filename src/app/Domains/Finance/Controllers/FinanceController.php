@@ -17,7 +17,10 @@ class FinanceController extends Controller
 
         // Contas e transações
         $accounts = $user->accounts()->with('transactions')->get();
-        $netWorth = (float) $accounts->sum(fn($a) => $a->current_balance);
+        $netWorth = (float) $accounts->sum(function ($a) {
+            $balance = (float) $a->current_balance;
+            return $a->is_liability ? -$balance : $balance;
+        });
 
         // Transações do mês
         $allTx   = collect();
@@ -57,21 +60,27 @@ class FinanceController extends Controller
             'savings'    => ['label' => 'Poupança',       'color' => 'var(--sky)'],
             'investment' => ['label' => 'Investimentos',  'color' => 'var(--green)'],
             'credit'     => ['label' => 'Crédito',        'color' => 'var(--rose)'],
+            'loan'       => ['label' => 'Financiamento',  'color' => 'var(--amber)'],
+            'cash'       => ['label' => 'Dinheiro',       'color' => 'var(--yellow)'],
         ];
         $donutGroups = [];
         foreach ($accounts as $account) {
             $type  = $account->type ?? 'checking';
             $meta  = $typeMap[$type] ?? ['label' => ucfirst($type), 'color' => 'var(--text-4)'];
             $label = $meta['label'];
-            $donutGroups[$label]['label']  = $label;
-            $donutGroups[$label]['color']  = $meta['color'];
-            $donutGroups[$label]['amount'] = ($donutGroups[$label]['amount'] ?? 0) + (float) $account->current_balance;
+            $donutGroups[$label]['label']        = $label;
+            $donutGroups[$label]['color']        = $meta['color'];
+            $donutGroups[$label]['is_liability'] = $account->is_liability;
+            $donutGroups[$label]['amount']       = ($donutGroups[$label]['amount'] ?? 0) + (float) $account->current_balance;
         }
-        $donut = $netWorth > 0 ? array_values(array_map(fn($g) => [
-            'label'  => $g['label'], 'color' => $g['color'],
-            'amount' => round($g['amount'], 2),
-            'pct'    => (int) round($g['amount'] / $netWorth * 100),
-        ], $donutGroups)) : [];
+        $totalAssets = (float) $accounts->filter(fn($a) => !$a->is_liability)->sum('current_balance');
+        $donut = array_values(array_filter(array_map(fn($g) => [
+            'label'        => $g['label'],
+            'color'        => $g['color'],
+            'amount'       => round(abs($g['amount']), 2),
+            'pct'          => $totalAssets > 0 ? (int) round(abs($g['amount']) / $totalAssets * 100) : 0,
+            'is_liability' => $g['is_liability'] ?? false,
+        ], $donutGroups), fn($g) => $g['amount'] != 0));
 
         // Orçamentos
         $budgetCategories = $user->budgetCategories()->get();
