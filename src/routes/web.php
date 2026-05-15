@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/goals', [GoalController::class, 'store']);
     Route::patch('/finance/goals/{goal}', [GoalController::class, 'update']);
     Route::delete('/finance/goals/{goal}', [GoalController::class, 'destroy']);
+    Route::post('/finance/goals/{goal}/deposit', [GoalController::class, 'deposit']);
     Route::post('/finance/wishlist', [WishlistController::class, 'store']);
     Route::patch('/finance/wishlist/{item}', [WishlistController::class, 'update']);
     Route::delete('/finance/wishlist/{item}', [WishlistController::class, 'destroy']);

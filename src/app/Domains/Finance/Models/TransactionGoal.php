@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class TransactionGoal extends Model
 {
     protected $fillable = [
-        'transaction_id', 'financial_goal_id', 'amount_encrypted',
+        'transaction_id', 'financial_goal_id', 'amount_encrypted', 'occurred_at', 'note',
     ];
 
     protected function casts(): array
