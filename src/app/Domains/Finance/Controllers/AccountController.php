@@ -15,11 +15,32 @@ class AccountController extends Controller
     {
         abort_if($account->user_id !== $request->user()->id, 403);
 
+        $now        = \Carbon\Carbon::now($request->user()->timezone ?? 'America/Sao_Paulo');
+        $monthStart = $now->copy()->startOfMonth()->toDateString();
+        $monthEnd   = $now->copy()->endOfMonth()->toDateString();
+
         $transactions = $account->transactions()->latest('occurred_at')->paginate(25);
 
+        $allTx      = $account->transactions()->get();
+        $monthTx    = $allTx->filter(function ($t) use ($monthStart, $monthEnd) {
+            $date = \Carbon\Carbon::parse($t->occurred_at)->toDateString();
+            return $date >= $monthStart && $date <= $monthEnd;
+        });
+
+        $monthIncome  = (float) $monthTx->where('type', 'income')->sum(fn($t) => (float) $t->amount_encrypted);
+        $monthExpense = (float) $monthTx->where('type', 'expense')->sum(fn($t) => (float) $t->amount_encrypted);
+        $monthCount   = $monthTx->count();
+
+        $currentBalance = (float) $account->current_balance;
+        $peakBalance    = $currentBalance * 1.2; // fallback conservador
+
         return Inertia::render('Finance/Account', [
-            'account'      => AccountResource::make($account->loadMissing('transactions')),
-            'transactions' => TransactionResource::collection($transactions),
+            'account'       => AccountResource::make($account->loadMissing('transactions')),
+            'transactions'  => TransactionResource::collection($transactions),
+            'month_income'  => $monthIncome,
+            'month_expense' => $monthExpense,
+            'month_count'   => $monthCount,
+            'peak_balance'  => $peakBalance,
         ]);
     }
 
