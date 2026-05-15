@@ -15,8 +15,8 @@ class BudgetCategoryLinkageTest extends TestCase
     public function test_budget_categories_are_passed_to_frontend()
     {
         $user = User::factory()->create();
-        BudgetCategory::factory()->create(['user_id' => $user->id, 'name' => 'Alimentação', 'budget_amount_encrypted' => 1000]);
-        BudgetCategory::factory()->create(['user_id' => $user->id, 'name' => 'Transporte',  'budget_amount_encrypted' => 400]);
+        BudgetCategory::factory()->create(['user_id' => $user->id, 'name' => 'Alimentação', 'budget_amount_encrypted' => 1000, 'position' => 0]);
+        BudgetCategory::factory()->create(['user_id' => $user->id, 'name' => 'Transporte',  'budget_amount_encrypted' => 400,  'position' => 1]);
 
         $response = $this->actingAs($user)->get('/finance');
 

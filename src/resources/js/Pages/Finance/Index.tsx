@@ -564,7 +564,10 @@ function TransactionModal({ accounts, budgetCategories, onClose }: { accounts: A
               <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
               <select className="input" style={{ width: '100%' }} value={category} onChange={e => setCategory(e.target.value)}>
                 <option value="">Sem categoria</option>
-                {(budgetCategories.length > 0 ? budgetCategories : ['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Salário','Freelance','Investimento','Outros']).map(c => (
+                {(type === 'income'
+                  ? ['Salário', 'Freelance', 'Investimento', 'Outros']
+                  : (budgetCategories.length > 0 ? budgetCategories : ['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Outros'])
+                ).map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>

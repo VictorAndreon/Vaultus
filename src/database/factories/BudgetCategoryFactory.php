@@ -12,7 +12,7 @@ class BudgetCategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id'                 => 1,
+            'user_id'                 => \App\Domains\Auth\Models\User::factory(),
             'name'                    => $this->faker->word(),
             'budget_amount_encrypted' => $this->faker->numberBetween(100, 2000),
             'color'                   => 'var(--green)',

@@ -83,7 +83,7 @@ class FinanceController extends Controller
         ], $donutGroups), fn($g) => $g['amount'] != 0));
 
         // Orçamentos
-        $budgetCategories = $user->budgetCategories()->get();
+        $budgetCategories = $user->budgetCategories()->orderBy('position')->get();
         $spendingByCategory = $monthTx->where('type', 'expense')->groupBy('category')
             ->map(fn($txs) => (float) $txs->sum(fn($t) => (float) $t->amount_encrypted));
         $budgets = $budgetCategories->map(function ($bc) use ($spendingByCategory) {
