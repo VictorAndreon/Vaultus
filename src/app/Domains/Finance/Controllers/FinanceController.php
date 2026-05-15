@@ -39,7 +39,7 @@ class FinanceController extends Controller
 
         // Flow chart (12 meses)
         $incomeByMonth = []; $expenseByMonth = [];
-        foreach ($allTx as $t) {
+        foreach ($allTx->whereNotIn('type', ['transfer']) as $t) {
             $key    = \Carbon\Carbon::parse($t->occurred_at)->format('Y-m');
             $amount = (float) $t->amount_encrypted;
             if ($t->type === 'income') $incomeByMonth[$key] = ($incomeByMonth[$key] ?? 0) + $amount;

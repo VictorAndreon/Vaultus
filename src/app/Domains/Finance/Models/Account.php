@@ -45,10 +45,20 @@ class Account extends Model
             ? $this->transactions
             : $this->transactions()->get();
 
-        $income  = $transactions->where('type', 'income')->sum(fn($t) => (float) $t->amount_encrypted);
-        $expense = $transactions->where('type', 'expense')->sum(fn($t) => (float) $t->amount_encrypted);
+        $income  = $transactions->whereIn('type', ['income'])->sum(fn($t) => (float) $t->amount_encrypted);
+        $expense = $transactions->whereIn('type', ['expense'])->sum(fn($t) => (float) $t->amount_encrypted);
 
-        return (float) ($this->balance_encrypted ?? 0) + $income - $expense;
+        // Para transferências: a conta é ORIGEM quando transfer_to_account_id IS NOT NULL (saída)
+        // A conta é DESTINO quando transfer_to_account_id IS NULL mas transfer_pair_id existe (entrada)
+        $transferOut = $transactions->where('type', 'transfer')
+            ->filter(fn($t) => !is_null($t->transfer_to_account_id))
+            ->sum(fn($t) => (float) $t->amount_encrypted);
+
+        $transferIn = $transactions->where('type', 'transfer')
+            ->filter(fn($t) => is_null($t->transfer_to_account_id))
+            ->sum(fn($t) => (float) $t->amount_encrypted);
+
+        return (float) ($this->balance_encrypted ?? 0) + $income - $expense + $transferIn - $transferOut;
     }
 
     public function user()

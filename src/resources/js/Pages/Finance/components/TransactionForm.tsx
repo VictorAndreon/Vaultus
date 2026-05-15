@@ -9,33 +9,52 @@ export const TRANSACTION_CATEGORIES = [
     'Investimento', 'Outros',
 ] as const
 
+interface AccountOption {
+    id: number
+    name: string
+    type: string
+}
+
 interface Props {
     accountId: number
     transaction: Transaction | null
     onClose: () => void
+    accounts?: AccountOption[]
+    budgetCategories?: string[]
 }
 
 function todayStr() {
     return new Date().toISOString().slice(0, 10)
 }
 
-export default function TransactionForm({ accountId, transaction, onClose }: Props) {
-    const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
+export default function TransactionForm({ accountId, transaction, onClose, accounts = [], budgetCategories = [] }: Props) {
+    const [type, setType] = useState<'income' | 'expense' | 'transfer'>(transaction?.type ?? 'expense')
     const [amount, setAmount] = useState<number>(transaction?.amount ?? 0)
     const [description, setDescription] = useState(transaction?.description ?? '')
     const [category, setCategory] = useState(transaction?.category ?? '')
     const [occurred_at, setOccurredAt] = useState(transaction?.occurred_at ?? todayStr())
+    const [transferToAccountId, setTransferToAccountId] = useState<number | ''>('')
+
+    const isNewTransaction = transaction === null
+    const categoryOptions = budgetCategories.length > 0 ? budgetCategories : [...TRANSACTION_CATEGORIES]
+    const otherAccounts = accounts.filter(a => a.id !== accountId)
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        const data = {
+        const data: Record<string, unknown> = {
             type,
             amount_encrypted: amount,
             description,
-            category: category || null,
             occurred_at,
         }
-        if (transaction === null) {
+
+        if (type === 'transfer') {
+            data.transfer_to_account_id = transferToAccountId
+        } else {
+            data.category = category || null
+        }
+
+        if (isNewTransaction) {
             router.post('/finance/accounts/' + accountId + '/transactions', data, {
                 preserveScroll: true,
                 onSuccess: onClose,
@@ -72,6 +91,16 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                             >
                                 Despesa
                             </button>
+                            {isNewTransaction && otherAccounts.length > 0 && (
+                                <button
+                                    type="button"
+                                    data-active={type === 'transfer'}
+                                    onClick={() => setType('transfer')}
+                                    style={type === 'transfer' ? { background: 'oklch(40% 0.08 260 / 20%)', color: 'var(--sky)' } : undefined}
+                                >
+                                    Transferência
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -82,7 +111,7 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                             type="text"
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            placeholder="Ex: Supermercado"
+                            placeholder={type === 'transfer' ? 'Ex: Reserva mensal' : 'Ex: Supermercado'}
                             required
                             className="input"
                         />
@@ -94,20 +123,40 @@ export default function TransactionForm({ accountId, transaction, onClose }: Pro
                         <CurrencyInput className="input" value={amount} onValueChange={setAmount} required />
                     </div>
 
+                    {/* Transfer destination */}
+                    {type === 'transfer' && (
+                        <div style={{ width: 200 }}>
+                            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Conta destino</label>
+                            <select
+                                value={transferToAccountId}
+                                onChange={e => setTransferToAccountId(Number(e.target.value))}
+                                className="input"
+                                required
+                            >
+                                <option value="">Selecionar conta</option>
+                                {otherAccounts.map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Category */}
-                    <div style={{ width: 160 }}>
-                        <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
-                        <select
-                            value={category}
-                            onChange={e => setCategory(e.target.value)}
-                            className="input"
-                        >
-                            <option value="">Sem categoria</option>
-                            {TRANSACTION_CATEGORIES.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {type !== 'transfer' && (
+                        <div style={{ width: 160 }}>
+                            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
+                            <select
+                                value={category}
+                                onChange={e => setCategory(e.target.value)}
+                                className="input"
+                            >
+                                <option value="">Sem categoria</option>
+                                {categoryOptions.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Date */}
                     <div style={{ width: 160 }}>
