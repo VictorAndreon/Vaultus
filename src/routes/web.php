@@ -75,6 +75,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
     Route::patch('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'update']);
     Route::delete('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'destroy']);
+    Route::post('/finance/upcoming-payments', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'store']);
+    Route::patch('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'update']);
+    Route::delete('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'destroy']);
 
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
