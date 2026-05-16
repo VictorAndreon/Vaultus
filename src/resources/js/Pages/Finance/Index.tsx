@@ -19,7 +19,7 @@ interface FinancialGoal {
 interface AccountItem { id: number; name: string; type: string }
 
 interface BudgetEntry { id: number; name: string; color: string; spent: number; budget: number; pct: number }
-interface FinanceTransaction { id: number; date: string; description: string; category: string; method: string; amount: number; type: 'income' | 'expense' }
+interface FinanceTransaction { id: number; date: string; description: string; category: string; method: string; amount: number; type: 'income' | 'expense' | 'transfer' }
 interface DonutSegment { label: string; color: string; amount: number; pct: number }
 interface FlowChart { labels: string[]; income: number[]; expense: number[] }
 
@@ -293,9 +293,26 @@ function GoalCard({ g, onAporte, onEdit, onDelete }: {
   )
 }
 
-function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: () => void; onSave: (v: number) => void }) {
+function AporteModal({
+  goal,
+  accounts,
+  onClose,
+  onSave,
+}: {
+  goal: FinancialGoal
+  accounts: AccountItem[]
+  onClose: () => void
+  onSave: (v: { amount: number; accountId: number }) => void
+}) {
+  const externalAccounts = accounts.filter(a => a.type !== 'goal')
   const [amount, setAmount] = useState(goal.monthly_amount > 0 ? goal.monthly_amount : 0)
-  function submit(e: React.FormEvent) { e.preventDefault(); if (amount > 0) onSave(amount) }
+  const [accountId, setAccountId] = useState<number | ''>(externalAccounts[0]?.id ?? '')
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (amount > 0 && accountId !== '') onSave({ amount, accountId: Number(accountId) })
+  }
+
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 400, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
@@ -304,11 +321,27 @@ function AporteModal({ goal, onClose, onSave }: { goal: FinancialGoal; onClose: 
           <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
         </div>
         <form onSubmit={submit} style={{ padding: '22px 26px' }}>
+          <label className="kicker" style={{ display: 'block', marginBottom: 8 }}>De qual conta?</label>
+          <select
+            className="input"
+            style={{ width: '100%', marginBottom: 16 }}
+            value={accountId}
+            onChange={e => setAccountId(e.target.value === '' ? '' : Number(e.target.value))}
+            required
+          >
+            <option value="">Selecionar conta de origem</option>
+            {externalAccounts.map(a => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+
           <label className="kicker" style={{ display: 'block', marginBottom: 8 }}>Valor do aporte (R$)</label>
           <CurrencyInput value={amount} onValueChange={setAmount} autoFocus style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-3)', color: 'var(--text)', fontSize: 15, fontFamily: 'var(--mono)' }} />
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
             <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> Confirmar aporte</button>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={accountId === '' || amount <= 0}>
+              <Icons.Check size={13} /> Confirmar aporte
+            </button>
           </div>
         </form>
       </div>
@@ -757,9 +790,9 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
   const totalPct      = totalTarget > 0 ? Math.round(totalCurrent / totalTarget * 100) : 0
   const totalMonthly  = goals.reduce((s, g) => s + g.monthly_amount, 0)
 
-  function handleAporte(amount: number) {
+  function handleAporte({ amount, accountId }: { amount: number; accountId: number }) {
     if (!aporteGoal) return
-    router.post(`/finance/goals/${aporteGoal.id}/deposit`, { amount }, {
+    router.post(`/finance/goals/${aporteGoal.id}/deposit`, { amount, account_id: accountId }, {
       preserveScroll: true, onSuccess: () => setAporteGoal(null),
     })
   }
@@ -1008,9 +1041,15 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
                 <div>{t.description}</div>
                 <div className="muted">{t.category}</div>
                 <div className="muted mono" style={{ fontSize: 11 }}>{t.method}</div>
-                <div className="mono" style={{ textAlign: 'right', color: t.type === 'income' ? 'var(--success)' : 'var(--text)', fontWeight: 500 }}>
-                  {t.type === 'income' ? '+' : '−'} {fmtBRL(Math.abs(t.amount))}
-                </div>
+                {(() => {
+                  const sign = t.type === 'income' ? '+' : t.type === 'expense' ? '−' : '↔'
+                  const color = t.type === 'income' ? 'var(--success)' : t.type === 'expense' ? 'var(--rose)' : 'var(--text-3)'
+                  return (
+                    <div className="mono" style={{ textAlign: 'right', color, fontWeight: 500 }}>
+                      {sign} {fmtBRL(Math.abs(t.amount))}
+                    </div>
+                  )
+                })()}
               </div>
             ))
           }
@@ -1021,7 +1060,7 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
       {goalModal !== null && (
         <GoalModal goal={goalModal.goal} onClose={() => setGoalModal(null)} />
       )}
-      {aporteGoal && <AporteModal goal={aporteGoal} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
+      {aporteGoal && <AporteModal goal={aporteGoal} accounts={accounts_list} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
       {showAccountModal && <AccountModal onClose={() => setShowAccountModal(false)} />}
       {showTxModal && <TransactionModal accounts={accounts_list} budgetCategories={budget_category_names} onClose={() => setShowTxModal(false)} />}
       {showBudgetModal && <BudgetModal budgets={budgets} onClose={() => setShowBudgetModal(false)} />}
