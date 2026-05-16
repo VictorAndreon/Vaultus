@@ -71,8 +71,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/wishlist', [WishlistController::class, 'store']);
     Route::patch('/finance/wishlist/{item}', [WishlistController::class, 'update']);
     Route::delete('/finance/wishlist/{item}', [WishlistController::class, 'destroy']);
-    Route::post('/finance/transactions/{transaction}/allocations', [TransactionGoalController::class, 'store']);
-    Route::delete('/finance/allocations/{allocation}', [TransactionGoalController::class, 'destroy']);
+    // Rotas de alocação de transação a meta — desativadas em 2026-05-16.
+    // Substituídas pelo fluxo de aporte como transferência interna (POST /finance/goals/{goal}/deposit).
+    // Mantidas comentadas como registro da migração; ver TransactionGoalController para detalhes.
+    // Route::post('/finance/transactions/{transaction}/allocations', [TransactionGoalController::class, 'store']);
+    // Route::delete('/finance/allocations/{allocation}', [TransactionGoalController::class, 'destroy']);
     Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
     Route::put('/finance/budget-categories/batch', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'batch']);
     Route::patch('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'update']);

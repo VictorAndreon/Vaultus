@@ -8,6 +8,11 @@ use App\Domains\Finance\Models\TransactionGoal;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
+/**
+ * @deprecated Substituído por GoalDepositService (aporte como transferência interna).
+ *             Rotas correspondentes desativadas em routes/web.php. Mantido apenas
+ *             para evitar erros caso algum job/queue legado faça referência.
+ */
 class TransactionGoalController extends Controller
 {
     public function store(Request $request, Transaction $transaction)

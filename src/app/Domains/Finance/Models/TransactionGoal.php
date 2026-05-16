@@ -5,6 +5,13 @@ namespace App\Domains\Finance\Models;
 use App\Shared\Casts\EncryptedCast;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @deprecated Aportes de meta agora são modelados como transferências internas
+ *             entre conta de origem e subconta virtual da meta (ver
+ *             GoalDepositService + migration 2026_05_16_000002). Esta entidade
+ *             permanece exclusivamente para leitura de histórico anterior à
+ *             migração. Não criar novos registros aqui.
+ */
 class TransactionGoal extends Model
 {
     protected $fillable = [

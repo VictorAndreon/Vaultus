@@ -20,4 +20,12 @@ class AccountFactory extends Factory
             'currency'          => 'BRL',
         ];
     }
+
+    public function goalAccount(): static
+    {
+        return $this->state(fn () => [
+            'type'        => 'goal',
+            'is_internal' => true,
+        ]);
+    }
 }
