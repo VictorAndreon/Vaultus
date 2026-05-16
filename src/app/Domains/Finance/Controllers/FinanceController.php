@@ -100,22 +100,7 @@ class FinanceController extends Controller
             ];
         })->values()->toArray();
 
-        // Aportes manuais de metas (transaction_id IS NULL = depósito sem transação vinculada)
-        $goalDeposits = $user->financialGoals()
-            ->with(['transactionGoals' => fn($q) => $q->whereNull('transaction_id')])
-            ->get()
-            ->flatMap(fn($g) => $g->transactionGoals->map(fn($tg) => [
-                'id'          => 'tg-' . $tg->id,
-                'date'        => \Carbon\Carbon::parse($tg->occurred_at)->locale('pt_BR')->translatedFormat('d M'),
-                'description' => 'Aporte: ' . $g->name,
-                'category'    => 'Meta',
-                'method'      => $tg->note ?? 'Aporte manual',
-                'amount'      => (float) $tg->amount_encrypted,
-                'type'        => 'goal_deposit',
-                'occurred_ts' => \Carbon\Carbon::parse($tg->occurred_at)->timestamp,
-            ]));
-
-        // Transações recentes (regulares + aportes de metas, ordenadas por data)
+        // Transações recentes ordenadas por data
         $recentTx = $allTx->map(fn($t) => [
                 'id'          => $t->id,
                 'date'        => \Carbon\Carbon::parse($t->occurred_at)->locale('pt_BR')->translatedFormat('d M'),
@@ -126,7 +111,6 @@ class FinanceController extends Controller
                 'type'        => $t->type,
                 'occurred_ts' => \Carbon\Carbon::parse($t->occurred_at)->timestamp,
             ])
-            ->concat($goalDeposits)
             ->sortByDesc('occurred_ts')
             ->take(8)
             ->map(fn($t) => collect($t)->except('occurred_ts')->all())

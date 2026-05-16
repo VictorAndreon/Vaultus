@@ -160,4 +160,50 @@ class TransactionGoalTest extends TestCase
             ->delete("/finance/allocations/{$allocation->id}")
             ->assertForbidden();
     }
+
+    public function test_legacy_transaction_goal_deposits_are_migrated_to_transfers(): void
+    {
+        $user     = User::factory()->create();
+        $checking = Account::create([
+            'user_id'           => $user->id,
+            'name'              => 'Conta Corrente',
+            'type'              => 'checking',
+            'balance_encrypted' => 5000.00,
+            'currency'          => 'BRL',
+        ]);
+        $goal = FinancialGoal::create([
+            'user_id'                 => $user->id,
+            'name'                    => 'Legado',
+            'target_amount_encrypted' => 10000.00,
+        ]);
+        $virtual = $goal->virtualAccount;
+
+        // Simula aporte legado: TransactionGoal sem transaction_id
+        \DB::table('transaction_goal')->insert([
+            'financial_goal_id' => $goal->id,
+            'transaction_id'    => null,
+            'amount_encrypted'  => encrypt('300'),
+            'occurred_at'       => '2026-04-01',
+            'note'              => 'Aporte manual legado',
+            'created_at'        => now(),
+            'updated_at'        => now(),
+        ]);
+
+        // Instancia e executa a migration diretamente para evitar re-execução de migrations já rodadas
+        $migration = require base_path('database/migrations/2026_05_16_000002_backfill_goal_virtual_accounts.php');
+        $migration->up();
+
+        // Após migração: existe transação de transfer saindo da checking para a virtual
+        $this->assertDatabaseHas('transactions', [
+            'account_id'             => $checking->id,
+            'type'                   => 'transfer',
+            'transfer_to_account_id' => $virtual->id,
+        ]);
+
+        // E o TransactionGoal legado foi removido
+        $this->assertDatabaseMissing('transaction_goal', [
+            'financial_goal_id' => $goal->id,
+            'transaction_id'    => null,
+        ]);
+    }
 }
