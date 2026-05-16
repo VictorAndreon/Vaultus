@@ -109,4 +109,69 @@ class GoalDepositAsTransferTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_deposit_from_internal_account_is_rejected()
+    {
+        $user = User::factory()->create();
+        $goalSource = $user->financialGoals()->create([
+            'name'                    => 'Origem virtual',
+            'target_amount_encrypted' => 10000,
+        ]);
+        $goalDest = $user->financialGoals()->create([
+            'name'                    => 'Destino',
+            'target_amount_encrypted' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson("/finance/goals/{$goalDest->id}/deposit", [
+                'amount'     => 100,
+                'account_id' => $goalSource->virtualAccount->id,
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_deposit_persists_custom_occurred_at()
+    {
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 5000]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Com data',
+            'target_amount_encrypted' => 10000,
+        ]);
+
+        $this->actingAs($user)->post("/finance/goals/{$goal->id}/deposit", [
+            'amount'      => 200,
+            'account_id'  => $source->id,
+            'occurred_at' => '2026-03-15',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id'             => $source->id,
+            'transfer_to_account_id' => $goal->virtualAccount->id,
+            'occurred_at'            => '2026-03-15',
+        ]);
+    }
+
+    public function test_deposit_persists_custom_note_as_description()
+    {
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 5000]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Com nota',
+            'target_amount_encrypted' => 10000,
+        ]);
+
+        $this->actingAs($user)->post("/finance/goals/{$goal->id}/deposit", [
+            'amount'     => 300,
+            'account_id' => $source->id,
+            'note'       => 'Aporte do bônus',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id'             => $source->id,
+            'transfer_to_account_id' => $goal->virtualAccount->id,
+            'description'            => 'Aporte do bônus',
+        ]);
+    }
 }

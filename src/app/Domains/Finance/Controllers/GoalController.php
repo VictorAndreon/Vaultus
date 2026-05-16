@@ -2,9 +2,12 @@
 
 namespace App\Domains\Finance\Controllers;
 
+use App\Domains\Finance\Models\Account;
 use App\Domains\Finance\Models\FinancialGoal;
+use App\Domains\Finance\Services\GoalDepositService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule;
 
 class GoalController extends Controller
 {
@@ -87,19 +90,19 @@ class GoalController extends Controller
         return back();
     }
 
-    public function deposit(Request $request, FinancialGoal $goal, \App\Domains\Finance\Services\GoalDepositService $service)
+    public function deposit(Request $request, FinancialGoal $goal, GoalDepositService $service)
     {
         abort_if($goal->user_id !== $request->user()->id, 403);
 
+        $userId = $request->user()->id;
         $data = $request->validate([
             'amount'      => 'required|numeric|min:0.01',
-            'account_id'  => 'required|integer|exists:accounts,id',
+            'account_id'  => ['required', 'integer', Rule::exists('accounts', 'id')->where('user_id', $userId)],
             'occurred_at' => 'nullable|date_format:Y-m-d',
             'note'        => 'nullable|string|max:255',
         ]);
 
-        $source = \App\Domains\Finance\Models\Account::findOrFail($data['account_id']);
-        abort_if($source->user_id !== $request->user()->id, 422, 'Conta de origem inválida.');
+        $source = Account::findOrFail($data['account_id']);
 
         $service->deposit(
             goal:       $goal,

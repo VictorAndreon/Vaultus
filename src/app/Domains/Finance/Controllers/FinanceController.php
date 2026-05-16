@@ -134,7 +134,7 @@ class FinanceController extends Controller
 
         // Metas financeiras
         $goals = $user->financialGoals()->where('is_archived', false)
-            ->with('transactionGoals')
+            ->with(['transactionGoals', 'virtualAccount.transactions'])
             ->get()
             ->map(fn($g) => [
                 'id'                => $g->id,
