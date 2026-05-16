@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import CurrencyInput from '@/Components/CurrencyInput'
 import { Account, Transaction, PaginatedResponse } from '@/types'
+import { idempotentPost } from '@/lib/idempotentPost'
 import TransactionList from './components/TransactionList'
 
 interface Props {
@@ -44,7 +45,7 @@ function TransactionModal({ accountId, transaction, onClose }: {
     e.preventDefault()
     const data = { type, amount_encrypted: amount, description, category: category || null, occurred_at }
     const opts = { preserveScroll: true, onSuccess: onClose }
-    if (transaction === null) router.post(`/finance/accounts/${accountId}/transactions`, data, opts)
+    if (transaction === null) idempotentPost(`/finance/accounts/${accountId}/transactions`, data, opts)
     else router.patch(`/finance/transactions/${transaction.id}`, data, opts)
   }
 

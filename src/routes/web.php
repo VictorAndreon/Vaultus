@@ -55,36 +55,42 @@ Route::middleware('auth')->group(function () {
     Route::delete('/journal/prompts/{prompt}', [JournalPromptController::class, 'destroy']);
     Route::patch('/journal/{entry}', [JournalEntryController::class, 'update']);
 
-    // Finance
+    // Finance — leitura
     Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
     Route::get('/finance/accounts/{account}', [AccountController::class, 'show']);
-    Route::post('/finance/accounts', [AccountController::class, 'store']);
+    Route::get('/finance/transactions', [TransactionController::class, 'index'])->name('finance.transactions');
+
+    // Finance — escritas POST sob middleware de idempotência (protege contra clique-duplo / replay)
+    Route::middleware('idempotent')->group(function () {
+        Route::post('/finance/accounts', [AccountController::class, 'store']);
+        Route::post('/finance/accounts/{account}/transactions', [TransactionController::class, 'store']);
+        Route::post('/finance/goals', [GoalController::class, 'store']);
+        Route::post('/finance/goals/{goal}/deposit', [GoalController::class, 'deposit']);
+        Route::post('/finance/wishlist', [WishlistController::class, 'store']);
+        Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
+        Route::post('/finance/upcoming-payments', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'store']);
+    });
+
+    // Finance — atualizações e remoções (já idempotentes por contrato HTTP)
     Route::patch('/finance/accounts/{account}', [AccountController::class, 'update']);
     Route::delete('/finance/accounts/{account}', [AccountController::class, 'destroy']);
-    Route::get('/finance/transactions', [TransactionController::class, 'index'])->name('finance.transactions');
-    Route::post('/finance/accounts/{account}/transactions', [TransactionController::class, 'store']);
     Route::patch('/finance/transactions/{transaction}', [TransactionController::class, 'update']);
     Route::delete('/finance/transactions/{transaction}', [TransactionController::class, 'destroy']);
-    Route::post('/finance/goals', [GoalController::class, 'store']);
     Route::patch('/finance/goals/{goal}', [GoalController::class, 'update']);
     Route::delete('/finance/goals/{goal}', [GoalController::class, 'destroy']);
-    Route::post('/finance/goals/{goal}/deposit', [GoalController::class, 'deposit']);
-    Route::post('/finance/wishlist', [WishlistController::class, 'store']);
     Route::patch('/finance/wishlist/{item}', [WishlistController::class, 'update']);
     Route::delete('/finance/wishlist/{item}', [WishlistController::class, 'destroy']);
+    Route::put('/finance/budget-categories/batch', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'batch']);
+    Route::patch('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'update']);
+    Route::delete('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'destroy']);
+    Route::patch('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'update']);
+    Route::delete('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'destroy']);
+    Route::patch('/finance/settings', [\App\Domains\Finance\Controllers\FinanceController::class, 'updateSettings']);
     // Rotas de alocação de transação a meta — desativadas em 2026-05-16.
     // Substituídas pelo fluxo de aporte como transferência interna (POST /finance/goals/{goal}/deposit).
     // Mantidas comentadas como registro da migração; ver TransactionGoalController para detalhes.
     // Route::post('/finance/transactions/{transaction}/allocations', [TransactionGoalController::class, 'store']);
     // Route::delete('/finance/allocations/{allocation}', [TransactionGoalController::class, 'destroy']);
-    Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
-    Route::put('/finance/budget-categories/batch', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'batch']);
-    Route::patch('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'update']);
-    Route::delete('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'destroy']);
-    Route::post('/finance/upcoming-payments', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'store']);
-    Route::patch('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'update']);
-    Route::delete('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'destroy']);
-    Route::patch('/finance/settings', [\App\Domains\Finance\Controllers\FinanceController::class, 'updateSettings']);
 
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');

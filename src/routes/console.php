@@ -15,3 +15,6 @@ Schedule::command('backup:run --type=weekly')
 Schedule::command('backup:run --type=monthly')
     ->monthlyOn(1, '04:00')
     ->withoutOverlapping();
+
+Schedule::command('idempotency:prune --days=7')
+    ->daily();

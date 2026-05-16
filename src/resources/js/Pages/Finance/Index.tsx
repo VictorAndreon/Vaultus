@@ -3,6 +3,7 @@ import { router, Link } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import CurrencyInput from '@/Components/CurrencyInput'
+import { idempotentPost } from '@/lib/idempotentPost'
 
 interface FinancialGoal {
   id: number; name: string; note: string | null
@@ -378,7 +379,7 @@ function GoalModal({ goal, onClose }: { goal: FinancialGoal | null; onClose: () 
     }
     const opts = { preserveScroll: true, onSuccess: onClose }
     if (goal) router.patch(`/finance/goals/${goal.id}`, data, opts)
-    else router.post('/finance/goals', data, opts)
+    else idempotentPost('/finance/goals', data, opts)
   }
 
   return (
@@ -487,7 +488,7 @@ function AccountModal({ onClose }: { onClose: () => void }) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    router.post('/finance/accounts', {
+    idempotentPost('/finance/accounts', {
       name,
       type,
       balance_encrypted: balance,
@@ -551,7 +552,7 @@ function TransactionModal({ accounts, budgetCategories, onClose }: { accounts: A
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    router.post(`/finance/accounts/${accountId}/transactions`, {
+    idempotentPost(`/finance/accounts/${accountId}/transactions`, {
       type,
       amount_encrypted: amount,
       description,
@@ -728,7 +729,7 @@ function UpcomingPaymentModal({ payment, goals, onClose }: {
     }
     const opts = { preserveScroll: true, onSuccess: onClose }
     if (payment) router.patch(`/finance/upcoming-payments/${payment.id}`, data, opts)
-    else router.post('/finance/upcoming-payments', data, opts)
+    else idempotentPost('/finance/upcoming-payments', data, opts)
   }
 
   return (
@@ -792,7 +793,7 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
 
   function handleAporte({ amount, accountId }: { amount: number; accountId: number }) {
     if (!aporteGoal) return
-    router.post(`/finance/goals/${aporteGoal.id}/deposit`, { amount, account_id: accountId }, {
+    idempotentPost(`/finance/goals/${aporteGoal.id}/deposit`, { amount, account_id: accountId }, {
       preserveScroll: true, onSuccess: () => setAporteGoal(null),
     })
   }
