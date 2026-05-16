@@ -6,6 +6,7 @@ use App\Domains\Auth\Models\User;
 use App\Shared\Casts\EncryptedCast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class FinancialGoal extends Model
 {
@@ -20,15 +21,17 @@ class FinancialGoal extends Model
         });
 
         static::created(function (FinancialGoal $goal) {
-            \App\Domains\Finance\Models\Account::create([
-                'user_id'           => $goal->user_id,
-                'name'              => $goal->name,
-                'type'              => 'goal',
-                'balance_encrypted' => 0,
-                'currency'          => 'BRL',
-                'is_internal'       => true,
-                'goal_id'           => $goal->id,
-            ]);
+            DB::transaction(function () use ($goal) {
+                Account::create([
+                    'user_id'           => $goal->user_id,
+                    'name'              => $goal->name,
+                    'type'              => 'goal',
+                    'balance_encrypted' => 0,
+                    'currency'          => 'BRL',
+                    'is_internal'       => true,
+                    'goal_id'           => $goal->id,
+                ]);
+            });
         });
 
         static::updated(function (FinancialGoal $goal) {
@@ -101,7 +104,7 @@ class FinancialGoal extends Model
 
     public function virtualAccount()
     {
-        return $this->hasOne(\App\Domains\Finance\Models\Account::class, 'goal_id');
+        return $this->hasOne(Account::class, 'goal_id');
     }
 
     public function transactionGoals()
