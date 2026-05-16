@@ -17,10 +17,10 @@ class GoalTest extends TestCase
 
         $this->actingAs($user)
             ->post('/finance/goals', [
-                'name'                    => 'Viagem',
-                'target_amount_encrypted' => 5000.00,
-                'category'                => 'Lazer',
-                'deadline'                => '2026-12-31',
+                'name'           => 'Viagem',
+                'target_amount'  => 5000.00,
+                'category'       => 'Lazer',
+                'deadline'       => '2026-12',
             ])
             ->assertRedirect();
 

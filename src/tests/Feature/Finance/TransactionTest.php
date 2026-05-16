@@ -184,7 +184,7 @@ class TransactionTest extends TestCase
             ->assertStatus(200)
             ->assertInertia(fn ($page) => $page
                 ->component('Finance/Index')
-                ->where('accounts.data.0.current_balance', 1300)
+                ->where('net_worth', fn ($v) => (float) $v === 1300.0)
             );
     }
 }

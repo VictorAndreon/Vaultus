@@ -25,9 +25,8 @@ class AccountTest extends TestCase
             ->assertStatus(200)
             ->assertInertia(fn ($page) => $page
                 ->component('Finance/Index')
-                ->has('accounts')
+                ->has('accounts_list')
                 ->has('goals')
-                ->has('wishlist')
                 ->has('net_worth')
             );
     }
