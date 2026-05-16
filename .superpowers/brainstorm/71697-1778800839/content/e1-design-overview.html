@@ -1,0 +1,206 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1a14; color: #e8f0eb; font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; }
+
+  h2 { font-size: 22px; margin-bottom: 6px; }
+  .subtitle { color: #64846e; font-size: 13px; margin-bottom: 28px; }
+
+  .bloco-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+    color: #4ade80; font-weight: 600; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .bloco-label::after { content:''; flex:1; height:1px; background: rgba(74,222,128,.2); }
+
+  .change-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+  .change-item {
+    background: #162119; border: 1px solid #243329; border-radius: 12px;
+    padding: 16px 20px; display: flex; gap: 16px; align-items: flex-start;
+  }
+  .change-icon {
+    width: 36px; height: 36px; border-radius: 10px; flex: none;
+    display: grid; place-items: center; font-size: 16px;
+  }
+  .icon-red   { background: rgba(248,113,113,.15); color: #f87171; }
+  .icon-gold  { background: rgba(250,204,21,.15);  color: #facc15; }
+  .icon-green { background: rgba(74,222,128,.15);  color: #4ade80; }
+  .icon-sky   { background: rgba(147,197,253,.15); color: #93c5fd; }
+
+  .change-body { flex: 1; }
+  .change-title { font-size: 14px; font-weight: 600; color: #e8f0eb; margin-bottom: 4px; }
+  .change-desc  { font-size: 12.5px; color: #64846e; line-height: 1.6; }
+  .change-tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px;
+    font-weight: 500; margin-top: 6px; font-family: 'Geist Mono', monospace;
+  }
+  .tag-new   { background: rgba(74,222,128,.15);  color: #4ade80;  border: 1px solid rgba(74,222,128,.25); }
+  .tag-fix   { background: rgba(248,113,113,.12); color: #f87171;  border: 1px solid rgba(248,113,113,.25); }
+  .tag-improve { background: rgba(250,204,21,.12); color: #facc15; border: 1px solid rgba(250,204,21,.25); }
+
+  /* Mini mockup do modal */
+  .modal-preview {
+    background: #162119; border: 1px solid #243329; border-radius: 14px;
+    padding: 20px; margin-top: 8px;
+  }
+  .modal-header {
+    padding-bottom: 14px; border-bottom: 1px solid #1e2d22; margin-bottom: 16px;
+  }
+  .modal-kicker { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: #64846e; font-family: 'Geist Mono', monospace; margin-bottom: 4px; }
+  .modal-title  { font-size: 18px; font-weight: 600; color: #e8f0eb; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-field { display: flex; flex-direction: column; gap: 5px; }
+  .field-label { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: #64846e; font-family: 'Geist Mono', monospace; }
+  .field-mock  {
+    height: 36px; border-radius: 8px; background: #1a2920; border: 1px solid #243329;
+    display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: #8aac92;
+  }
+  .field-mock.highlight { border-color: rgba(74,222,128,.4); color: #4ade80; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #1e2d22; }
+  .btn-ghost-mock { padding: 7px 14px; border-radius: 7px; border: 1px solid #243329; color: #64846e; font-size: 12px; }
+  .btn-primary-mock { padding: 7px 14px; border-radius: 7px; background: #4ade80; color: #0a1a0e; font-size: 12px; font-weight: 600; }
+  .seg-mock { display: flex; background: #1a2920; border-radius: 8px; overflow: hidden; border: 1px solid #243329; }
+  .seg-btn { flex: 1; padding: 7px 0; font-size: 11px; text-align: center; color: #64846e; }
+  .seg-btn.active { background: rgba(74,222,128,.15); color: #4ade80; font-weight: 600; }
+
+  /* Goal icons grid */
+  .icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }
+  .icon-cell {
+    height: 34px; border-radius: 8px; background: #1a2920; border: 1px solid #243329;
+    display: grid; place-items: center; font-size: 14px; cursor: pointer;
+  }
+  .icon-cell.active { background: rgba(74,222,128,.15); border-color: rgba(74,222,128,.4); }
+
+  /* GoalCard with CRUD */
+  .goal-card-mock {
+    background: #162119; border: 1px solid #243329; border-radius: 12px; padding: 20px;
+    position: relative;
+  }
+  .goal-card-actions { position: absolute; top: 16px; right: 16px; display: flex; gap: 6px; }
+  .btn-xs { padding: 4px 10px; border-radius: 6px; border: 1px solid #243329; color: #64846e; font-size: 11px; cursor: pointer; }
+  .btn-xs.danger { color: #f87171; border-color: rgba(248,113,113,.3); }
+</style>
+
+<h2>Design — Bloco E1</h2>
+<p class="subtitle">Modals de CRUD + correções funcionais no Finance/Index.tsx</p>
+
+<div class="bloco-label">1 · Botão "+ Lançamento" — modal rápido</div>
+
+<div class="change-list">
+  <div class="change-item">
+    <div class="change-icon icon-red">⚡</div>
+    <div class="change-body">
+      <div class="change-title">Modal de Novo Lançamento</div>
+      <div class="change-desc">Abre ao clicar no botão do header. Campos: conta (select das contas do usuário), tipo (receita/despesa — seg control), valor, categoria, data, descrição, método de pagamento.</div>
+      <span class="change-tag tag-fix">corrige bug</span>
+      <div class="modal-preview" style="max-width:520px; margin-top:14px;">
+        <div class="modal-header">
+          <div class="modal-kicker">Finanças · Novo lançamento</div>
+          <div class="modal-title">Registrar transação</div>
+        </div>
+        <div class="seg-mock" style="margin-bottom:12px;">
+          <div class="seg-btn active">Despesa</div>
+          <div class="seg-btn">Receita</div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><div class="field-label">Conta</div><div class="field-mock">Nubank — Corrente ▾</div></div>
+          <div class="form-field"><div class="field-label">Valor (R$)</div><div class="field-mock highlight">0,00</div></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><div class="field-label">Categoria</div><div class="field-mock">Alimentação ▾</div></div>
+          <div class="form-field"><div class="field-label">Data</div><div class="field-mock">14/05/2026</div></div>
+        </div>
+        <div class="form-field" style="margin-bottom:10px;"><div class="field-label">Descrição</div><div class="field-mock">ex: iFood — jantar</div></div>
+        <div class="form-field"><div class="field-label">Método</div><div class="field-mock">Cartão de crédito ▾</div></div>
+        <div class="form-actions">
+          <div class="btn-ghost-mock">Cancelar</div>
+          <div class="btn-primary-mock">Registrar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bloco-label">2 · Metas — CRUD integrado ao Index</div>
+
+<div class="change-list">
+  <div class="change-item">
+    <div class="change-icon icon-green">🎯</div>
+    <div class="change-body">
+      <div class="change-title">GoalCard com Editar / Excluir</div>
+      <div class="change-desc">Os botões ficam discretos no canto superior direito do GoalCard rico (já existente no Index). Ao clicar Editar, abre modal pré-preenchido.</div>
+      <span class="change-tag tag-new">nova ação</span>
+      <div class="goal-card-mock" style="max-width:420px; margin-top:14px;">
+        <div class="goal-card-actions">
+          <div class="btn-xs">Editar</div>
+          <div class="btn-xs danger">Excluir</div>
+        </div>
+        <div style="font-size:12px; color:#4ade80; font-weight:600; margin-bottom:8px;">🏠 Casa Própria <span style="font-size:10px; background:rgba(74,222,128,.15); color:#4ade80; border-radius:99px; padding:2px 8px; margin-left:4px;">No prazo</span></div>
+        <div style="font-size:22px; color:#e8f0eb; font-weight:300; margin-bottom:4px;">R$ 48.000</div>
+        <div style="font-size:11px; color:#64846e; margin-bottom:10px;">de R$ 200.000</div>
+        <div style="height:5px; background:#1e2d22; border-radius:99px; overflow:hidden; margin-bottom:14px;"><div style="width:24%; height:100%; background:#4ade80; border-radius:99px;"></div></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; font-size:11px; color:#64846e;">
+          <div><div style="font-size:9px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px;">Aporte mensal</div><div style="color:#e8f0eb;">R$ 2.000</div></div>
+          <div><div style="font-size:9px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px;">Falta</div><div style="color:#e8f0eb;">R$ 152k</div></div>
+          <div><div style="font-size:9px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px;">Prazo</div><div style="color:#e8f0eb;">Dez/2031</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="change-item">
+    <div class="change-icon icon-sky">🖼</div>
+    <div class="change-body">
+      <div class="change-title">Modal de Meta — com seletor de ícone expandido</div>
+      <div class="change-desc">Campos: nome, ícone (grid de ícones — expandir dos atuais 3 para ~16), cor (palette de cores do design system), valor alvo, aporte mensal, prazo, nota.</div>
+      <span class="change-tag tag-improve">melhoria</span>
+      <div style="margin-top:12px;">
+        <div class="field-label" style="margin-bottom:8px;">Ícone da meta</div>
+        <div class="icon-grid">
+          <div class="icon-cell active">🏠</div>
+          <div class="icon-cell">✈️</div>
+          <div class="icon-cell">🚗</div>
+          <div class="icon-cell">🎓</div>
+          <div class="icon-cell">💍</div>
+          <div class="icon-cell">🏖</div>
+          <div class="icon-cell">💼</div>
+          <div class="icon-cell">🏥</div>
+          <div class="icon-cell">📱</div>
+          <div class="icon-cell">🐶</div>
+          <div class="icon-cell">🌱</div>
+          <div class="icon-cell">🛡</div>
+          <div class="icon-cell">⭐</div>
+          <div class="icon-cell">🎮</div>
+          <div class="icon-cell">🔧</div>
+          <div class="icon-cell">💰</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bloco-label">3 · Orçamentos — CRUD via modal</div>
+
+<div class="change-list">
+  <div class="change-item">
+    <div class="change-icon icon-gold">📊</div>
+    <div class="change-body">
+      <div class="change-title">Botão "Gerenciar Orçamentos" na seção + modal de lista editável</div>
+      <div class="change-desc">Aparece no card-head dos Orçamentos. Modal lista as categorias existentes com campo de limite editável inline, botão excluir por linha, e formulário de nova categoria no rodapé.</div>
+      <span class="change-tag tag-new">novo CRUD</span>
+    </div>
+  </div>
+</div>
+
+<div class="bloco-label">4 · Taxa de poupança — meta dinâmica</div>
+
+<div class="change-list">
+  <div class="change-item">
+    <div class="change-icon icon-gold">🎯</div>
+    <div class="change-body">
+      <div class="change-title">Meta de poupança configurável (ou padrão sensato)</div>
+      <div class="change-desc">Atualmente "meta 40%" está hardcoded no JSX. Opção: usar um campo de configuração (settings do usuário) ou mudar para um padrão mais realista de 20% com possibilidade de editar inline. Recomendado: campo simples nas configs do usuário, passado pelo controller.</div>
+      <span class="change-tag tag-improve">melhoria</span>
+    </div>
+  </div>
+</div>

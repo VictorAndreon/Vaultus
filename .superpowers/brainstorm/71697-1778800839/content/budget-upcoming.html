@@ -1,0 +1,246 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green:  oklch(74% 0.135 155);
+    --gold:   oklch(82% 0.13 85);
+    --rose:   oklch(72% 0.13 25);
+    --sky:    oklch(76% 0.10 230);
+    --purple: oklch(72% 0.12 290);
+    --teal:   oklch(76% 0.12 195);
+    --pink:   oklch(74% 0.14 340);
+    --bg:     oklch(15% 0.012 155);
+    --surface: oklch(19% 0.013 155);
+    --surface-2: oklch(22% 0.014 155);
+    --line:   oklch(28% 0.014 155);
+    --line-soft: oklch(24% 0.012 155);
+    --text:   oklch(96% 0.006 155);
+    --text-2: oklch(78% 0.012 155);
+    --text-3: oklch(58% 0.014 155);
+    --text-4: oklch(42% 0.013 155);
+    --mono: ui-monospace, monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; padding: 24px; }
+  h2 { font-size: 20px; margin-bottom: 6px; }
+  .subtitle { color: var(--text-3); font-size: 13px; margin-bottom: 28px; }
+
+  /* Layout dos dois cards */
+  .two-col { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; max-width: 900px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 20px 22px;
+  }
+  .card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px;
+  }
+  .card-kicker {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--text-4); font-family: var(--mono); font-weight: 500;
+  }
+  .link-ajustar {
+    font-size: 12px; color: var(--text-3); cursor: pointer;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .link-ajustar:hover { color: var(--green); }
+
+  /* Orçamentos */
+  .budget-list { display: flex; flex-direction: column; gap: 13px; }
+  .budget-item { }
+  .budget-row {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 6px;
+  }
+  .budget-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-right: 8px; }
+  .budget-name { font-size: 13px; color: var(--text-2); flex: none; }
+  .budget-pct  { font-size: 11px; color: var(--text-4); font-family: var(--mono); margin-left: 6px; flex: none; }
+  .budget-vals {
+    margin-left: auto;
+    font-size: 12px; font-family: var(--mono); color: var(--text-3);
+    white-space: nowrap;
+  }
+  .budget-vals strong { color: var(--text-2); font-weight: 500; }
+  .budget-bar { height: 4px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+  .budget-fill { height: 100%; border-radius: 99px; }
+
+  /* Próximos pagamentos */
+  .payment-list { display: flex; flex-direction: column; }
+  .payment-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .payment-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .payment-item:first-child { padding-top: 0; }
+  .payment-date {
+    font-size: 11px; font-family: var(--mono); color: var(--text-4);
+    flex: none; width: 44px;
+  }
+  .payment-desc { flex: 1; font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+  .payment-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 99px;
+    font-family: var(--mono); font-weight: 500; flex: none;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .tag-urgent { background: oklch(72% 0.13 25 / .2); color: var(--rose); border: 1px solid oklch(72% 0.13 25 / .35); }
+  .tag-meta   { background: oklch(74% 0.135 155 / .15); color: var(--green); border: 1px solid oklch(74% 0.135 155 / .3); }
+  .tag-dot    { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .payment-amount { font-size: 12.5px; font-family: var(--mono); color: var(--text-2); flex: none; font-weight: 500; }
+
+  /* Annotation */
+  .annot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 24px; max-width: 900px; }
+  .annot {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .annot-title { font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .annot-item { font-size: 11.5px; color: var(--text-3); line-height: 1.8; }
+  .annot-item::before { content: '·  '; color: var(--text-4); }
+  .badge { display:inline-block; font-size:9px; padding:1px 6px; border-radius:99px; font-family:var(--mono); font-weight:600; }
+  .badge-exists { background: oklch(74% .135 155 / .15); color: var(--green); }
+  .badge-new    { background: oklch(82% .13 85 / .15); color: var(--gold); }
+</style>
+
+<h2>Orçamentos + Próximos Pagamentos</h2>
+<p class="subtitle">Dois cards lado a lado — redesign do existente + nova feature</p>
+
+<div class="two-col">
+
+  <!-- Orçamentos -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-kicker">Orçamentos · Maio</div>
+      <div class="link-ajustar">Ajustar</div>
+    </div>
+    <div class="budget-list">
+
+      <div class="budget-item">
+        <div class="budget-row">
+          <div class="budget-dot" style="background:var(--green)"></div>
+          <div class="budget-name">Moradia</div>
+          <div class="budget-pct">90%</div>
+          <div class="budget-vals"><strong>R$ 3.800</strong> / R$ 4.200</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" style="width:90%;background:var(--green)"></div></div>
+      </div>
+
+      <div class="budget-item">
+        <div class="budget-row">
+          <div class="budget-dot" style="background:var(--gold)"></div>
+          <div class="budget-name">Alimentação</div>
+          <div class="budget-pct">84%</div>
+          <div class="budget-vals"><strong>R$ 1.840</strong> / R$ 2.200</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" style="width:84%;background:var(--gold)"></div></div>
+      </div>
+
+      <div class="budget-item">
+        <div class="budget-row">
+          <div class="budget-dot" style="background:var(--sky)"></div>
+          <div class="budget-name">Transporte</div>
+          <div class="budget-pct">77%</div>
+          <div class="budget-vals"><strong>R$ 920</strong> / R$ 1.200</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" style="width:77%;background:var(--sky)"></div></div>
+      </div>
+
+      <div class="budget-item">
+        <div class="budget-row">
+          <div class="budget-dot" style="background:var(--purple)"></div>
+          <div class="budget-name">Lazer</div>
+          <div class="budget-pct">68%</div>
+          <div class="budget-vals"><strong>R$ 680</strong> / R$ 1.000</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" style="width:68%;background:var(--purple)"></div></div>
+      </div>
+
+      <div class="budget-item">
+        <div class="budget-row">
+          <div class="budget-dot" style="background:var(--pink)"></div>
+          <div class="budget-name">Assinaturas</div>
+          <div class="budget-pct">89%</div>
+          <div class="budget-vals"><strong>R$ 312</strong> / R$ 350</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" style="width:89%;background:var(--pink)"></div></div>
+      </div>
+
+      <div class="budget-item">
+        <div class="budget-row">
+          <div class="budget-dot" style="background:var(--teal)"></div>
+          <div class="budget-name">Saúde</div>
+          <div class="budget-pct">40%</div>
+          <div class="budget-vals"><strong>R$ 240</strong> / R$ 600</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" style="width:40%;background:var(--teal)"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Próximos Pagamentos -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-kicker">Próximos Pagamentos</div>
+    </div>
+    <div class="payment-list">
+
+      <div class="payment-item">
+        <div class="payment-date">15 Mai</div>
+        <div class="payment-desc">
+          Fatura Bradesco
+          <span class="payment-tag tag-urgent">3d</span>
+        </div>
+        <div class="payment-amount">R$ 2.840,50</div>
+      </div>
+
+      <div class="payment-item">
+        <div class="payment-date">20 Mai</div>
+        <div class="payment-desc">Aluguel · maio</div>
+        <div class="payment-amount">R$ 3.800</div>
+      </div>
+
+      <div class="payment-item">
+        <div class="payment-date">22 Mai</div>
+        <div class="payment-desc">Plano de saúde</div>
+        <div class="payment-amount">R$ 1.240</div>
+      </div>
+
+      <div class="payment-item">
+        <div class="payment-date">28 Mai</div>
+        <div class="payment-desc">Anuidade Itaú</div>
+        <div class="payment-amount">R$ 540</div>
+      </div>
+
+      <div class="payment-item">
+        <div class="payment-date">30 Mai</div>
+        <div class="payment-desc">
+          Aporte XP · meta
+          <span class="payment-tag tag-meta"><span class="tag-dot"></span>meta</span>
+        </div>
+        <div class="payment-amount">R$ 6.000</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- O que cada card precisa -->
+<div class="annot-grid">
+  <div class="annot">
+    <div class="annot-title"><span class="badge badge-exists">já existe</span> Card de Orçamentos</div>
+    <div class="annot-item">Tabela <code>budget_categories</code> já existe no DB</div>
+    <div class="annot-item">Dado <code>budgets[]</code> já vem do controller</div>
+    <div class="annot-item">Adicionar campo <code>color</code> por categoria (já tem no modelo)</div>
+    <div class="annot-item">Redesign visual: dot colorido, valores alinhados à direita, "Ajustar" abre modal CRUD</div>
+    <div class="annot-item">Barra individual por cor de categoria</div>
+  </div>
+  <div class="annot">
+    <div class="annot-title"><span class="badge badge-new">novo</span> Card de Próximos Pagamentos</div>
+    <div class="annot-item">Nova tabela <code>upcoming_payments</code>: date, description, amount, tag, linked_goal_id (nullable)</div>
+    <div class="annot-item">Badge <code>Xd</code> calculado: dias até o vencimento (vermelho se ≤ 3)</div>
+    <div class="annot-item">Badge <code>meta</code>: quando linked_goal_id está preenchido</div>
+    <div class="annot-item">Controller: buscar pagamentos dos próximos 30 dias, ordenados por data</div>
+    <div class="annot-item">CRUD via modal (criar, editar, excluir pagamentos futuros)</div>
+  </div>
+</div>

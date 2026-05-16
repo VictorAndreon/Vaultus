@@ -2,7 +2,6 @@
 
 use App\Domains\Finance\Models\Account;
 use App\Domains\Finance\Models\FinancialGoal;
-use App\Domains\Finance\Models\Transaction;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -47,35 +46,38 @@ return new class extends Migration {
 
             DB::transaction(function () use ($source, $goal, $row, $amount) {
                 $virtual = $goal->virtualAccount;
+                $encryptedAmount = encrypt((string) $amount);
+                $description = $row->note ?? 'Aporte migrado';
+                $occurredAt = $row->occurred_at ?? now()->toDateString();
 
-                $outgoing = Transaction::create([
+                $outgoingId = DB::table('transactions')->insertGetId([
                     'account_id'             => $source->id,
                     'type'                   => 'transfer',
-                    'amount_encrypted'       => $amount,
+                    'amount_encrypted'       => $encryptedAmount,
                     'transfer_to_account_id' => $virtual->id,
-                    'description'            => $row->note ?? 'Aporte migrado',
+                    'description'            => $description,
                     'category'               => null,
-                    'occurred_at'            => $row->occurred_at ?? now()->toDateString(),
+                    'occurred_at'            => $occurredAt,
                     'created_at'             => $row->created_at,
                     'updated_at'             => $row->updated_at,
                 ]);
 
-                $incoming = Transaction::create([
+                $incomingId = DB::table('transactions')->insertGetId([
                     'account_id'       => $virtual->id,
                     'type'             => 'transfer',
-                    'amount_encrypted' => $amount,
-                    'transfer_pair_id' => $outgoing->id,
-                    'description'      => $row->note ?? 'Aporte migrado',
+                    'amount_encrypted' => $encryptedAmount,
+                    'transfer_pair_id' => $outgoingId,
+                    'description'      => $description,
                     'category'         => null,
-                    'occurred_at'      => $row->occurred_at ?? now()->toDateString(),
+                    'occurred_at'      => $occurredAt,
                     'created_at'       => $row->created_at,
                     'updated_at'       => $row->updated_at,
                 ]);
 
-                $outgoing->update(['transfer_pair_id' => $incoming->id]);
-            });
+                DB::table('transactions')->where('id', $outgoingId)->update(['transfer_pair_id' => $incomingId]);
 
-            DB::table('transaction_goal')->where('id', $row->id)->delete();
+                DB::table('transaction_goal')->where('id', $row->id)->delete();
+            });
         });
     }
 

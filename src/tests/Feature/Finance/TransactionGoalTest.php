@@ -193,12 +193,21 @@ class TransactionGoalTest extends TestCase
         $migration = require base_path('database/migrations/2026_05_16_000002_backfill_goal_virtual_accounts.php');
         $migration->up();
 
-        // Após migração: existe transação de transfer saindo da checking para a virtual
+        // Após migração: perna outgoing — checking → virtual
         $this->assertDatabaseHas('transactions', [
             'account_id'             => $checking->id,
             'type'                   => 'transfer',
             'transfer_to_account_id' => $virtual->id,
         ]);
+
+        // Perna incoming — registrada na conta virtual com pareamento
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $virtual->id,
+            'type'       => 'transfer',
+        ]);
+
+        // E o saldo da meta passa a refletir o aporte migrado
+        $this->assertSame(300.0, (float) $goal->fresh()->current_amount);
 
         // E o TransactionGoal legado foi removido
         $this->assertDatabaseMissing('transaction_goal', [

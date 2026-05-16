@@ -1,0 +1,74 @@
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --green: oklch(74% 0.135 155);
+    --bg: oklch(15% 0.012 155);
+    --surface: oklch(19% 0.013 155);
+    --line: oklch(28% 0.014 155);
+    --text: oklch(96% 0.006 155);
+    --text-3: oklch(58% 0.014 155);
+    --text-4: oklch(42% 0.013 155);
+  }
+  body { background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; }
+  h2 { margin-bottom: 6px; font-size: 20px; }
+  .subtitle { color: var(--text-3); font-size: 13px; margin-bottom: 28px; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; }
+  .swatch-block { border-radius: 14px; border: 1px solid var(--line); padding: 24px; background: var(--surface); }
+  .swatch { height: 56px; border-radius: 10px; margin-bottom: 16px; }
+  .swatch-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-4); margin-bottom: 4px; }
+  .swatch-value { font-family: 'Geist Mono', monospace; font-size: 13px; margin-bottom: 12px; }
+  .swatch-desc { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+
+  /* Mini exemplos de UI com cada cor */
+  .ui-sample { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; width: fit-content; }
+  .mini-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 99px; font-size: 11px; }
+  .mini-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .mini-bar { height: 5px; border-radius: 99px; background: oklch(22% 0.014 155); overflow: hidden; }
+  .mini-fill { height: 100%; border-radius: 99px; width: 60%; }
+  .mini-pct { font-size: 12px; font-family: monospace; }
+</style>
+
+<h2>Verde do Design System vs. Mockup</h2>
+<p class="subtitle">A implementação sempre usará <code>var(--green)</code> — o mesmo token do restante do app</p>
+
+<div class="compare">
+
+  <!-- Mockup color -->
+  <div class="swatch-block">
+    <div class="swatch" style="background: #4ade80;"></div>
+    <div class="swatch-label">No mockup</div>
+    <div class="swatch-value" style="color: #4ade80;">#4ade80</div>
+    <div class="swatch-desc">Verde elétrico/lima — aproximação usada nos wireframes para visualização rápida. <strong>Não será usado na implementação.</strong></div>
+    <div class="ui-sample">
+      <div class="mini-btn" style="background: #4ade80; color: #0a1a0e;">+ Lançamento</div>
+      <div class="mini-tag" style="background: rgba(74,222,128,.15); color: #4ade80; border: 1px solid rgba(74,222,128,.3);">
+        <div class="mini-dot" style="background: #4ade80;"></div> No prazo
+      </div>
+      <div class="mini-bar"><div class="mini-fill" style="background: #4ade80;"></div></div>
+      <div class="mini-pct" style="color: #4ade80;">60%</div>
+    </div>
+  </div>
+
+  <!-- Design system color -->
+  <div class="swatch-block" style="border-color: oklch(74% 0.135 155); box-shadow: 0 0 0 1px oklch(74% 0.135 155 / .2);">
+    <div class="swatch" style="background: oklch(74% 0.135 155);"></div>
+    <div class="swatch-label">No app real</div>
+    <div class="swatch-value" style="color: var(--green);">oklch(74% 0.135 155)</div>
+    <div class="swatch-desc">Verde floresta — token <code>var(--green)</code> usado em toda a UI: botões, tags, barras de progresso, sparklines, badges. É o acento principal do Vaultus.</div>
+    <div class="ui-sample">
+      <div class="mini-btn" style="background: var(--green); color: #0a1a0e;">+ Lançamento</div>
+      <div class="mini-tag" style="background: oklch(74% 0.135 155 / .15); color: var(--green); border: 1px solid oklch(74% 0.135 155 / .3);">
+        <div class="mini-dot" style="background: var(--green);"></div> No prazo
+      </div>
+      <div class="mini-bar"><div class="mini-fill" style="background: var(--green);"></div></div>
+      <div class="mini-pct" style="color: var(--green);">60%</div>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top: 24px; font-size: 13px; color: var(--text-3); max-width: 700px;">
+  O verde do app é mais escuro e terroso — harmoniza com o fundo OKLCH hue 155. Os mockups foram approximações de wireframe. Na implementação, todos os elementos novos (modal, botões, tags, barras) usam <code>var(--green)</code> automaticamente via classes CSS do design system (<code>.btn-primary</code>, <code>.tag-green</code>, <code>.meter</code>).
+</p>
