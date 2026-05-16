@@ -178,11 +178,12 @@ class TransactionGoalTest extends TestCase
         ]);
         $virtual = $goal->virtualAccount;
 
-        // Simula aporte legado: TransactionGoal sem transaction_id
+        // Simula aporte legado: TransactionGoal sem transaction_id.
+        // Usa Crypt::encryptString para casar com o EncryptedCast da model (que é como produção persistiu).
         \DB::table('transaction_goal')->insert([
             'financial_goal_id' => $goal->id,
             'transaction_id'    => null,
-            'amount_encrypted'  => encrypt('300'),
+            'amount_encrypted'  => \Illuminate\Support\Facades\Crypt::encryptString('300'),
             'occurred_at'       => '2026-04-01',
             'note'              => 'Aporte manual legado',
             'created_at'        => now(),

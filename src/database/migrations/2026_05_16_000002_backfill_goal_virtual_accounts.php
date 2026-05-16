@@ -3,6 +3,7 @@
 use App\Domains\Finance\Models\Account;
 use App\Domains\Finance\Models\FinancialGoal;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
@@ -42,11 +43,14 @@ return new class extends Migration {
                 return;
             }
 
-            $amount = (float) decrypt($row->amount_encrypted);
+            // Par simétrico do EncryptedCast — decrypt() (que desserializa) falharia em payloads escritos pelo cast.
+            $amount = (float) Crypt::decryptString($row->amount_encrypted);
 
             DB::transaction(function () use ($source, $goal, $row, $amount) {
                 $virtual = $goal->virtualAccount;
-                $encryptedAmount = encrypt((string) $amount);
+                // Crypt::encryptString casa com EncryptedCast (que lê via decryptString).
+                // O helper encrypt() serializa antes de cifrar e produziria 's:N:"..."' na leitura.
+                $encryptedAmount = Crypt::encryptString((string) $amount);
                 $description = $row->note ?? 'Aporte migrado';
                 $occurredAt = $row->occurred_at ?? now()->toDateString();
 
