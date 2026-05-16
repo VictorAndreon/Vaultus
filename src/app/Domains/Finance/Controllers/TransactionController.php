@@ -4,12 +4,37 @@ namespace App\Domains\Finance\Controllers;
 
 use App\Domains\Finance\Models\Account;
 use App\Domains\Finance\Models\Transaction;
+use App\Domains\Finance\Queries\TransactionFilters;
+use App\Domains\Finance\Queries\TransactionListingQuery;
+use App\Http\Resources\TransactionResource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
+    public function index(Request $request, TransactionListingQuery $query)
+    {
+        $user    = $request->user();
+        $filters = TransactionFilters::fromRequest($request);
+
+        $transactions = $query->paginate($user, $filters);
+
+        $accounts = $user->accounts()->userVisible()->get(['id', 'name', 'type']);
+
+        // through() preserva a estrutura plana do LengthAwarePaginator (last_page, next_page_url, etc.)
+        // que o Inertia consome diretamente como props, em vez do wrapper {data, meta, links} de ::collection().
+        $transactions->through(fn ($t) => (new TransactionResource($t))->resolve($request));
+
+        return Inertia::render('Finance/Transactions', [
+            'transactions' => $transactions,
+            'filters'      => $filters->toArray(),
+            'accounts'     => $accounts,
+            'categories'   => $user->budgetCategories()->pluck('name')->values(),
+        ]);
+    }
+
     public function store(Request $request, Account $account)
     {
         abort_if($account->user_id !== $request->user()->id, 403);

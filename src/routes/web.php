@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/accounts', [AccountController::class, 'store']);
     Route::patch('/finance/accounts/{account}', [AccountController::class, 'update']);
     Route::delete('/finance/accounts/{account}', [AccountController::class, 'destroy']);
+    Route::get('/finance/transactions', [TransactionController::class, 'index'])->name('finance.transactions');
     Route::post('/finance/accounts/{account}/transactions', [TransactionController::class, 'store']);
     Route::patch('/finance/transactions/{transaction}', [TransactionController::class, 'update']);
     Route::delete('/finance/transactions/{transaction}', [TransactionController::class, 'destroy']);

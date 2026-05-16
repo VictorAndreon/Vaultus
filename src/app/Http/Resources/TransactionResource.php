@@ -16,7 +16,15 @@ class TransactionResource extends JsonResource
             'amount'      => (float) $this->amount_encrypted,
             'description' => $this->description,
             'category'    => $this->category,
-            'occurred_at' => $this->occurred_at->toDateString(),
+            'occurred_at' => $this->occurred_at?->toDateString(),
+            'account'     => $this->whenLoaded('account', fn () => [
+                'id'   => $this->account->id,
+                'name' => $this->account->name,
+                'type' => $this->account->type,
+            ]),
+            'is_transfer'            => $this->type === 'transfer',
+            'transfer_to_account_id' => $this->transfer_to_account_id,
+            'transfer_pair_id'       => $this->transfer_pair_id,
         ];
     }
 }
