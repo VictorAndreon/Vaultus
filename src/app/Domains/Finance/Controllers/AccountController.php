@@ -55,6 +55,13 @@ class AccountController extends Controller
             'interest_rate'          => 'nullable|numeric|min:0|max:999',
         ]);
 
+        // credit_limit e interest_rate só fazem sentido em contas de passivo (credit/loan).
+        // Aceitar em outros tipos é silenciosamente errado — corrompe semântica e relatórios.
+        if (! in_array($validated['type'], ['credit', 'loan'], true)) {
+            abort_if(! empty($validated['credit_limit_encrypted']), 422, 'credit_limit só é aplicável a contas do tipo credit/loan.');
+            abort_if(! empty($validated['interest_rate']),          422, 'interest_rate só é aplicável a contas do tipo credit/loan.');
+        }
+
         $request->user()->accounts()->create($validated);
 
         return back();

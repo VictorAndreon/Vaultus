@@ -88,6 +88,9 @@ class TransactionController extends Controller
     public function update(Request $request, Transaction $transaction)
     {
         abort_if($transaction->account->user_id !== $request->user()->id, 403);
+        // Transferências são pares atômicos — editar uma perna sem a outra corromperia
+        // o saldo de duas contas. Para alterar, o cliente deve excluir e recriar.
+        abort_if($transaction->type === 'transfer', 422, 'Transferências não podem ser editadas. Exclua e recrie.');
 
         $validated = $request->validate([
             'type'             => 'sometimes|in:income,expense',
@@ -106,14 +109,15 @@ class TransactionController extends Controller
     {
         abort_if($transaction->account->user_id !== $request->user()->id, 403);
 
-        if ($transaction->transfer_pair_id) {
-            $pair = Transaction::find($transaction->transfer_pair_id);
-            if ($pair && $pair->account->user_id === $request->user()->id) {
-                $pair->delete();
+        DB::transaction(function () use ($request, $transaction) {
+            if ($transaction->transfer_pair_id) {
+                $pair = Transaction::find($transaction->transfer_pair_id);
+                if ($pair && $pair->account->user_id === $request->user()->id) {
+                    $pair->delete();
+                }
             }
-        }
-
-        $transaction->delete();
+            $transaction->delete();
+        });
 
         return back();
     }
