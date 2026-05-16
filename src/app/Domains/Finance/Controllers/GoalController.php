@@ -87,19 +87,27 @@ class GoalController extends Controller
         return back();
     }
 
-    public function deposit(Request $request, FinancialGoal $goal)
+    public function deposit(Request $request, FinancialGoal $goal, \App\Domains\Finance\Services\GoalDepositService $service)
     {
         abort_if($goal->user_id !== $request->user()->id, 403);
 
         $data = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount'      => 'required|numeric|min:0.01',
+            'account_id'  => 'required|integer|exists:accounts,id',
+            'occurred_at' => 'nullable|date_format:Y-m-d',
+            'note'        => 'nullable|string|max:255',
         ]);
 
-        $goal->transactionGoals()->create([
-            'amount_encrypted' => $data['amount'],
-            'occurred_at'      => now()->toDateString(),
-            'note'             => 'Aporte manual',
-        ]);
+        $source = \App\Domains\Finance\Models\Account::findOrFail($data['account_id']);
+        abort_if($source->user_id !== $request->user()->id, 422, 'Conta de origem inválida.');
+
+        $service->deposit(
+            goal:       $goal,
+            source:     $source,
+            amount:     (float) $data['amount'],
+            occurredAt: $data['occurred_at'] ?? null,
+            note:       $data['note']        ?? null,
+        );
 
         return back();
     }

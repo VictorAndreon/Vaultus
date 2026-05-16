@@ -17,7 +17,11 @@ class FinanceController extends Controller
 
         // Contas e transações (excluindo subcontas internas de metas)
         $accounts = $user->accounts()->userVisible()->with('transactions')->get();
-        $netWorth = (float) $accounts->sum(function ($a) {
+
+        // Net worth inclui subcontas internas de metas (sem elas, um aporte reduziria o patrimônio)
+        $goalAccounts = $user->accounts()->internalGoalAccounts()->with('transactions')->get();
+        $allAccountsForNetWorth = $accounts->concat($goalAccounts);
+        $netWorth = (float) $allAccountsForNetWorth->sum(function ($a) {
             $balance = (float) $a->current_balance;
             return $a->is_liability ? -$balance : $balance;
         });

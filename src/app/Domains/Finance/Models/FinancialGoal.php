@@ -83,11 +83,7 @@ class FinancialGoal extends Model
 
     public function getCurrentAmountAttribute(): float
     {
-        $goals = $this->relationLoaded('transactionGoals')
-            ? $this->transactionGoals
-            : $this->transactionGoals()->get();
-
-        return $goals->sum(fn($tg) => (float) $tg->amount_encrypted);
+        return (float) ($this->virtualAccount?->current_balance ?? 0);
     }
 
     public function getProgressPercentAttribute(): float
