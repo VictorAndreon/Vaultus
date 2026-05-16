@@ -1029,6 +1029,9 @@ export default function FinanceIndex({ net_worth, month_income, month_expense, s
         <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="card-title">Lançamentos recentes</div>
+            <Link href="/finance/transactions" className="btn btn-ghost btn-sm">
+              Ver tudo →
+            </Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 140px 180px 120px', padding: '10px 24px', color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--line-soft)' }}>
             <div>Data</div><div>Descrição</div><div>Categoria</div><div>Método</div><div style={{ textAlign: 'right' }}>Valor</div>
