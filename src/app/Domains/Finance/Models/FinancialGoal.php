@@ -18,6 +18,28 @@ class FinancialGoal extends Model
                 $goal->current_amount_encrypted = '0';
             }
         });
+
+        static::created(function (FinancialGoal $goal) {
+            \App\Domains\Finance\Models\Account::create([
+                'user_id'           => $goal->user_id,
+                'name'              => $goal->name,
+                'type'              => 'goal',
+                'balance_encrypted' => 0,
+                'currency'          => 'BRL',
+                'is_internal'       => true,
+                'goal_id'           => $goal->id,
+            ]);
+        });
+
+        static::updated(function (FinancialGoal $goal) {
+            if ($goal->wasChanged('name') && $goal->virtualAccount) {
+                $goal->virtualAccount->update(['name' => $goal->name]);
+            }
+        });
+
+        static::deleting(function (FinancialGoal $goal) {
+            $goal->virtualAccount?->delete();
+        });
     }
 
     protected $fillable = [
@@ -75,6 +97,11 @@ class FinancialGoal extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function virtualAccount()
+    {
+        return $this->hasOne(\App\Domains\Finance\Models\Account::class, 'goal_id');
     }
 
     public function transactionGoals()

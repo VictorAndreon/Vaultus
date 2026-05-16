@@ -5,6 +5,7 @@ namespace App\Domains\Finance\Models;
 use App\Domains\Auth\Models\User;
 use App\Shared\Casts\EncryptedCast;
 use Database\Factories\AccountFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,9 +22,11 @@ class Account extends Model
     protected $fillable = [
         'user_id', 'name', 'type', 'balance_encrypted', 'currency',
         'credit_limit_encrypted', 'interest_rate',
+        'is_internal', 'goal_id',
     ];
 
     public const LIABILITY_TYPES = ['credit', 'loan'];
+    public const VISIBLE_TYPES   = ['checking', 'savings', 'investment', 'cash', 'credit', 'loan'];
 
     protected function casts(): array
     {
@@ -31,7 +34,18 @@ class Account extends Model
             'balance_encrypted'      => EncryptedCast::class,
             'credit_limit_encrypted' => EncryptedCast::class,
             'interest_rate'          => 'float',
+            'is_internal'            => 'boolean',
         ];
+    }
+
+    public function scopeUserVisible(Builder $q): Builder
+    {
+        return $q->where('is_internal', false);
+    }
+
+    public function scopeInternalGoalAccounts(Builder $q): Builder
+    {
+        return $q->where('is_internal', true)->whereNotNull('goal_id');
     }
 
     public function getIsLiabilityAttribute(): bool
@@ -71,6 +85,11 @@ class Account extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function goal()
+    {
+        return $this->belongsTo(FinancialGoal::class, 'goal_id');
     }
 
     public function transactions()

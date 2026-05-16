@@ -15,8 +15,8 @@ class FinanceController extends Controller
         $monthEnd   = $now->copy()->endOfMonth()->toDateString();
         $ptMonths   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-        // Contas e transações
-        $accounts = $user->accounts()->with('transactions')->get();
+        // Contas e transações (excluindo subcontas internas de metas)
+        $accounts = $user->accounts()->userVisible()->with('transactions')->get();
         $netWorth = (float) $accounts->sum(function ($a) {
             $balance = (float) $a->current_balance;
             return $a->is_liability ? -$balance : $balance;
