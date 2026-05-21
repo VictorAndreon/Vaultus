@@ -74,6 +74,45 @@ class FinanceDashboardAggregatorTest extends TestCase
         $this->assertNotContains('Dinheiro', $labels);
     }
 
+    public function test_goal_history_reflects_cumulative_balance_per_month(): void
+    {
+        \Carbon\Carbon::setTestNow('2026-05-20');
+
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 10000]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Histórico',
+            'target_amount_encrypted' => 5000,
+        ]);
+        $virtual = $goal->virtualAccount;
+
+        // Aporte 200 em mar/2026, 300 em abr/2026, 100 em mai/2026
+        foreach ([['2026-03-10', 200], ['2026-04-15', 300], ['2026-05-05', 100]] as [$date, $amt]) {
+            $out = $source->transactions()->create([
+                'type' => 'transfer', 'amount_encrypted' => $amt, 'description' => 'a',
+                'occurred_at' => $date, 'transfer_to_account_id' => $virtual->id,
+            ]);
+            $in  = $virtual->transactions()->create([
+                'type' => 'transfer', 'amount_encrypted' => $amt, 'description' => 'a',
+                'occurred_at' => $date, 'transfer_pair_id' => $out->id,
+            ]);
+            $out->update(['transfer_pair_id' => $in->id]);
+        }
+
+        $data = app(FinanceDashboardAggregator::class)->aggregate($user->fresh());
+        $history = collect($data['goals'])->firstWhere('name', 'Histórico')['history'];
+
+        $this->assertCount(12, $history);
+        // Indices: 0=jun/2025 ... 11=mai/2026. Acumulativos:
+        // jun/2025-fev/2026 = 0, mar/2026=200, abr/2026=500, mai/2026=600
+        $this->assertSame(0.0,   $history[8]);  // fev/2026
+        $this->assertSame(200.0, $history[9]);  // mar/2026
+        $this->assertSame(500.0, $history[10]); // abr/2026
+        $this->assertSame(600.0, $history[11]); // mai/2026 (atual)
+
+        \Carbon\Carbon::setTestNow();
+    }
+
     public function test_aggregate_returns_wishlist_with_linked_goal_name(): void
     {
         $user = User::factory()->create();

@@ -33,7 +33,7 @@ export default function WishlistModal({ item, goals, onClose }: Props) {
     e.preventDefault()
     const payload = {
       name,
-      estimated_price_encrypted: price > 0 ? price : null,
+      estimated_price: price > 0 ? price : null,
       priority,
       url: url || null,
       notes: notes || null,

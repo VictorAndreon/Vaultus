@@ -13,12 +13,18 @@ class WishlistController extends Controller
     {
         $validated = $request->validate([
             'name'                      => 'required|string|max:255',
+            'estimated_price'           => 'nullable|numeric|min:0',
             'estimated_price_encrypted' => 'nullable|numeric|min:0',
             'priority'                  => 'required|in:low,medium,high',
             'url'                       => 'nullable|url|max:500',
             'notes'                     => 'nullable|string|max:1000',
             'financial_goal_id'         => ['nullable', Rule::exists('financial_goals', 'id')->where('user_id', $request->user()->id)],
         ]);
+
+        if (array_key_exists('estimated_price', $validated)) {
+            $validated['estimated_price_encrypted'] = $validated['estimated_price'];
+            unset($validated['estimated_price']);
+        }
 
         $request->user()->wishlistItems()->create($validated);
 
@@ -31,12 +37,18 @@ class WishlistController extends Controller
 
         $validated = $request->validate([
             'name'                      => 'sometimes|string|max:255',
+            'estimated_price'           => 'nullable|numeric|min:0',
             'estimated_price_encrypted' => 'nullable|numeric|min:0',
             'priority'                  => 'sometimes|in:low,medium,high',
             'url'                       => 'nullable|url|max:500',
             'notes'                     => 'nullable|string|max:1000',
             'financial_goal_id'         => ['nullable', Rule::exists('financial_goals', 'id')->where('user_id', $request->user()->id)],
         ]);
+
+        if (array_key_exists('estimated_price', $validated)) {
+            $validated['estimated_price_encrypted'] = $validated['estimated_price'];
+            unset($validated['estimated_price']);
+        }
 
         $item->update($validated);
 

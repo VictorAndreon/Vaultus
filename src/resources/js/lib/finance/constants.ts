@@ -37,3 +37,15 @@ export const DEADLINE_MONTHS = [
   { v: '07', l: 'Jul' }, { v: '08', l: 'Ago' }, { v: '09', l: 'Set' },
   { v: '10', l: 'Out' }, { v: '11', l: 'Nov' }, { v: '12', l: 'Dez' },
 ]
+
+// Categorias sugeridas em selects de transação. `expense_fallback` é usada quando o
+// usuário ainda não cadastrou nenhum orçamento — sob orçamentos cadastrados, esses
+// nomes vêm do backend (BudgetCategory.name).
+export const INCOME_CATEGORIES = [
+  'Salário', 'Freelance', 'Investimento', 'Outros',
+]
+
+export const EXPENSE_FALLBACK_CATEGORIES = [
+  'Alimentação', 'Transporte', 'Moradia', 'Saúde',
+  'Lazer', 'Educação', 'Vestuário', 'Assinaturas', 'Outros',
+]

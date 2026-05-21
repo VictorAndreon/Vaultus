@@ -44,7 +44,8 @@ class RecurringRuleController extends Controller
         $validated = $request->validate([
             'account_id'       => ['required', Rule::exists('accounts', 'id')->where('user_id', $userId)],
             'type'             => 'required|in:income,expense',
-            'amount_encrypted' => 'required|numeric|min:0.01',
+            'amount'           => 'sometimes|numeric|min:0.01',
+            'amount_encrypted' => 'sometimes|numeric|min:0.01',
             'description'      => 'required|string|max:255',
             'category'         => 'nullable|string|max:100',
             'day_of_month'     => 'required|integer|min:1|max:31',
@@ -52,6 +53,11 @@ class RecurringRuleController extends Controller
             'ends_on'          => 'nullable|date_format:Y-m-d|after_or_equal:starts_on',
             'is_active'        => 'sometimes|boolean',
         ]);
+
+        $amount = $validated['amount'] ?? $validated['amount_encrypted'] ?? null;
+        abort_if($amount === null, 422, 'O campo valor é obrigatório.');
+        $validated['amount_encrypted'] = $amount;
+        unset($validated['amount']);
 
         $request->user()->recurringRules()->create($validated);
 
@@ -66,6 +72,7 @@ class RecurringRuleController extends Controller
         $validated = $request->validate([
             'account_id'       => ['sometimes', Rule::exists('accounts', 'id')->where('user_id', $userId)],
             'type'             => 'sometimes|in:income,expense',
+            'amount'           => 'sometimes|numeric|min:0.01',
             'amount_encrypted' => 'sometimes|numeric|min:0.01',
             'description'      => 'sometimes|string|max:255',
             'category'         => 'nullable|string|max:100',
@@ -74,6 +81,11 @@ class RecurringRuleController extends Controller
             'ends_on'          => 'nullable|date_format:Y-m-d|after_or_equal:starts_on',
             'is_active'        => 'sometimes|boolean',
         ]);
+
+        if (array_key_exists('amount', $validated)) {
+            $validated['amount_encrypted'] = $validated['amount'];
+            unset($validated['amount']);
+        }
 
         $rule->update($validated);
 

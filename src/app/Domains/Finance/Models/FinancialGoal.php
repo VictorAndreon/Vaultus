@@ -48,7 +48,7 @@ class FinancialGoal extends Model
     protected $fillable = [
         'user_id', 'name', 'icon', 'color', 'note',
         'target_amount_encrypted', 'current_amount_encrypted', 'monthly_amount_encrypted',
-        'category', 'deadline', 'is_completed', 'is_archived', 'status',
+        'category', 'deadline', 'is_completed', 'is_archived',
     ];
 
     protected function casts(): array

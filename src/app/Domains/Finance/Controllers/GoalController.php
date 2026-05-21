@@ -37,7 +37,6 @@ class GoalController extends Controller
             'note'                     => $validated['note'] ?? null,
             'category'                 => $validated['category'] ?? null,
             'deadline'                 => $deadlineDate,
-            'status'                   => 'no-prazo',
         ]);
 
         return back();

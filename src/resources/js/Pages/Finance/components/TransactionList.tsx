@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Transaction, PaginatedResponse } from '@/types'
 import { Icons } from '@/Components/Icons'
+import { EXPENSE_FALLBACK_CATEGORIES, INCOME_CATEGORIES } from '@/lib/finance/constants'
 
 const TRANSACTION_CATEGORIES = [
-  'Alimentação', 'Transporte', 'Moradia', 'Saúde', 'Lazer',
-  'Educação', 'Vestuário', 'Assinaturas', 'Salário', 'Freelance',
-  'Investimento', 'Outros',
+  ...EXPENSE_FALLBACK_CATEGORIES.filter(c => c !== 'Outros'),
+  ...INCOME_CATEGORIES.filter(c => c !== 'Outros'),
+  'Outros',
 ]
 
 interface Props {

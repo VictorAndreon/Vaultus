@@ -28,11 +28,11 @@ export default function AccountModal({ onClose }: Props) {
     const payload: Record<string, unknown> = {
       name,
       type,
-      balance_encrypted: balance,
+      balance,
       currency,
     }
     if (type === 'credit') {
-      payload.credit_limit_encrypted = creditLimit
+      payload.credit_limit = creditLimit
       if (closingDay !== '') payload.closing_day = closingDay
       if (dueDay !== '')     payload.due_day = dueDay
     }

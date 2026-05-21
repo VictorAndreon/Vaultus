@@ -217,6 +217,8 @@ class FinanceDashboardAggregator
 
     private function goals(User $user): array
     {
+        $now = Carbon::now($user->timezone ?? 'America/Sao_Paulo');
+
         return $user->financialGoals()->where('is_archived', false)
             ->with(['transactionGoals', 'virtualAccount.transactions'])
             ->get()
@@ -237,8 +239,35 @@ class FinanceDashboardAggregator
                 'deadline_label'    => $g->deadline ? (self::PT_MONTHS[$g->deadline->month - 1] . ' ' . $g->deadline->year) : null,
                 'months_left'       => $g->months_left,
                 'is_completed'      => $g->is_completed,
-                'history'           => array_fill(0, 12, 0),
+                'history'           => $this->goalHistory($g, $now),
             ])->toArray();
+    }
+
+    /**
+     * Saldo cumulativo da subconta virtual da meta no fim de cada um dos últimos 12 meses.
+     * A subconta só recebe transfers (perna incoming), por isso somamos transferências
+     * sem transfer_to_account_id (incoming) ocorridas até o fim do mês alvo.
+     */
+    private function goalHistory($goal, Carbon $now): array
+    {
+        $virtual = $goal->virtualAccount;
+        if (! $virtual) {
+            return array_fill(0, 12, 0.0);
+        }
+
+        $incoming = $virtual->transactions
+            ->where('type', 'transfer')
+            ->filter(fn ($t) => is_null($t->transfer_to_account_id));
+
+        $history = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $endOfMonth = $now->copy()->subMonths($i)->endOfMonth();
+            $balance = (float) $incoming
+                ->filter(fn ($t) => Carbon::parse($t->occurred_at)->lte($endOfMonth))
+                ->sum(fn ($t) => (float) $t->amount_encrypted);
+            $history[] = round($balance, 2);
+        }
+        return $history;
     }
 
     private function accountsList(Collection $accounts): array

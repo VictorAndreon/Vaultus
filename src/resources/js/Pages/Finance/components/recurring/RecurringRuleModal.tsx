@@ -29,14 +29,14 @@ export default function RecurringRuleModal({ rule, accounts, onClose }: Props) {
   function submit(e: React.FormEvent) {
     e.preventDefault()
     const payload = {
-      account_id:       accountId,
+      account_id:   accountId,
       type,
-      amount_encrypted: amount,
+      amount,
       description,
-      category:         category || null,
-      day_of_month:     dayOfMonth,
-      starts_on:        startsOn,
-      ends_on:          endsOn || null,
+      category:     category || null,
+      day_of_month: dayOfMonth,
+      starts_on:    startsOn,
+      ends_on:      endsOn || null,
     }
     const opts = { preserveScroll: true, onSuccess: onClose }
     if (isEdit) router.patch(`/finance/recurring/${rule!.id}`, payload, opts)

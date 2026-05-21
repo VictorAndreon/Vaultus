@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link, router } from '@inertiajs/react'
+import { Link } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
-import CurrencyInput from '@/Components/CurrencyInput'
 import { Account, Transaction, PaginatedResponse } from '@/types'
-import { idempotentPost } from '@/lib/idempotentPost'
+import { AccountItem, FinanceTransaction } from '@/types/finance'
+import { fmtBRL } from '@/lib/finance/formatters'
 import TransactionList from './components/TransactionList'
+import TransactionModal from './components/transactions/TransactionModal'
 
 interface Props {
   account: { data: Account }
@@ -14,93 +15,43 @@ interface Props {
   month_expense: number
   month_count: number
   peak_balance: number
+  accounts_list: AccountItem[]
+  budget_category_names: string[]
 }
 
 const TYPE_LABELS: Record<string, string> = {
   checking: 'Conta Corrente', savings: 'Poupança',
   investment: 'Investimento', cash: 'Dinheiro',
+  credit: 'Cartão de Crédito', loan: 'Financiamento',
 }
 
 const TYPE_COLORS: Record<string, string> = {
   checking: 'var(--sky)', savings: 'var(--green)',
   investment: 'var(--purple, oklch(72% 0.12 290))', cash: 'var(--text-4)',
+  credit: 'var(--rose)', loan: 'var(--gold)',
 }
 
-function fmtBRL(v: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
-}
-
-function TransactionModal({ accountId, transaction, onClose }: {
-  accountId: number
-  transaction: Transaction | null
-  onClose: () => void
-}) {
-  const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
-  const [amount, setAmount] = useState<number>(transaction?.amount ?? 0)
-  const [description, setDescription] = useState(transaction?.description ?? '')
-  const [category, setCategory] = useState(transaction?.category ?? '')
-  const [occurred_at, setOccurredAt] = useState(transaction?.occurred_at ?? new Date().toISOString().slice(0, 10))
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    const data = { type, amount_encrypted: amount, description, category: category || null, occurred_at }
-    const opts = { preserveScroll: true, onSuccess: onClose }
-    if (transaction === null) idempotentPost(`/finance/accounts/${accountId}/transactions`, data, opts)
-    else router.patch(`/finance/transactions/${transaction.id}`, data, opts)
+// Converte a Transaction da API genérica para o shape que TransactionModal espera
+// para o modo edição. Campos extras (date, method) não são lidos pelo modal — passamos vazios.
+function toFinanceTransaction(t: Transaction, accountId: number): FinanceTransaction {
+  return {
+    id:          t.id,
+    account_id:  accountId,
+    date:        t.occurred_at,
+    occurred_at: t.occurred_at,
+    description: t.description,
+    category:    t.category ?? '',
+    method:      '',
+    amount:      t.amount,
+    type:        t.type as 'income' | 'expense' | 'transfer',
   }
-
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 200, padding: 24 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-5)', width: '100%', maxWidth: 440, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
-        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid var(--line-soft)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div className="kicker">{transaction ? 'Editar lançamento' : 'Novo lançamento'}</div>
-            <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', marginTop: 6 }}>
-              {transaction ? transaction.description : 'Registrar transação'}
-            </div>
-          </div>
-          <button className="icon-btn" onClick={onClose} style={{ width: 26, height: 26, border: 'none' }}><Icons.X size={13} /></button>
-        </div>
-        <form onSubmit={submit} style={{ padding: '20px 26px' }}>
-          <div className="seg" style={{ marginBottom: 14 }}>
-            <button type="button" data-active={type === 'expense'} onClick={() => setType('expense')}>Despesa</button>
-            <button type="button" data-active={type === 'income'} onClick={() => setType('income')}>Receita</button>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            <div>
-              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Valor (R$)</label>
-              <CurrencyInput className="input" style={{ width: '100%' }} value={amount} onValueChange={setAmount} autoFocus required />
-            </div>
-            <div>
-              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Data</label>
-              <input className="input" style={{ width: '100%' }} type="date" value={occurred_at} onChange={e => setOccurredAt(e.target.value)} required />
-            </div>
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
-            <input className="input" style={{ width: '100%' }} value={description} onChange={e => setDescription(e.target.value)} required />
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Categoria</label>
-            <select className="input" style={{ width: '100%' }} value={category} onChange={e => setCategory(e.target.value)}>
-              <option value="">Sem categoria</option>
-              {['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Salário','Freelance','Investimento','Outros'].map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn btn-primary btn-sm"><Icons.Check size={13} /> {transaction ? 'Salvar' : 'Registrar'}</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
 }
 
-export default function FinanceAccount({ account, transactions, month_income, month_expense, month_count, peak_balance }: Props) {
-  const [txModal, setTxModal] = useState<{ tx: Transaction | null } | null>(null)
+export default function FinanceAccount({
+  account, transactions, month_income, month_expense, month_count, peak_balance,
+  accounts_list, budget_category_names,
+}: Props) {
+  const [txModal, setTxModal] = useState<{ tx: FinanceTransaction | null } | null>(null)
   const acc = account.data
   const color = TYPE_COLORS[acc.type] ?? 'var(--text-4)'
   const balance = acc.current_balance
@@ -168,14 +119,15 @@ export default function FinanceAccount({ account, transactions, month_income, mo
         <TransactionList
           transactions={transactions}
           accountId={acc.id}
-          onEdit={t => setTxModal({ tx: t })}
+          onEdit={t => setTxModal({ tx: toFinanceTransaction(t, acc.id) })}
         />
 
       </div>
 
       {txModal !== null && (
         <TransactionModal
-          accountId={acc.id}
+          accounts={accounts_list}
+          budgetCategories={budget_category_names}
           transaction={txModal.tx}
           onClose={() => setTxModal(null)}
         />

@@ -41,12 +41,18 @@ class TransactionController extends Controller
 
         $validated = $request->validate([
             'type'                   => 'required|in:income,expense,transfer',
-            'amount_encrypted'       => 'required|numeric|min:0.01',
+            'amount'                 => 'sometimes|numeric|min:0.01',
+            'amount_encrypted'       => 'sometimes|numeric|min:0.01',
             'description'            => 'required|string|max:255',
             'category'               => 'nullable|string|max:100',
             'occurred_at'            => 'required|date_format:Y-m-d',
             'transfer_to_account_id' => 'required_if:type,transfer|nullable|exists:accounts,id',
         ]);
+
+        $amount = $validated['amount'] ?? $validated['amount_encrypted'] ?? null;
+        abort_if($amount === null, 422, 'O campo valor é obrigatório.');
+        $validated['amount_encrypted'] = $amount;
+        unset($validated['amount']);
 
         if ($validated['type'] === 'transfer') {
             $this->createTransferPair($request->user(), $account, $validated);
@@ -94,11 +100,17 @@ class TransactionController extends Controller
 
         $validated = $request->validate([
             'type'             => 'sometimes|in:income,expense',
+            'amount'           => 'sometimes|numeric|min:0.01',
             'amount_encrypted' => 'sometimes|numeric|min:0.01',
             'description'      => 'sometimes|string|max:255',
             'category'         => 'nullable|string|max:100',
             'occurred_at'      => 'sometimes|date_format:Y-m-d',
         ]);
+
+        if (array_key_exists('amount', $validated)) {
+            $validated['amount_encrypted'] = $validated['amount'];
+            unset($validated['amount']);
+        }
 
         $transaction->update($validated);
 

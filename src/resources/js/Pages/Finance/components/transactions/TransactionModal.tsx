@@ -4,6 +4,7 @@ import { Icons } from '@/Components/Icons'
 import CurrencyInput from '@/Components/CurrencyInput'
 import { AccountItem, FinanceTransaction } from '@/types/finance'
 import { idempotentPost } from '@/lib/idempotentPost'
+import { EXPENSE_FALLBACK_CATEGORIES, INCOME_CATEGORIES } from '@/lib/finance/constants'
 
 type TxType = 'expense' | 'income' | 'transfer'
 
@@ -33,7 +34,7 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
       // Backend de update aceita type/amount/description/category/occurred_at (não muda conta nem transfer)
       router.patch(`/finance/transactions/${transaction!.id}`, {
         type,
-        amount_encrypted: amount,
+        amount,
         description,
         category: category || null,
         occurred_at,
@@ -43,7 +44,7 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
 
     const payload: Record<string, unknown> = {
       type,
-      amount_encrypted: amount,
+      amount,
       description,
       occurred_at,
     }
@@ -111,8 +112,8 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
                 <select className="input" style={{ width: '100%' }} value={category} onChange={e => setCategory(e.target.value)}>
                   <option value="">Sem categoria</option>
                   {(type === 'income'
-                    ? ['Salário', 'Freelance', 'Investimento', 'Outros']
-                    : (budgetCategories.length > 0 ? budgetCategories : ['Alimentação','Transporte','Moradia','Saúde','Lazer','Educação','Vestuário','Assinaturas','Outros'])
+                    ? INCOME_CATEGORIES
+                    : (budgetCategories.length > 0 ? budgetCategories : EXPENSE_FALLBACK_CATEGORIES)
                   ).map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
