@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { idempotentPost } from '@/lib/idempotentPost'
 import { fmtBRL } from '@/lib/finance/formatters'
-import { FinanceIndexProps, FinancialGoal, UpcomingPayment } from '@/types/finance'
+import { FinanceIndexProps, FinancialGoal, FinanceTransaction, UpcomingPayment } from '@/types/finance'
 
 // Charts
 import FlowAreaChart from './components/charts/FlowAreaChart'
@@ -29,7 +29,7 @@ export default function FinanceIndex({
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
   const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
-  const [showTxModal, setShowTxModal] = useState(false)
+  const [txModal, setTxModal] = useState<{ tx: FinanceTransaction | null } | null>(null)
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [upcomingModal, setUpcomingModal] = useState<{ payment: UpcomingPayment | null } | null>(null)
@@ -57,7 +57,7 @@ export default function FinanceIndex({
   return (
     <AppLayout title="Finanças" eyebrow="Patrimônio" subtitle="Saldo, fluxo, orçamento e metas."
       actions={
-        <button className="btn btn-primary btn-sm" onClick={() => setShowTxModal(true)}>
+        <button className="btn btn-primary btn-sm" onClick={() => setTxModal({ tx: null })}>
           <Icons.Plus size={13} /> Lançamento
         </button>
       }
@@ -281,22 +281,42 @@ export default function FinanceIndex({
               Ver tudo →
             </Link>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 140px 180px 120px', padding: '10px 24px', color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--line-soft)' }}>
-            <div>Data</div><div>Descrição</div><div>Categoria</div><div>Método</div><div style={{ textAlign: 'right' }}>Valor</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 140px 180px 110px 60px', padding: '10px 24px', color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--line-soft)' }}>
+            <div>Data</div><div>Descrição</div><div>Categoria</div><div>Método</div><div style={{ textAlign: 'right' }}>Valor</div><div></div>
           </div>
           {transactions.length === 0
             ? <div style={{ padding: 24, color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum lançamento.</div>
             : transactions.map((t, i) => {
               const sign  = t.type === 'income' ? '+' : t.type === 'expense' ? '−' : '↔'
               const color = t.type === 'income' ? 'var(--success)' : t.type === 'expense' ? 'var(--rose)' : 'var(--text-3)'
+              const canEdit = t.type !== 'transfer'
               return (
-                <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 140px 180px 120px', padding: '12px 24px', borderTop: i ? '1px solid var(--line-soft)' : 'none', alignItems: 'center', fontSize: 13 }}>
+                <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 140px 180px 110px 60px', padding: '12px 24px', borderTop: i ? '1px solid var(--line-soft)' : 'none', alignItems: 'center', fontSize: 13 }}>
                   <div className="mono muted" style={{ fontSize: 11 }}>{t.date}</div>
                   <div>{t.description}</div>
                   <div className="muted">{t.category}</div>
                   <div className="muted mono" style={{ fontSize: 11 }}>{t.method}</div>
                   <div className="mono" style={{ textAlign: 'right', color, fontWeight: 500 }}>
                     {sign} {fmtBRL(Math.abs(t.amount))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                    {canEdit && (
+                      <button className="icon-btn" title="Editar" style={{ width: 24, height: 24 }} onClick={() => setTxModal({ tx: t })}>
+                        <Icons.Edit size={11} />
+                      </button>
+                    )}
+                    <button
+                      className="icon-btn"
+                      title="Excluir"
+                      style={{ width: 24, height: 24, color: 'var(--rose)' }}
+                      onClick={() => {
+                        if (confirm(`Excluir "${t.description}"?`)) {
+                          router.delete(`/finance/transactions/${t.id}`, { preserveScroll: true })
+                        }
+                      }}
+                    >
+                      <Icons.Trash size={11} />
+                    </button>
                   </div>
                 </div>
               )
@@ -311,7 +331,14 @@ export default function FinanceIndex({
       )}
       {aporteGoal && <AporteModal goal={aporteGoal} accounts={accounts_list} onClose={() => setAporteGoal(null)} onSave={handleAporte} />}
       {showAccountModal && <AccountModal onClose={() => setShowAccountModal(false)} />}
-      {showTxModal && <TransactionModal accounts={accounts_list} budgetCategories={budget_category_names} onClose={() => setShowTxModal(false)} />}
+      {txModal !== null && (
+        <TransactionModal
+          accounts={accounts_list}
+          budgetCategories={budget_category_names}
+          transaction={txModal.tx}
+          onClose={() => setTxModal(null)}
+        />
+      )}
       {showBudgetModal && <BudgetModal budgets={budgets} onClose={() => setShowBudgetModal(false)} />}
       {upcomingModal !== null && (
         <UpcomingPaymentModal

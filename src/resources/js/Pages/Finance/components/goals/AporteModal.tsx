@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePage } from '@inertiajs/react'
 import { Icons } from '@/Components/Icons'
 import CurrencyInput from '@/Components/CurrencyInput'
 import { FinancialGoal, AccountItem } from '@/types/finance'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function AporteModal({ goal, accounts, onClose, onSave }: Props) {
+  const errors = usePage().props.errors as Record<string, string> | undefined
   const externalAccounts = accounts.filter(a => a.type !== 'goal')
   const [amount, setAmount] = useState(goal.monthly_amount > 0 ? goal.monthly_amount : 0)
   const [accountId, setAccountId] = useState<number | ''>(externalAccounts[0]?.id ?? '')
@@ -31,7 +33,7 @@ export default function AporteModal({ goal, accounts, onClose, onSave }: Props) 
           <label className="kicker" style={{ display: 'block', marginBottom: 8 }}>De qual conta?</label>
           <select
             className="input"
-            style={{ width: '100%', marginBottom: 16 }}
+            style={{ width: '100%', marginBottom: errors?.account_id ? 4 : 16 }}
             value={accountId}
             onChange={e => setAccountId(e.target.value === '' ? '' : Number(e.target.value))}
             required
@@ -41,9 +43,15 @@ export default function AporteModal({ goal, accounts, onClose, onSave }: Props) 
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
           </select>
+          {errors?.account_id && (
+            <div style={{ color: 'var(--rose)', fontSize: 12, marginBottom: 16 }}>{errors.account_id}</div>
+          )}
 
           <label className="kicker" style={{ display: 'block', marginBottom: 8 }}>Valor do aporte (R$)</label>
           <CurrencyInput value={amount} onValueChange={setAmount} autoFocus style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-3)', color: 'var(--text)', fontSize: 15, fontFamily: 'var(--mono)' }} />
+          {errors?.amount && (
+            <div style={{ color: 'var(--rose)', fontSize: 12, marginTop: 4 }}>{errors.amount}</div>
+          )}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
             <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn-primary btn-sm" disabled={accountId === '' || amount <= 0}>

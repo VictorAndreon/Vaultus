@@ -169,6 +169,7 @@ class GoalDepositAsTransferTest extends TestCase
             ]);
 
         $response->assertStatus(422);
+        $response->assertJsonValidationErrors('amount');
         $this->assertSame(0.0, (float) $goal->fresh()->current_amount);
         $this->assertDatabaseMissing('transactions', [
             'account_id'             => $source->id,
@@ -192,6 +193,7 @@ class GoalDepositAsTransferTest extends TestCase
             ]);
 
         $response->assertStatus(422);
+        $response->assertJsonValidationErrors('account_id');
     }
 
     public function test_deposit_equal_to_source_balance_is_allowed()

@@ -6,25 +6,36 @@ use App\Domains\Finance\Models\Account;
 use App\Domains\Finance\Models\FinancialGoal;
 use App\Domains\Finance\Models\Transaction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class GoalDepositService
 {
     public function deposit(FinancialGoal $goal, Account $source, float $amount, ?string $occurredAt = null, ?string $note = null): Transaction
     {
+        // ValidationException retorna 422 com {errors: {campo: [mensagem]}} — formato que o
+        // Inertia consome via flash.errors e que o frontend pode ler para destacar o campo.
         if ($source->user_id !== $goal->user_id) {
-            abort(422, 'Conta de origem não pertence ao dono da meta.');
+            throw ValidationException::withMessages([
+                'account_id' => 'Conta de origem não pertence ao dono da meta.',
+            ]);
         }
 
         if ($source->is_internal) {
-            abort(422, 'Conta de origem não pode ser uma subconta interna.');
+            throw ValidationException::withMessages([
+                'account_id' => 'Conta de origem não pode ser uma subconta interna.',
+            ]);
         }
 
         if ($source->is_liability) {
-            abort(422, 'Aporte a partir de conta de crédito ou financiamento não é permitido.');
+            throw ValidationException::withMessages([
+                'account_id' => 'Aporte a partir de conta de crédito ou financiamento não é permitido.',
+            ]);
         }
 
         if ($amount > (float) $source->current_balance) {
-            abort(422, 'Saldo insuficiente na conta de origem para esse aporte.');
+            throw ValidationException::withMessages([
+                'amount' => 'Saldo insuficiente na conta de origem para esse aporte.',
+            ]);
         }
 
         $virtual = $goal->virtualAccount;

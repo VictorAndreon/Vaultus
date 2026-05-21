@@ -74,6 +74,46 @@ class FinanceDashboardAggregatorTest extends TestCase
         $this->assertNotContains('Dinheiro', $labels);
     }
 
+    public function test_recent_transactions_expose_occurred_at_and_account_id_for_editing(): void
+    {
+        $user = User::factory()->create();
+        $acc  = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 1000]);
+        $acc->transactions()->create([
+            'type'             => 'expense',
+            'amount_encrypted' => 50,
+            'description'      => 'Café',
+            'occurred_at'      => '2026-05-10',
+        ]);
+
+        $data = app(FinanceDashboardAggregator::class)->aggregate($user->fresh());
+        $tx   = $data['transactions'][0];
+
+        $this->assertArrayHasKey('account_id', $tx);
+        $this->assertArrayHasKey('occurred_at', $tx);
+        $this->assertSame($acc->id, $tx['account_id']);
+        $this->assertSame('2026-05-10', $tx['occurred_at']);
+    }
+
+    public function test_recent_transactions_deduplicates_transfer_pairs(): void
+    {
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 5000]);
+        $dest   = Account::factory()->create(['user_id' => $user->id, 'type' => 'savings',  'balance_encrypted' => 0]);
+
+        $this->actingAs($user)->post("/finance/accounts/{$source->id}/transactions", [
+            'type'                   => 'transfer',
+            'amount_encrypted'       => 500,
+            'description'            => 'PIX para poupança',
+            'occurred_at'            => now()->format('Y-m-d'),
+            'transfer_to_account_id' => $dest->id,
+        ]);
+
+        $data = app(FinanceDashboardAggregator::class)->aggregate($user->fresh());
+
+        $transfers = collect($data['transactions'])->where('type', 'transfer');
+        $this->assertCount(1, $transfers, 'Esperava uma única linha por par de transferência');
+    }
+
     public function test_transfers_do_not_inflate_month_income_or_expense(): void
     {
         $user   = User::factory()->create();

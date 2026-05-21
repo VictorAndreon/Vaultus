@@ -21,11 +21,15 @@ export const STATUS_MAP: Record<string, { label: string; cls: string }> = {
 }
 
 export const ACCOUNT_TYPES = [
-  { value: 'checking',   label: 'Conta Corrente' },
-  { value: 'savings',    label: 'Poupança' },
-  { value: 'investment', label: 'Investimentos' },
-  { value: 'cash',       label: 'Dinheiro' },
+  { value: 'checking',   label: 'Conta Corrente', isLiability: false },
+  { value: 'savings',    label: 'Poupança',       isLiability: false },
+  { value: 'investment', label: 'Investimentos',  isLiability: false },
+  { value: 'cash',       label: 'Dinheiro',       isLiability: false },
+  { value: 'credit',     label: 'Cartão de Crédito',         isLiability: true  },
+  { value: 'loan',       label: 'Financiamento / Empréstimo', isLiability: true  },
 ]
+
+export const LIABILITY_TYPES = ['credit', 'loan']
 
 export const DEADLINE_MONTHS = [
   { v: '01', l: 'Jan' }, { v: '02', l: 'Fev' }, { v: '03', l: 'Mar' },

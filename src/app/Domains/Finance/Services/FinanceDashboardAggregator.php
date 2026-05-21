@@ -175,12 +175,20 @@ class FinanceDashboardAggregator
 
     private function recentTransactions(\Illuminate\Support\Collection $allTx): array
     {
-        return $allTx->map(fn ($t) => [
+        // Transferências são pares (outgoing + incoming). Mantemos só a perna outgoing —
+        // que carrega transfer_to_account_id — para o usuário ver uma única linha por evento.
+        return $allTx
+            ->reject(fn ($t) => $t->type === 'transfer' && is_null($t->transfer_to_account_id))
+            ->map(fn ($t) => [
                 'id'          => $t->id,
+                'account_id'  => $t->account_id,
                 'date'        => Carbon::parse($t->occurred_at)->locale('pt_BR')->translatedFormat('d M'),
+                'occurred_at' => Carbon::parse($t->occurred_at)->toDateString(),
                 'description' => $t->description,
                 'category'    => $t->category ?? 'Outros',
-                'method'      => optional($t->account)->name ?? '—',
+                'method'      => $t->type === 'transfer'
+                    ? (optional($t->account)->name ?? '—') . ' → ' . (optional($t->transferDestination)->name ?? '—')
+                    : (optional($t->account)->name ?? '—'),
                 'amount'      => (float) $t->amount_encrypted,
                 'type'        => $t->type,
                 'occurred_ts' => Carbon::parse($t->occurred_at)->timestamp,

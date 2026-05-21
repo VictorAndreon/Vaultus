@@ -35,7 +35,9 @@ export interface BudgetEntry {
 
 export interface FinanceTransaction {
   id: number
+  account_id: number
   date: string
+  occurred_at: string
   description: string
   category: string
   method: string
