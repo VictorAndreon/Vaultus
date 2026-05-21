@@ -13,6 +13,7 @@ class Transaction extends Model
     protected $fillable = [
         'account_id', 'type', 'amount_encrypted', 'description',
         'category', 'occurred_at', 'transfer_to_account_id', 'transfer_pair_id',
+        'installment_plan_id', 'installment_number',
     ];
 
     protected function casts(): array

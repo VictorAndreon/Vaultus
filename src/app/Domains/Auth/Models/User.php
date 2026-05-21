@@ -94,6 +94,11 @@ class User extends Authenticatable
         return $this->hasMany(\App\Domains\Finance\Models\RecurringRule::class);
     }
 
+    public function installmentPlans()
+    {
+        return $this->hasMany(\App\Domains\Finance\Models\InstallmentPlan::class);
+    }
+
     public function projects()
     {
         return $this->hasMany(\App\Domains\Projects\Models\Project::class);

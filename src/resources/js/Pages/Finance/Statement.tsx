@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { fmtBRL } from '@/lib/finance/formatters'
+import { AccountItem } from '@/types/finance'
+import PayInvoiceModal from './components/cards/PayInvoiceModal'
 
 interface StatementTransaction {
   id: number
@@ -27,6 +30,7 @@ interface Props {
   account: { id: number; name: string; closing_day: number; due_day: number }
   statement: Statement & { transactions: StatementTransaction[] }
   month: string
+  payment_accounts: AccountItem[]
 }
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
@@ -47,7 +51,8 @@ function nextMonth(ym: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-export default function StatementPage({ account, statement, month }: Props) {
+export default function StatementPage({ account, statement, month, payment_accounts }: Props) {
+  const [payOpen, setPayOpen] = useState(false)
   const remaining = Math.max(0, statement.total - statement.paid)
   const status = STATUS_MAP[statement.status] ?? STATUS_MAP.aberta
 
@@ -61,14 +66,21 @@ export default function StatementPage({ account, statement, month }: Props) {
       eyebrow="Cartão de crédito"
       subtitle={`Vencimento em ${statement.due_at} · período ${statement.period_start} → ${statement.period_end}`}
       actions={
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <button className="icon-btn" title="Mês anterior" style={{ width: 30, height: 30 }} onClick={() => goToMonth(prevMonth(month))}>
-            <Icons.ChevronLeft size={13} />
-          </button>
-          <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)', minWidth: 72, textAlign: 'center' }}>{month}</span>
-          <button className="icon-btn" title="Próximo mês" style={{ width: 30, height: 30 }} onClick={() => goToMonth(nextMonth(month))}>
-            <Icons.ChevronRight size={13} />
-          </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button className="icon-btn" title="Mês anterior" style={{ width: 30, height: 30 }} onClick={() => goToMonth(prevMonth(month))}>
+              <Icons.ChevronLeft size={13} />
+            </button>
+            <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)', minWidth: 72, textAlign: 'center' }}>{month}</span>
+            <button className="icon-btn" title="Próximo mês" style={{ width: 30, height: 30 }} onClick={() => goToMonth(nextMonth(month))}>
+              <Icons.ChevronRight size={13} />
+            </button>
+          </div>
+          {remaining > 0 && (
+            <button className="btn btn-primary btn-sm" onClick={() => setPayOpen(true)}>
+              <Icons.Check size={13} /> Pagar fatura
+            </button>
+          )}
         </div>
       }
     >
@@ -110,9 +122,9 @@ export default function StatementPage({ account, statement, month }: Props) {
             </div>
           </div>
           {remaining > 0 && (
-            <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
-              Para pagar, faça uma <b>transferência de uma conta corrente para este cartão</b> no Dashboard.
-            </div>
+            <button className="btn btn-soft btn-sm" onClick={() => setPayOpen(true)}>
+              <Icons.ArrowUpRight size={13} /> Pagar agora
+            </button>
           )}
         </div>
 
@@ -145,6 +157,16 @@ export default function StatementPage({ account, statement, month }: Props) {
         </div>
 
       </div>
+
+      {payOpen && (
+        <PayInvoiceModal
+          card={{ id: account.id, name: account.name }}
+          remaining={remaining}
+          dueAt={statement.due_at}
+          paymentAccounts={payment_accounts}
+          onClose={() => setPayOpen(false)}
+        />
+      )}
     </AppLayout>
   )
 }

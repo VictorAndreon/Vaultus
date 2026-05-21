@@ -54,6 +54,8 @@ class TransactionController extends Controller
         $validated['amount_encrypted'] = $amount;
         unset($validated['amount']);
 
+        $this->guardCreditLimit($account, $validated['type'], (float) $amount);
+
         if ($validated['type'] === 'transfer') {
             $this->createTransferPair($request->user(), $account, $validated);
         } else {
@@ -61,6 +63,30 @@ class TransactionController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Cartões de crédito têm limite — uma despesa que ultrapasse o saldo devedor atual
+     * + nova compra deve ser barrada. Para conta sem credit_limit cadastrado, o cartão é
+     * tratado como ilimitado (decisão consciente; força o usuário a cadastrar o limite
+     * se quiser proteção).
+     */
+    private function guardCreditLimit(Account $account, string $type, float $amount): void
+    {
+        if ($type !== 'expense' || $account->type !== 'credit') {
+            return;
+        }
+        $limit = $account->credit_limit_encrypted !== null ? (float) $account->credit_limit_encrypted : null;
+        if ($limit === null) {
+            return;
+        }
+
+        $projected = (float) $account->current_balance + $amount;
+        if ($projected > $limit) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'amount' => 'Compra ultrapassa o limite do cartão (disponível: R$ ' . number_format($limit - $account->current_balance, 2, ',', '.') . ').',
+            ]);
+        }
     }
 
     private function createTransferPair($user, Account $source, array $data): void

@@ -60,6 +60,9 @@ export default function FinanceIndex({
     <AppLayout title="Finanças" eyebrow="Patrimônio" subtitle="Saldo, fluxo, orçamento e metas."
       actions={
         <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/finance/cards" className="btn btn-ghost btn-sm">
+            <Icons.Tag size={13} /> Cartões
+          </Link>
           <Link href="/finance/recurring" className="btn btn-ghost btn-sm">
             <Icons.Clock size={13} /> Recorrências
           </Link>

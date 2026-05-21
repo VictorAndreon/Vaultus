@@ -25,6 +25,10 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
   const [description, setDescription] = useState(transaction?.description ?? '')
   const [category, setCategory] = useState(transaction && transaction.category !== 'Outros' ? transaction.category : '')
   const [occurred_at, setOccurredAt] = useState(transaction?.occurred_at ?? new Date().toISOString().slice(0, 10))
+  const [installments, setInstallments] = useState<number>(1)
+
+  const currentAccount = accounts.find(a => a.id === accountId)
+  const canInstall = !isEdit && type === 'expense' && currentAccount?.type === 'credit'
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -38,6 +42,18 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
         description,
         category: category || null,
         occurred_at,
+      }, opts)
+      return
+    }
+
+    if (canInstall && installments > 1) {
+      idempotentPost('/finance/installment-plans', {
+        account_id:   accountId,
+        description,
+        total_amount: amount,
+        installments,
+        first_due_on: occurred_at,
+        category:     category || null,
       }, opts)
       return
     }
@@ -133,7 +149,7 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
             </div>
           )}
 
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: canInstall ? 12 : 20 }}>
             <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
             <input
               className="input"
@@ -144,6 +160,29 @@ export default function TransactionModal({ accounts, budgetCategories, transacti
               placeholder={type === 'transfer' ? 'Ex: PIX para reserva' : 'Ex: iFood — jantar'}
             />
           </div>
+
+          {canInstall && (
+            <div style={{ marginBottom: 20 }}>
+              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Parcelar em (cartão de crédito)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  className="input"
+                  style={{ width: 80 }}
+                  value={installments}
+                  onChange={e => setInstallments(Math.max(1, Math.min(99, Number(e.target.value) || 1)))}
+                />
+                <span className="muted" style={{ fontSize: 12 }}>
+                  {installments > 1
+                    ? <>{installments}x de <b className="mono">{(amount / installments).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></>
+                    : 'à vista'}
+                </span>
+              </div>
+              {errors?.total_amount && <div style={{ color: 'var(--rose)', fontSize: 12, marginTop: 4 }}>{errors.total_amount}</div>}
+            </div>
+          )}
 
           {errors?.amount_encrypted && (
             <div style={{ color: 'var(--rose)', fontSize: 12, marginBottom: 12 }}>{errors.amount_encrypted}</div>

@@ -167,6 +167,25 @@ class CreditCardStatementTest extends TestCase
             );
     }
 
+    public function test_statement_route_exposes_payment_accounts(): void
+    {
+        Carbon::setTestNow('2026-05-10');
+        $user = User::factory()->create();
+        $card = Account::factory()->create([
+            'user_id' => $user->id, 'type' => 'credit', 'balance_encrypted' => 0,
+            'closing_day' => 5, 'due_day' => 15,
+        ]);
+        Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'name' => 'Nubank',  'balance_encrypted' => 5000]);
+        Account::factory()->create(['user_id' => $user->id, 'type' => 'investment', 'name' => 'XP', 'balance_encrypted' => 0]);
+
+        $this->actingAs($user)
+            ->get("/finance/accounts/{$card->id}/statement")
+            ->assertInertia(fn ($page) => $page
+                ->has('payment_accounts', 1) // só checking, savings ou cash
+                ->where('payment_accounts.0.name', 'Nubank')
+            );
+    }
+
     public function test_statement_route_forbids_other_users_card(): void
     {
         $u1 = User::factory()->create();

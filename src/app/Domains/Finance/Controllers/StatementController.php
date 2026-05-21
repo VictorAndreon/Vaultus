@@ -28,15 +28,23 @@ class StatementController extends Controller
             ? Carbon::createFromFormat('Y-m', $validated['month'], $tz)->day(min($account->due_day, 28))
             : $now->copy()->day(min($account->due_day, 28));
 
+        $user = $request->user();
+        $paymentAccounts = $user->accounts()->userVisible()
+            ->whereIn('type', ['checking', 'savings', 'cash'])
+            ->get(['id', 'name', 'type'])
+            ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'type' => $a->type])
+            ->values()->toArray();
+
         return Inertia::render('Finance/Statement', [
-            'account'   => [
+            'account'          => [
                 'id'          => $account->id,
                 'name'        => $account->name,
                 'closing_day' => $account->closing_day,
                 'due_day'     => $account->due_day,
             ],
-            'statement' => $service->forMonth($account, $dueAnchor),
-            'month'     => $dueAnchor->format('Y-m'),
+            'statement'        => $service->forMonth($account, $dueAnchor),
+            'month'            => $dueAnchor->format('Y-m'),
+            'payment_accounts' => $paymentAccounts,
         ]);
     }
 }
