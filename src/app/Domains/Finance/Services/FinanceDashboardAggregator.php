@@ -55,8 +55,24 @@ class FinanceDashboardAggregator
             'goals'                 => $this->goals($user),
             'accounts_list'         => $this->accountsList($accounts),
             'upcoming_payments'     => $this->upcomingPayments($user, $now),
+            'wishlist'              => $this->wishlist($user),
             'month_label'           => self::PT_MONTHS[$now->month - 1],
         ];
+    }
+
+    private function wishlist(User $user): array
+    {
+        return $user->wishlistItems()->with('goal')->orderByDesc('id')->get()
+            ->map(fn ($w) => [
+                'id'                => $w->id,
+                'name'              => $w->name,
+                'estimated_price'   => $w->estimated_price_encrypted !== null ? (float) $w->estimated_price_encrypted : null,
+                'priority'          => $w->priority,
+                'url'               => $w->url,
+                'notes'             => $w->notes,
+                'financial_goal_id' => $w->financial_goal_id,
+                'goal_name'         => $w->goal?->name,
+            ])->values()->toArray();
     }
 
     /**

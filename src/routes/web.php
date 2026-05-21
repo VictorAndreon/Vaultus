@@ -59,6 +59,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
     Route::get('/finance/accounts/{account}', [AccountController::class, 'show']);
     Route::get('/finance/transactions', [TransactionController::class, 'index'])->name('finance.transactions');
+    Route::get('/finance/reports', [\App\Domains\Finance\Controllers\ReportController::class, 'byCategory'])->name('finance.reports');
+    Route::get('/finance/recurring', [\App\Domains\Finance\Controllers\RecurringRuleController::class, 'index'])->name('finance.recurring');
+    Route::get('/finance/accounts/{account}/statement', [\App\Domains\Finance\Controllers\StatementController::class, 'show'])->name('finance.statement');
 
     // Finance — escritas POST sob middleware de idempotência (protege contra clique-duplo / replay)
     Route::middleware('idempotent')->group(function () {
@@ -69,6 +72,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/finance/wishlist', [WishlistController::class, 'store']);
         Route::post('/finance/budget-categories', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'store']);
         Route::post('/finance/upcoming-payments', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'store']);
+        Route::post('/finance/recurring', [\App\Domains\Finance\Controllers\RecurringRuleController::class, 'store']);
     });
 
     // Finance — atualizações e remoções (já idempotentes por contrato HTTP)
@@ -85,6 +89,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/finance/budget-categories/{category}', [\App\Domains\Finance\Controllers\BudgetCategoryController::class, 'destroy']);
     Route::patch('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'update']);
     Route::delete('/finance/upcoming-payments/{payment}', [\App\Domains\Finance\Controllers\UpcomingPaymentController::class, 'destroy']);
+    Route::patch('/finance/recurring/{rule}', [\App\Domains\Finance\Controllers\RecurringRuleController::class, 'update']);
+    Route::delete('/finance/recurring/{rule}', [\App\Domains\Finance\Controllers\RecurringRuleController::class, 'destroy']);
     Route::patch('/finance/settings', [\App\Domains\Finance\Controllers\FinanceController::class, 'updateSettings']);
     // Rotas de alocação de transação a meta — desativadas em 2026-05-16.
     // Substituídas pelo fluxo de aporte como transferência interna (POST /finance/goals/{goal}/deposit).

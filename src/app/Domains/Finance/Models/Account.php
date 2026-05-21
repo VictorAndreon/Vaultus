@@ -21,7 +21,7 @@ class Account extends Model
 
     protected $fillable = [
         'user_id', 'name', 'type', 'balance_encrypted', 'currency',
-        'credit_limit_encrypted', 'interest_rate',
+        'credit_limit_encrypted', 'interest_rate', 'closing_day', 'due_day',
         'is_internal', 'goal_id',
     ];
 
@@ -34,6 +34,8 @@ class Account extends Model
             'balance_encrypted'      => EncryptedCast::class,
             'credit_limit_encrypted' => EncryptedCast::class,
             'interest_rate'          => 'float',
+            'closing_day'            => 'integer',
+            'due_day'                => 'integer',
             'is_internal'            => 'boolean',
         ];
     }

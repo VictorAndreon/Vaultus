@@ -18,3 +18,7 @@ Schedule::command('backup:run --type=monthly')
 
 Schedule::command('idempotency:prune --days=7')
     ->daily();
+
+Schedule::command('recurring:materialize')
+    ->dailyAt('06:00')
+    ->withoutOverlapping();

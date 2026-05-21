@@ -70,6 +70,17 @@ export interface UpcomingPayment {
   linked_goal_id: number | null
 }
 
+export interface WishlistItem {
+  id: number
+  name: string
+  estimated_price: number | null
+  priority: 'low' | 'medium' | 'high'
+  url: string | null
+  notes: string | null
+  financial_goal_id: number | null
+  goal_name: string | null
+}
+
 export interface FinanceIndexProps {
   net_worth: number
   month_income: number
@@ -84,5 +95,6 @@ export interface FinanceIndexProps {
   month_label: string
   accounts_list: AccountItem[]
   upcoming_payments: UpcomingPayment[]
+  wishlist: WishlistItem[]
   budget_category_names: string[]
 }

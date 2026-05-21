@@ -23,7 +23,7 @@ class FinanceDashboardAggregatorTest extends TestCase
         foreach ([
             'net_worth', 'month_income', 'month_expense', 'savings_rate', 'savings_goal_pct',
             'flow_chart', 'donut', 'budgets', 'budget_category_names',
-            'transactions', 'goals', 'accounts_list', 'upcoming_payments', 'month_label',
+            'transactions', 'goals', 'accounts_list', 'upcoming_payments', 'wishlist', 'month_label',
         ] as $key) {
             $this->assertArrayHasKey($key, $data, "Falta a chave '{$key}' no payload do aggregator");
         }
@@ -72,6 +72,39 @@ class FinanceDashboardAggregatorTest extends TestCase
 
         $this->assertContains('Conta corrente', $labels);
         $this->assertNotContains('Dinheiro', $labels);
+    }
+
+    public function test_aggregate_returns_wishlist_with_linked_goal_name(): void
+    {
+        $user = User::factory()->create();
+        $goal = $user->financialGoals()->create([
+            'name'                    => 'Tech',
+            'target_amount_encrypted' => 5000,
+        ]);
+        $user->wishlistItems()->create([
+            'name'                      => 'Solo',
+            'estimated_price_encrypted' => 800,
+            'priority'                  => 'medium',
+        ]);
+        $user->wishlistItems()->create([
+            'name'                      => 'Linkado',
+            'estimated_price_encrypted' => 4500,
+            'priority'                  => 'high',
+            'financial_goal_id'         => $goal->id,
+        ]);
+
+        $data = app(FinanceDashboardAggregator::class)->aggregate($user->fresh());
+
+        $this->assertArrayHasKey('wishlist', $data);
+        $this->assertCount(2, $data['wishlist']);
+
+        $linked = collect($data['wishlist'])->firstWhere('name', 'Linkado');
+        $this->assertSame('Tech', $linked['goal_name']);
+        $this->assertSame($goal->id, $linked['financial_goal_id']);
+        $this->assertSame(4500.0, $linked['estimated_price']);
+
+        $loose = collect($data['wishlist'])->firstWhere('name', 'Solo');
+        $this->assertNull($loose['goal_name']);
     }
 
     public function test_recent_transactions_expose_occurred_at_and_account_id_for_editing(): void

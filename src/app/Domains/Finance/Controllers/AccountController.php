@@ -53,6 +53,8 @@ class AccountController extends Controller
             'currency'               => 'required|string|size:3',
             'credit_limit_encrypted' => 'nullable|numeric|min:0',
             'interest_rate'          => 'nullable|numeric|min:0|max:999',
+            'closing_day'            => 'nullable|integer|min:1|max:31',
+            'due_day'                => 'nullable|integer|min:1|max:31',
         ]);
 
         // credit_limit e interest_rate só fazem sentido em contas de passivo (credit/loan).
@@ -60,6 +62,8 @@ class AccountController extends Controller
         if (! in_array($validated['type'], ['credit', 'loan'], true)) {
             abort_if(! empty($validated['credit_limit_encrypted']), 422, 'credit_limit só é aplicável a contas do tipo credit/loan.');
             abort_if(! empty($validated['interest_rate']),          422, 'interest_rate só é aplicável a contas do tipo credit/loan.');
+            abort_if(! empty($validated['closing_day']),            422, 'closing_day só é aplicável a contas do tipo credit.');
+            abort_if(! empty($validated['due_day']),                422, 'due_day só é aplicável a contas do tipo credit.');
         }
 
         $request->user()->accounts()->create($validated);

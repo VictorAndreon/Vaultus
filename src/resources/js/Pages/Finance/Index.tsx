@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { idempotentPost } from '@/lib/idempotentPost'
 import { fmtBRL } from '@/lib/finance/formatters'
-import { FinanceIndexProps, FinancialGoal, FinanceTransaction, UpcomingPayment } from '@/types/finance'
+import { FinanceIndexProps, FinancialGoal, FinanceTransaction, UpcomingPayment, WishlistItem } from '@/types/finance'
 
 // Charts
 import FlowAreaChart from './components/charts/FlowAreaChart'
@@ -20,11 +20,12 @@ import AccountModal from './components/accounts/AccountModal'
 import BudgetModal from './components/budgets/BudgetModal'
 import UpcomingPaymentModal from './components/upcoming/UpcomingPaymentModal'
 import TransactionModal from './components/transactions/TransactionModal'
+import WishlistModal from './components/wishlist/WishlistModal'
 
 export default function FinanceIndex({
   net_worth, month_income, month_expense, savings_rate, savings_goal_pct,
   flow_chart, donut, budgets, transactions, goals, month_label,
-  accounts_list, upcoming_payments, budget_category_names,
+  accounts_list, upcoming_payments, wishlist, budget_category_names,
 }: FinanceIndexProps) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
@@ -33,6 +34,7 @@ export default function FinanceIndex({
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [upcomingModal, setUpcomingModal] = useState<{ payment: UpcomingPayment | null } | null>(null)
+  const [wishlistModal, setWishlistModal] = useState<{ item: WishlistItem | null } | null>(null)
   const [editSavingsPct, setEditSavingsPct] = useState(false)
   const [savingsPctInput, setSavingsPctInput] = useState(savings_goal_pct)
 
@@ -57,9 +59,17 @@ export default function FinanceIndex({
   return (
     <AppLayout title="Finanças" eyebrow="Patrimônio" subtitle="Saldo, fluxo, orçamento e metas."
       actions={
-        <button className="btn btn-primary btn-sm" onClick={() => setTxModal({ tx: null })}>
-          <Icons.Plus size={13} /> Lançamento
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/finance/recurring" className="btn btn-ghost btn-sm">
+            <Icons.Clock size={13} /> Recorrências
+          </Link>
+          <Link href="/finance/reports" className="btn btn-ghost btn-sm">
+            <Icons.Trend size={13} /> Relatórios
+          </Link>
+          <button className="btn btn-primary btn-sm" onClick={() => setTxModal({ tx: null })}>
+            <Icons.Plus size={13} /> Lançamento
+          </button>
+        </div>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -273,6 +283,74 @@ export default function FinanceIndex({
           </div>
         </section>
 
+        {/* Lista de desejos */}
+        <section>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div className="kicker">
+              Lista de desejos · <b style={{ color: 'var(--text-2)' }}>{wishlist.length}</b>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => setWishlistModal({ item: null })}>
+              <Icons.Plus size={12} /> Novo desejo
+            </button>
+          </div>
+
+          {wishlist.length === 0 ? (
+            <div className="card" style={{ padding: 20, color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>
+              Nenhum desejo cadastrado. Use para registrar coisas que você quer comprar e vinculá-las a metas.
+            </div>
+          ) : (
+            <div className="grid g-3">
+              {wishlist.map(w => {
+                const prioCls   = w.priority === 'high' ? 'tag-rose' : w.priority === 'medium' ? 'tag-gold' : 'tag'
+                const prioLabel = w.priority === 'high' ? 'Alta' : w.priority === 'medium' ? 'Média' : 'Baixa'
+                return (
+                  <div key={w.id} className="card" style={{ padding: '18px 22px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                          <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>{w.name}</span>
+                          <span className={`tag ${prioCls}`}><span className="dot" />{prioLabel}</span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--serif)', fontSize: 22, color: 'var(--text)' }}>
+                          {w.estimated_price != null ? fmtBRL(w.estimated_price) : '—'}
+                        </div>
+                        {w.goal_name && (
+                          <div className="mono muted" style={{ fontSize: 11, marginTop: 4 }}>→ Meta: {w.goal_name}</div>
+                        )}
+                        {w.url && (
+                          <a href={w.url} target="_blank" rel="noopener noreferrer" className="card-link" style={{ fontSize: 12, marginTop: 6, display: 'inline-block' }}>Abrir link ↗</a>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, flex: 'none' }}>
+                        <button className="icon-btn" title="Editar" style={{ width: 26, height: 26 }} onClick={() => setWishlistModal({ item: w })}>
+                          <Icons.Edit size={11} />
+                        </button>
+                        <button
+                          className="icon-btn"
+                          title="Excluir"
+                          style={{ width: 26, height: 26, color: 'var(--rose)' }}
+                          onClick={() => {
+                            if (confirm(`Excluir "${w.name}"?`)) {
+                              router.delete(`/finance/wishlist/${w.id}`, { preserveScroll: true })
+                            }
+                          }}
+                        >
+                          <Icons.Trash size={11} />
+                        </button>
+                      </div>
+                    </div>
+                    {w.notes && (
+                      <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
+                        {w.notes}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
         {/* Tabela de lançamentos */}
         <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -345,6 +423,13 @@ export default function FinanceIndex({
           payment={upcomingModal.payment}
           goals={goals}
           onClose={() => setUpcomingModal(null)}
+        />
+      )}
+      {wishlistModal !== null && (
+        <WishlistModal
+          item={wishlistModal.item}
+          goals={goals}
+          onClose={() => setWishlistModal(null)}
         />
       )}
     </AppLayout>

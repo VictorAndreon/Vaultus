@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { router } from '@inertiajs/react'
+import { Link, router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import CurrencyInput from '@/Components/CurrencyInput'
@@ -112,9 +112,16 @@ export default function FinanceAccount({ account, transactions, month_income, mo
       eyebrow={TYPE_LABELS[acc.type] ?? acc.type}
       subtitle="Histórico e lançamentos desta conta"
       actions={
-        <button className="btn btn-primary btn-sm" onClick={() => setTxModal({ tx: null })}>
-          <Icons.Plus size={13} /> Nova Transação
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {acc.type === 'credit' && (
+            <Link href={`/finance/accounts/${acc.id}/statement`} className="btn btn-ghost btn-sm">
+              <Icons.Calendar size={13} /> Ver fatura
+            </Link>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={() => setTxModal({ tx: null })}>
+            <Icons.Plus size={13} /> Nova Transação
+          </button>
+        </div>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

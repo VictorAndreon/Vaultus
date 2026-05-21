@@ -17,6 +17,8 @@ export default function AccountModal({ onClose }: Props) {
   const [currency, setCurrency] = useState('BRL')
   const [creditLimit, setCreditLimit] = useState(0)
   const [interestRate, setInterestRate] = useState<number | ''>('')
+  const [closingDay, setClosingDay] = useState<number | ''>('')
+  const [dueDay, setDueDay] = useState<number | ''>('')
 
   const isLiability = LIABILITY_TYPES.includes(type)
   const balanceLabel = isLiability ? 'Dívida atual (saldo devedor)' : 'Saldo inicial (R$)'
@@ -31,6 +33,8 @@ export default function AccountModal({ onClose }: Props) {
     }
     if (type === 'credit') {
       payload.credit_limit_encrypted = creditLimit
+      if (closingDay !== '') payload.closing_day = closingDay
+      if (dueDay !== '')     payload.due_day = dueDay
     }
     if (isLiability && interestRate !== '') {
       payload.interest_rate = interestRate
@@ -101,13 +105,31 @@ export default function AccountModal({ onClose }: Props) {
           </div>
 
           {type === 'credit' && (
-            <div style={{ marginBottom: 14 }}>
-              <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Limite do cartão (R$)</label>
-              <CurrencyInput className="input" style={{ width: '100%' }} value={creditLimit} onValueChange={setCreditLimit} />
-              {errors?.credit_limit_encrypted && (
-                <div style={{ color: 'var(--rose)', fontSize: 12, marginTop: 4 }}>{errors.credit_limit_encrypted}</div>
-              )}
-            </div>
+            <>
+              <div style={{ marginBottom: 14 }}>
+                <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Limite do cartão (R$)</label>
+                <CurrencyInput className="input" style={{ width: '100%' }} value={creditLimit} onValueChange={setCreditLimit} />
+                {errors?.credit_limit_encrypted && (
+                  <div style={{ color: 'var(--rose)', fontSize: 12, marginTop: 4 }}>{errors.credit_limit_encrypted}</div>
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div>
+                  <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Dia de fechamento</label>
+                  <input type="number" min={1} max={31} className="input" style={{ width: '100%' }}
+                    value={closingDay} onChange={e => setClosingDay(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Ex: 5" />
+                  {errors?.closing_day && <div style={{ color: 'var(--rose)', fontSize: 12, marginTop: 4 }}>{errors.closing_day}</div>}
+                </div>
+                <div>
+                  <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Dia de vencimento</label>
+                  <input type="number" min={1} max={31} className="input" style={{ width: '100%' }}
+                    value={dueDay} onChange={e => setDueDay(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Ex: 15" />
+                  {errors?.due_day && <div style={{ color: 'var(--rose)', fontSize: 12, marginTop: 4 }}>{errors.due_day}</div>}
+                </div>
+              </div>
+            </>
           )}
 
           {isLiability && (
