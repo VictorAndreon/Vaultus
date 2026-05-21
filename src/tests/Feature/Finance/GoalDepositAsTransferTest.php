@@ -153,6 +153,64 @@ class GoalDepositAsTransferTest extends TestCase
         ]);
     }
 
+    public function test_deposit_above_source_balance_is_rejected()
+    {
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 100]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Sem cobertura',
+            'target_amount_encrypted' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson("/finance/goals/{$goal->id}/deposit", [
+                'amount'     => 500,
+                'account_id' => $source->id,
+            ]);
+
+        $response->assertStatus(422);
+        $this->assertSame(0.0, (float) $goal->fresh()->current_amount);
+        $this->assertDatabaseMissing('transactions', [
+            'account_id'             => $source->id,
+            'transfer_to_account_id' => $goal->virtualAccount->id,
+        ]);
+    }
+
+    public function test_deposit_from_liability_account_is_rejected()
+    {
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'credit', 'balance_encrypted' => 0]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Sem aporte de dívida',
+            'target_amount_encrypted' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson("/finance/goals/{$goal->id}/deposit", [
+                'amount'     => 100,
+                'account_id' => $source->id,
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_deposit_equal_to_source_balance_is_allowed()
+    {
+        $user   = User::factory()->create();
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 300]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Aporte exato',
+            'target_amount_encrypted' => 1000,
+        ]);
+
+        $this->actingAs($user)->post("/finance/goals/{$goal->id}/deposit", [
+            'amount'     => 300,
+            'account_id' => $source->id,
+        ])->assertRedirect();
+
+        $this->assertSame(300.0, (float) $goal->fresh()->current_amount);
+    }
+
     public function test_deposit_persists_custom_note_as_description()
     {
         $user   = User::factory()->create();

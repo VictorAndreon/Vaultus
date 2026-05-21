@@ -21,7 +21,7 @@ class GoalController extends Controller
             'color'           => 'nullable|string|max:60',
             'note'            => 'nullable|string|max:255',
             'category'        => 'nullable|string|max:100',
-            'deadline'        => 'nullable|date_format:Y-m',
+            'deadline'        => ['nullable', 'date_format:Y-m', 'after_or_equal:'.now()->startOfMonth()->toDateString()],
         ]);
 
         $deadlineDate = isset($validated['deadline'])
@@ -55,7 +55,7 @@ class GoalController extends Controller
             'color'          => 'nullable|string|max:60',
             'note'           => 'nullable|string|max:255',
             'category'       => 'nullable|string|max:100',
-            'deadline'       => 'nullable|date_format:Y-m',
+            'deadline'       => ['nullable', 'date_format:Y-m', 'after_or_equal:'.now()->startOfMonth()->toDateString()],
             'is_completed'   => 'sometimes|boolean',
             'is_archived'    => 'sometimes|boolean',
         ]);

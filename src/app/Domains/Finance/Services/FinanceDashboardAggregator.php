@@ -137,7 +137,12 @@ class FinanceDashboardAggregator
             $groups[$label]['amount']       = ($groups[$label]['amount'] ?? 0) + (float) $account->current_balance;
         }
 
-        $totalAssets = (float) $accounts->filter(fn ($a) => ! $a->is_liability)->sum('current_balance');
+        // Denominador = soma apenas dos ativos com saldo positivo. Saldo negativo de ativo
+        // (ex: corrente estourada) é uma anomalia que não compõe "alocação de patrimônio";
+        // incluí-lo distorce o pct de todas as outras fatias.
+        $totalAssets = (float) $accounts
+            ->filter(fn ($a) => ! $a->is_liability && (float) $a->current_balance > 0)
+            ->sum('current_balance');
 
         return array_values(array_filter(array_map(fn ($g) => [
             'label'        => $g['label'],
@@ -145,7 +150,7 @@ class FinanceDashboardAggregator
             'amount'       => round(abs($g['amount']), 2),
             'pct'          => $totalAssets > 0 ? (int) round(abs($g['amount']) / $totalAssets * 100) : 0,
             'is_liability' => $g['is_liability'] ?? false,
-        ], $groups), fn ($g) => $g['amount'] != 0));
+        ], $groups), fn ($g) => $g['amount'] > 0));
     }
 
     private function budgets(User $user, \Illuminate\Support\Collection $monthTx): array

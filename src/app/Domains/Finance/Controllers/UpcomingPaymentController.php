@@ -13,7 +13,7 @@ class UpcomingPaymentController extends Controller
         $data = $request->validate([
             'description'    => 'required|string|max:255',
             'amount'         => 'required|numeric|min:0.01',
-            'due_date'       => 'required|date_format:Y-m-d',
+            'due_date'       => 'required|date_format:Y-m-d|after_or_equal:today',
             'tag'            => 'nullable|in:meta',
             'linked_goal_id' => 'nullable|exists:financial_goals,id',
         ]);
@@ -36,7 +36,7 @@ class UpcomingPaymentController extends Controller
         $data = $request->validate([
             'description'    => 'sometimes|string|max:255',
             'amount'         => 'sometimes|numeric|min:0.01',
-            'due_date'       => 'sometimes|date_format:Y-m-d',
+            'due_date'       => 'sometimes|date_format:Y-m-d|after_or_equal:today',
             'tag'            => 'nullable|in:meta',
             'linked_goal_id' => 'nullable|exists:financial_goals,id',
         ]);

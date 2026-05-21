@@ -40,6 +40,40 @@ class FinanceDashboardAggregatorTest extends TestCase
         $this->assertSame(300000.0, (float) $data['net_worth']);
     }
 
+    public function test_donut_pct_remains_correct_when_an_account_has_negative_balance(): void
+    {
+        $user       = User::factory()->create();
+        $checking   = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 1000]);
+        $investment = Account::factory()->create(['user_id' => $user->id, 'type' => 'investment', 'balance_encrypted' => 3000]);
+
+        // Despesas zerando a conta corrente e deixando-a negativa
+        $checking->transactions()->create([
+            'type'             => 'expense',
+            'amount_encrypted' => 1500,
+            'description'      => 'Estouro',
+            'occurred_at'      => now()->format('Y-m-d'),
+        ]);
+
+        $donut = collect(app(FinanceDashboardAggregator::class)->aggregate($user->fresh())['donut'])
+            ->keyBy('label');
+
+        $this->assertArrayHasKey('Investimentos', $donut);
+        $this->assertSame(100, $donut['Investimentos']['pct']);
+    }
+
+    public function test_donut_excludes_assets_with_non_positive_balance(): void
+    {
+        $user = User::factory()->create();
+        Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 2000]);
+        $zeroed = Account::factory()->create(['user_id' => $user->id, 'type' => 'cash', 'balance_encrypted' => 0]);
+
+        $labels = collect(app(FinanceDashboardAggregator::class)->aggregate($user->fresh())['donut'])
+            ->pluck('label');
+
+        $this->assertContains('Conta corrente', $labels);
+        $this->assertNotContains('Dinheiro', $labels);
+    }
+
     public function test_transfers_do_not_inflate_month_income_or_expense(): void
     {
         $user   = User::factory()->create();

@@ -19,6 +19,14 @@ class GoalDepositService
             abort(422, 'Conta de origem não pode ser uma subconta interna.');
         }
 
+        if ($source->is_liability) {
+            abort(422, 'Aporte a partir de conta de crédito ou financiamento não é permitido.');
+        }
+
+        if ($amount > (float) $source->current_balance) {
+            abort(422, 'Saldo insuficiente na conta de origem para esse aporte.');
+        }
+
         $virtual = $goal->virtualAccount;
         abort_if($virtual === null, 500, 'Meta sem subconta virtual associada.');
 

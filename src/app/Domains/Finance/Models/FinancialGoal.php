@@ -93,6 +93,23 @@ class FinancialGoal extends Model
         return (float) min(100, $target > 0 ? round($this->current_amount / $target * 100, 1) : 0);
     }
 
+    public function getStatusAttribute(): string
+    {
+        if ($this->is_completed || $this->progress_percent >= 100) {
+            return 'concluida';
+        }
+
+        if ($this->deadline && $this->deadline->endOfDay()->isPast()) {
+            return 'atrasado';
+        }
+
+        if ($this->deadline && $this->suggested_monthly > $this->monthly_amount) {
+            return 'atencao';
+        }
+
+        return 'no-prazo';
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

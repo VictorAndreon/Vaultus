@@ -73,6 +73,26 @@ class AccountTest extends TestCase
         ]);
     }
 
+    public function test_can_update_account_balance(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::create([
+            'user_id'           => $user->id,
+            'name'              => 'Reconciliação',
+            'type'              => 'checking',
+            'balance_encrypted' => 1000.00,
+            'currency'          => 'BRL',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/finance/accounts/{$account->id}", [
+                'balance_encrypted' => 2500.50,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(2500.50, (float) $account->fresh()->balance_encrypted);
+    }
+
     public function test_can_delete_account(): void
     {
         $user = User::factory()->create();

@@ -74,6 +74,55 @@ class GoalTest extends TestCase
         $this->assertSoftDeleted('financial_goals', ['id' => $goal->id]);
     }
 
+    public function test_rejects_goal_with_past_deadline(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->postJson('/finance/goals', [
+                'name'          => 'Atrasada',
+                'target_amount' => 1000,
+                'deadline'      => now()->subMonth()->format('Y-m'),
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('deadline');
+        $this->assertDatabaseMissing('financial_goals', ['name' => 'Atrasada']);
+    }
+
+    public function test_accepts_goal_with_current_month_deadline(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/finance/goals', [
+                'name'          => 'Este mês',
+                'target_amount' => 1000,
+                'deadline'      => now()->format('Y-m'),
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('financial_goals', ['name' => 'Este mês']);
+    }
+
+    public function test_rejects_updating_goal_to_past_deadline(): void
+    {
+        $user = User::factory()->create();
+        $goal = $user->financialGoals()->create([
+            'name'                    => 'Boa',
+            'target_amount_encrypted' => 1000,
+            'deadline'                => now()->addMonths(6)->endOfMonth()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson("/finance/goals/{$goal->id}", [
+                'deadline' => now()->subMonth()->format('Y-m'),
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('deadline');
+    }
+
     public function test_cannot_modify_other_users_goal(): void
     {
         $user1 = User::factory()->create();

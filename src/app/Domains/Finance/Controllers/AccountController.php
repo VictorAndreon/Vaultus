@@ -72,8 +72,9 @@ class AccountController extends Controller
         abort_if($account->user_id !== $request->user()->id, 403);
 
         $validated = $request->validate([
-            'name'     => 'sometimes|string|max:255',
-            'currency' => 'sometimes|string|size:3',
+            'name'              => 'sometimes|string|max:255',
+            'currency'          => 'sometimes|string|size:3',
+            'balance_encrypted' => 'sometimes|numeric',
         ]);
 
         $account->update($validated);
