@@ -404,6 +404,23 @@ h1.page-title em { color: var(--green); font-style: italic; }
 .muted-2 { color: var(--text-4); }
 .kicker { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-3); }
 
+/* Accent line — borda esquerda verde para item ativo, entrada "hoje", quote */
+.accent-line {
+  position: relative;
+  padding-left: 14px;
+}
+.accent-line::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 2px;
+  background: var(--green);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Variante mais fechada para uso dentro de cards */
+.accent-line-tight::before { top: 2px; bottom: 2px; }
+
 /* Tags */
 .tag {
   display: inline-flex; align-items: center; gap: 5px;
@@ -459,14 +476,30 @@ h1.page-title em { color: var(--green); font-style: italic; }
 .meter > span { display: block; height: 100%; background: var(--green); border-radius: 999px; }
 
 .ring {
-  --p: 65; --size: 64px;
+  --p: 65;
+  --size: 64px;
+  --ring-color: var(--green);
+  --ring-track: var(--surface-3);
+  --ring-thickness: 6px;
   width: var(--size); height: var(--size);
   border-radius: 50%;
-  background: conic-gradient(var(--green) calc(var(--p) * 1%), var(--surface-3) 0);
+  background: conic-gradient(var(--ring-color) calc(var(--p) * 1%), var(--ring-track) 0);
   display: grid; place-items: center; position: relative;
 }
-.ring::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--surface); }
-.ring > span { position: relative; font-family: var(--mono); font-size: 13px; color: var(--text); z-index: 1; }
+.ring::after {
+  content: "";
+  position: absolute;
+  inset: var(--ring-thickness);
+  border-radius: 50%;
+  background: var(--surface);
+}
+.ring > span {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  z-index: 1;
+}
 
 /* Placeholder */
 .ph {
