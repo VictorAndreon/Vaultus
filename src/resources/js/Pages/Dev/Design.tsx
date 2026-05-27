@@ -5,6 +5,7 @@ import GoalIcon from '@/Components/GoalIcon'
 import Sparkline from '@/Components/charts/Sparkline'
 import AreaChart from '@/Components/charts/AreaChart'
 import Donut from '@/Components/charts/Donut'
+import Heatmap from '@/Components/charts/Heatmap'
 
 export default function DesignShowcase() {
     return (
@@ -133,6 +134,28 @@ export default function DesignShowcase() {
                             <div><span style={{ color: 'oklch(72% 0.13 320)' }}>●</span> Cripto <span className="muted">6%</span></div>
                             <div><span style={{ color: 'var(--text-4)' }}>●</span> Caixa <span className="muted">14%</span></div>
                         </div>
+                    </div>
+                </section>
+                <section id="heatmap">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Heatmap</h2>
+                    <div className="card">
+                        <div className="card-head">
+                            <div className="card-title">HÁBITOS · <b>12 SEMANAS</b></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>
+                                Menos
+                                <span style={{ width: 10, height: 10, background: 'var(--surface-3)', borderRadius: 2 }} />
+                                <span style={{ width: 10, height: 10, background: 'oklch(38% 0.09 var(--h))', borderRadius: 2 }} />
+                                <span style={{ width: 10, height: 10, background: 'var(--green-bright)', borderRadius: 2 }} />
+                                Mais
+                            </div>
+                        </div>
+                        <Heatmap rows={[
+                            { label: 'Leitura',    values: [0.7, 0.9, 0.8, 1, 0.6, 0.9, 0.7, 1, 0.8, 0.9, 1, 1] },
+                            { label: 'Exercício',  values: [0.5, 0.7, 0.9, 0.6, 0.8, 0.5, 0.7, 0.6, 0.9, 0.8, 0.7, 1] },
+                            { label: 'Meditação',  values: [1, 0.9, 0, 0.6, 0.8, 1, 0.7, 0, 0.5, 0.9, 0.8, 0.7] },
+                            { label: 'Sono 7h+',   values: [0.3, 0.5, 0.4, 0.6, 0.8, 0.3, 0.5, 0.7, 0.4, 0.8, 0.9, 0.6] },
+                            { label: 'Sem álcool', values: [0.6, 0.8, 0.7, 0.5, 0.9, 0.7, 0.8, 0.6, 0.9, 0.7, 0.8, 1] },
+                        ]} />
                     </div>
                 </section>
             </div>
