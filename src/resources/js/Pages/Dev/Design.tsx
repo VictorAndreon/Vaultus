@@ -3,6 +3,7 @@ import Greeting from '@/Components/Greeting'
 import GradientAvatar from '@/Components/GradientAvatar'
 import GoalIcon from '@/Components/GoalIcon'
 import Sparkline from '@/Components/charts/Sparkline'
+import AreaChart from '@/Components/charts/AreaChart'
 
 export default function DesignShowcase() {
     return (
@@ -79,6 +80,29 @@ export default function DesignShowcase() {
                         <div className="stat-spark">
                             <Sparkline data={[3, 5, 4, 7, 6, 8, 11, 10, 13, 12, 14, 15]} area />
                         </div>
+                    </div>
+                </section>
+                <section id="area-chart">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Area chart</h2>
+                    <div className="card">
+                        <div className="card-head">
+                            <div className="card-title"><b>PATRIMÔNIO</b> · 12 MESES</div>
+                        </div>
+                        <AreaChart data={[
+                            { label: 'Mai', value: 420 },
+                            { label: 'Jun', value: 435 },
+                            { label: 'Jul', value: 444 },
+                            { label: 'Ago', value: 451 },
+                            { label: 'Set', value: 458 },
+                            { label: 'Out', value: 462 },
+                            { label: 'Nov', value: 472 },
+                            { label: 'Dez', value: 480 },
+                            { label: 'Jan', value: 484 },
+                            { label: 'Fev', value: 490 },
+                            { label: 'Mar', value: 494 },
+                            { label: 'Abr', value: 498 },
+                            { label: 'Mai', value: 502 },
+                        ]} />
                     </div>
                 </section>
             </div>
