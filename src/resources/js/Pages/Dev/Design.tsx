@@ -1,4 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout'
+import Greeting from '@/Components/Greeting'
 
 export default function DesignShowcase() {
     return (
@@ -27,6 +28,14 @@ export default function DesignShowcase() {
                         <div className="ring" style={{ ['--p' as string]: 68 }}><span>68%</span></div>
                         <div className="ring" style={{ ['--p' as string]: 24, ['--size' as string]: '48px' }}><span>24%</span></div>
                         <div className="ring" style={{ ['--p' as string]: 92, ['--size' as string]: '96px', ['--ring-thickness' as string]: '10px' }}><span>92%</span></div>
+                    </div>
+                </section>
+                <section id="greeting">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Greeting</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <Greeting name="Victor" period="morning" />
+                        <Greeting name="Victor" period="afternoon" />
+                        <Greeting name="Victor" period="evening" />
                     </div>
                 </section>
             </div>
