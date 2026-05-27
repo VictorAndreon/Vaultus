@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout'
 import Greeting from '@/Components/Greeting'
 import GradientAvatar from '@/Components/GradientAvatar'
 import GoalIcon from '@/Components/GoalIcon'
+import Sparkline from '@/Components/charts/Sparkline'
 
 export default function DesignShowcase() {
     return (
@@ -59,6 +60,25 @@ export default function DesignShowcase() {
                         <GoalIcon variant="plane" />
                         <GoalIcon variant="car" />
                         <GoalIcon variant="shield" size={48} />
+                    </div>
+                </section>
+                <section id="sparkline">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Sparkline</h2>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Sparkline data={[3, 5, 4, 8, 6, 9, 11, 10, 13]} />
+                        <Sparkline data={[10, 9, 11, 7, 8, 6, 5, 4, 3]} accent="var(--danger)" />
+                        <Sparkline data={[2, 4, 3, 5, 6, 4, 7, 8, 6]} area />
+                        <Sparkline data={[5, 5, 5, 5, 5]} accent="var(--text-3)" />
+                    </div>
+
+                    <h3 className="h-3" style={{ marginTop: 24, marginBottom: 12 }}>Embutido em .stat</h3>
+                    <div className="stat" style={{ maxWidth: 260 }}>
+                        <div className="stat-label">Patrimônio líquido</div>
+                        <div className="stat-value">R$ 501,8 <span className="unit">mil</span></div>
+                        <div className="stat-delta up">↗ +2,4% mês</div>
+                        <div className="stat-spark">
+                            <Sparkline data={[3, 5, 4, 7, 6, 8, 11, 10, 13, 12, 14, 15]} area />
+                        </div>
                     </div>
                 </section>
             </div>
