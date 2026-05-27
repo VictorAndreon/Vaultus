@@ -6,6 +6,7 @@ import Sparkline from '@/Components/charts/Sparkline'
 import AreaChart from '@/Components/charts/AreaChart'
 import Donut from '@/Components/charts/Donut'
 import Heatmap from '@/Components/charts/Heatmap'
+import MiniCalendar from '@/Components/MiniCalendar'
 
 export default function DesignShowcase() {
     return (
@@ -157,6 +158,19 @@ export default function DesignShowcase() {
                             { label: 'Sem álcool', values: [0.6, 0.8, 0.7, 0.5, 0.9, 0.7, 0.8, 0.6, 0.9, 0.7, 0.8, 1] },
                         ]} />
                     </div>
+                </section>
+                <section id="mini-calendar">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Mini calendar</h2>
+                    <MiniCalendar
+                        year={2026}
+                        month={4}
+                        today={12}
+                        entries={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+                        intensity={{
+                            1: 0.7, 2: 0.4, 3: 0.6, 4: 0.3, 5: 0.8, 6: 0.5, 7: 0.9,
+                            8: 0.7, 9: 0.4, 10: 0.6, 11: 0.5, 12: 1,
+                        }}
+                    />
                 </section>
             </div>
         </AppLayout>
