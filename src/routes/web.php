@@ -22,6 +22,7 @@ use App\Domains\Projects\Controllers\ProjectNoteController;
 use App\Domains\Projects\Controllers\ProjectLinkController;
 use App\Domains\Tasks\Controllers\TasksController;
 use App\Domains\Library\Controllers\LibraryController;
+use App\Http\Controllers\Dev\DesignShowcaseController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -146,7 +147,7 @@ Route::middleware('auth')->group(function () {
 
     // Dev — apenas ambiente local
     if (app()->environment('local')) {
-        Route::get('/dev/design', [\App\Http\Controllers\Dev\DesignShowcaseController::class, 'index'])
+        Route::get('/dev/design', [DesignShowcaseController::class, 'index'])
             ->name('dev.design');
     }
 });
