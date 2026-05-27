@@ -4,6 +4,7 @@ import GradientAvatar from '@/Components/GradientAvatar'
 import GoalIcon from '@/Components/GoalIcon'
 import Sparkline from '@/Components/charts/Sparkline'
 import AreaChart from '@/Components/charts/AreaChart'
+import Donut from '@/Components/charts/Donut'
 
 export default function DesignShowcase() {
     return (
@@ -103,6 +104,35 @@ export default function DesignShowcase() {
                             { label: 'Abr', value: 498 },
                             { label: 'Mai', value: 502 },
                         ]} />
+                    </div>
+                </section>
+                <section id="donut">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Donut</h2>
+                    <div className="card" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+                        <Donut
+                            size={160}
+                            thickness={16}
+                            center={
+                                <div>
+                                    <div className="kicker">TOTAL</div>
+                                    <div className="h-2">R$ 501k</div>
+                                </div>
+                            }
+                            data={[
+                                { label: 'Ações', value: 38, color: 'var(--green)' },
+                                { label: 'Renda fixa', value: 28, color: 'var(--gold)' },
+                                { label: 'FIIs', value: 14, color: 'var(--sky)' },
+                                { label: 'Cripto', value: 6, color: 'oklch(72% 0.13 320)' },
+                                { label: 'Caixa', value: 14, color: 'var(--text-4)' },
+                            ]}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
+                            <div><span style={{ color: 'var(--green)' }}>●</span> Ações <span className="muted">38%</span></div>
+                            <div><span style={{ color: 'var(--gold)' }}>●</span> Renda fixa <span className="muted">28%</span></div>
+                            <div><span style={{ color: 'var(--sky)' }}>●</span> FIIs <span className="muted">14%</span></div>
+                            <div><span style={{ color: 'oklch(72% 0.13 320)' }}>●</span> Cripto <span className="muted">6%</span></div>
+                            <div><span style={{ color: 'var(--text-4)' }}>●</span> Caixa <span className="muted">14%</span></div>
+                        </div>
                     </div>
                 </section>
             </div>
