@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/finance/accounts/{account}', [AccountController::class, 'show']);
     Route::get('/finance/transactions', [TransactionController::class, 'index'])->name('finance.transactions');
     Route::get('/finance/reports', [\App\Domains\Finance\Controllers\ReportController::class, 'byCategory'])->name('finance.reports');
+    Route::get('/finance/reports/export.csv', [\App\Domains\Finance\Controllers\ReportController::class, 'exportCsv'])->name('finance.reports.export');
     Route::get('/finance/recurring', [\App\Domains\Finance\Controllers\RecurringRuleController::class, 'index'])->name('finance.recurring');
     Route::get('/finance/cards', [\App\Domains\Finance\Controllers\CardsController::class, 'index'])->name('finance.cards');
     Route::get('/finance/accounts/{account}/statement', [\App\Domains\Finance\Controllers\StatementController::class, 'show'])->name('finance.statement');
@@ -141,5 +142,11 @@ Route::middleware('auth')->group(function () {
     $stubs = ['notes', 'contacts', 'reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
+    }
+
+    // Dev — apenas ambiente local
+    if (app()->environment('local')) {
+        Route::get('/dev/design', [\App\Http\Controllers\Dev\DesignShowcaseController::class, 'index'])
+            ->name('dev.design');
     }
 });
