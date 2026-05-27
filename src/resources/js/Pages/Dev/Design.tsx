@@ -1,5 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout'
 import Greeting from '@/Components/Greeting'
+import GradientAvatar from '@/Components/GradientAvatar'
 
 export default function DesignShowcase() {
     return (
@@ -36,6 +37,17 @@ export default function DesignShowcase() {
                         <Greeting name="Victor" period="morning" />
                         <Greeting name="Victor" period="afternoon" />
                         <Greeting name="Victor" period="evening" />
+                    </div>
+                </section>
+                <section id="gradient-avatar">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Gradient avatar</h2>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <GradientAvatar initials="HC" size={30} />
+                        <GradientAvatar initials="PA" size={40} />
+                        <GradientAvatar initials="RM" size={56} />
+                        <GradientAvatar initials="LT" size={72} />
+                        <GradientAvatar initials="BL" size={56} hue={85} />
+                        <GradientAvatar initials="MS" size={56} hue={230} />
                     </div>
                 </section>
             </div>
