@@ -1,6 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout'
 import Greeting from '@/Components/Greeting'
 import GradientAvatar from '@/Components/GradientAvatar'
+import GoalIcon from '@/Components/GoalIcon'
 
 export default function DesignShowcase() {
     return (
@@ -48,6 +49,16 @@ export default function DesignShowcase() {
                         <GradientAvatar initials="LT" size={72} />
                         <GradientAvatar initials="BL" size={56} hue={85} />
                         <GradientAvatar initials="MS" size={56} hue={230} />
+                    </div>
+                </section>
+                <section id="goal-icon">
+                    <h2 className="h-2" style={{ marginBottom: 16 }}>Goal icon</h2>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <GoalIcon variant="shield" />
+                        <GoalIcon variant="home" />
+                        <GoalIcon variant="plane" />
+                        <GoalIcon variant="car" />
+                        <GoalIcon variant="shield" size={48} />
                     </div>
                 </section>
             </div>
