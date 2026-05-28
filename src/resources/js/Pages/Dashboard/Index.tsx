@@ -146,25 +146,33 @@ export default function Dashboard({
             <div className="stat-label">Patrimônio Líquido</div>
             <div className="stat-value">{nw.main}{nw.unit && <span className="unit">{nw.unit}</span>}</div>
             <div className="stat-delta up"><Icons.ArrowUpRight size={12} /> +2,4% mês</div>
-            <Sparkline data={wealth_chart.data.slice(-12)} accent="var(--green)" area />
+            <div className="stat-spark">
+              <Sparkline data={wealth_chart.data.slice(-12)} accent="var(--green)" area />
+            </div>
           </div>
           <div className="stat">
             <div className="stat-label">Tarefas Hoje</div>
             <div className="stat-value">{stats.tasks_due_today}<span className="unit">pendentes</span></div>
             <div className="stat-delta flat">ver lista completa</div>
-            <Sparkline data={[3,5,4,7,6,8,5,6,4,5,3,stats.tasks_due_today]} accent="var(--gold)" area />
+            <div className="stat-spark">
+              <Sparkline data={[3,5,4,7,6,8,5,6,4,5,3,stats.tasks_due_today]} accent="var(--gold)" area />
+            </div>
           </div>
           <div className="stat">
             <div className="stat-label">Hábitos</div>
             <div className="stat-value">{habDone}<span className="unit">/ {habTotal} hoje</span></div>
             <div className="stat-delta up"><Icons.ArrowUpRight size={12} /> consistência</div>
-            <Sparkline data={[2,3,4,4,3,5,5,4,5,5,4,habDone]} accent="var(--green)" area />
+            <div className="stat-spark">
+              <Sparkline data={[2,3,4,4,3,5,5,4,5,5,4,habDone]} accent="var(--green)" area />
+            </div>
           </div>
           <div className="stat">
             <div className="stat-label">Projetos Ativos</div>
             <div className="stat-value">{stats.open_projects}<span className="unit">em andamento</span></div>
             <div className="stat-delta flat">ver todos</div>
-            <Sparkline data={[1,2,2,3,3,4,4,4,5,5,stats.open_projects,stats.open_projects]} accent="var(--sky)" area />
+            <div className="stat-spark">
+              <Sparkline data={[1,2,2,3,3,4,4,4,5,5,stats.open_projects,stats.open_projects]} accent="var(--sky)" area />
+            </div>
           </div>
         </div>
 
