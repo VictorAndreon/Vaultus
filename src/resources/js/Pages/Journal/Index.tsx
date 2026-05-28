@@ -6,6 +6,7 @@ import JournalCalendar from './components/JournalCalendar'
 import EntryList from './components/EntryList'
 import EntryEditor from './components/EntryEditor'
 import PromptsPanel from './components/PromptsPanel'
+import AreaChart from '@/Components/charts/AreaChart'
 
 interface Props {
     entries: JournalEntry[]
@@ -16,22 +17,6 @@ interface Props {
 
 const MOOD_LABELS: Record<number, string> = { 1: 'Difícil', 2: 'Cansado', 3: 'Neutro', 4: 'Calmo', 5: 'Realizado' }
 
-function MoodChart({ data }: { data: { label: string; value: number }[] }) {
-    if (data.length < 2) return null
-    const values = data.map(d => d.value)
-    const w = 400, h = 60, pad = 8
-    const min = 1, range = 4
-    const pts = values.map((v, i) => [
-        pad + (i / (values.length - 1)) * (w - pad * 2),
-        h - pad - ((v - min) / range) * (h - pad * 2),
-    ] as [number, number])
-    const linePath = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ')
-    return (
-        <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} preserveAspectRatio="none">
-            <path d={linePath} fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    )
-}
 
 export default function JournalIndex({ entries, prompts, today, mood_chart }: Props) {
     const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -74,7 +59,12 @@ export default function JournalIndex({ entries, prompts, today, mood_chart }: Pr
                             <div className="card-head">
                                 <div className="card-title">Humor · <b>30 dias</b></div>
                             </div>
-                            <MoodChart data={mood_chart} />
+                            <AreaChart
+                                height={60}
+                                gradient={false}
+                                showEndDot={false}
+                                data={mood_chart}
+                            />
                             <div style={{ display: 'flex', gap: 16, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line-soft)' }}>
                                 <div>
                                     <div className="kicker">Média</div>
@@ -98,7 +88,7 @@ export default function JournalIndex({ entries, prompts, today, mood_chart }: Pr
                         {/* Card de hoje */}
                         <div className="card" style={{ padding: 28, borderColor: 'var(--green-soft)', background: 'linear-gradient(180deg, var(--green-wash) 0%, var(--surface) 100%)' }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                                <div>
+                                <div className="accent-line">
                                     <div className="kicker">Hoje · {new Date(today + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}</div>
                                     <h2 className="h-display" style={{ marginTop: 4 }}>
                                         {new Date(today + 'T12:00:00').getDate()}{' '}
