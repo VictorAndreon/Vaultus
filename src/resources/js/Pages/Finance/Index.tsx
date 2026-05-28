@@ -7,8 +7,8 @@ import { fmtBRL } from '@/lib/finance/formatters'
 import { FinanceIndexProps, FinancialGoal, FinanceTransaction, UpcomingPayment, WishlistItem } from '@/types/finance'
 
 // Charts
-import FlowAreaChart from './components/charts/FlowAreaChart'
-import DonutChart from './components/charts/DonutChart'
+import AreaChart from '@/Components/charts/AreaChart'
+import Donut from '@/Components/charts/Donut'
 
 // Goals
 import GoalCard from './components/goals/GoalCard'
@@ -26,6 +26,7 @@ export default function FinanceIndex({
   net_worth, month_income, month_expense, savings_rate, savings_goal_pct,
   flow_chart, donut, budgets, transactions, goals, month_label,
   accounts_list, upcoming_payments, wishlist, budget_category_names,
+  period_from, period_to, period_is_default,
 }: FinanceIndexProps) {
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
@@ -59,7 +60,19 @@ export default function FinanceIndex({
   return (
     <AppLayout title="Finanças" eyebrow="Patrimônio" subtitle="Saldo, fluxo, orçamento e metas."
       actions={
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {!period_is_default && (
+            <span className="tag tag-gold" style={{ fontSize: 10 }}>
+              <span className="dot" /> {period_from} → {period_to}
+              <button
+                type="button"
+                onClick={() => router.get('/finance', {}, { preserveScroll: true })}
+                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', marginLeft: 6, padding: 0 }}
+              >
+                <Icons.X size={9} />
+              </button>
+            </span>
+          )}
           <Link href="/finance/cards" className="btn btn-ghost btn-sm">
             <Icons.Tag size={13} /> Cartões
           </Link>
@@ -130,7 +143,17 @@ export default function FinanceIndex({
                 </div>
               </div>
             </div>
-            <FlowAreaChart income={flow_chart.income} expense={flow_chart.expense} labels={flow_chart.labels} />
+            <AreaChart
+              height={160}
+              gridlines
+              showTooltip
+              dual={{
+                income: flow_chart.income,
+                expense: flow_chart.expense,
+                labels: flow_chart.labels,
+                format: (n) => fmtBRL(n),
+              }}
+            />
           </div>
           <div className="card">
             <div className="card-head">
@@ -139,10 +162,34 @@ export default function FinanceIndex({
                 <Icons.Plus size={12} /> Nova Conta
               </button>
             </div>
-            {donut.length > 0
-              ? <DonutChart segments={donut} center={{ label: 'Total', value: fmtBRL(net_worth, true) }} />
-              : <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma conta cadastrada.</div>
-            }
+            {donut.length > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                <Donut
+                  size={160}
+                  thickness={14}
+                  data={donut.map(s => ({ label: s.label, value: s.pct, color: s.color }))}
+                  center={
+                    <div>
+                      <div className="kicker">Total</div>
+                      <div style={{ fontFamily: 'var(--serif)', fontSize: 22, color: 'var(--text)', marginTop: 2 }}>
+                        {fmtBRL(net_worth, true)}
+                      </div>
+                    </div>
+                  }
+                />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
+                  {donut.map((s, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flex: 'none' }} />
+                      <span style={{ flex: 1 }}>{s.label}</span>
+                      <span className="mono muted">{s.pct}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma conta cadastrada.</div>
+            )}
           </div>
         </div>
 
