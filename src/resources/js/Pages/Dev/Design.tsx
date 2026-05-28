@@ -58,12 +58,24 @@ export default function DesignShowcase() {
                 </section>
                 <section id="goal-icon">
                     <h2 className="h-2" style={{ marginBottom: 16 }}>Goal icon</h2>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <GoalIcon variant="shield" />
-                        <GoalIcon variant="home" />
-                        <GoalIcon variant="plane" />
-                        <GoalIcon variant="car" />
-                        <GoalIcon variant="shield" size={48} />
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <GoalIcon iconKey="shield" color="var(--green)" />
+                        <GoalIcon iconKey="home" color="var(--gold)" />
+                        <GoalIcon iconKey="plane" color="var(--sky)" />
+                        <GoalIcon iconKey="car" color="oklch(72% 0.13 320)" />
+                        <GoalIcon iconKey="graduation" color="var(--green)" />
+                        <GoalIcon iconKey="heart" color="var(--rose)" />
+                        <GoalIcon iconKey="briefcase" color="var(--gold)" />
+                        <GoalIcon iconKey="smartphone" color="var(--sky)" />
+                        <GoalIcon iconKey="leaf" color="var(--green)" />
+                        <GoalIcon iconKey="coin" color="var(--gold)" />
+                        <GoalIcon iconKey="wrench" color="var(--text-3)" />
+                        <GoalIcon iconKey="gamepad" color="oklch(72% 0.13 320)" />
+                        <GoalIcon iconKey="star" color="var(--gold)" />
+                        <GoalIcon iconKey="flag" color="var(--rose)" />
+                        <GoalIcon iconKey="trend" color="var(--green)" />
+                        <GoalIcon iconKey="finance" color="var(--green)" />
+                        <GoalIcon iconKey="shield" color="var(--green)" size={48} />
                     </div>
                 </section>
                 <section id="sparkline">
