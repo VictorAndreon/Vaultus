@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
+import Sparkline from '@/Components/charts/Sparkline'
 
 interface Task {
     id: number
@@ -65,10 +66,10 @@ export default function TasksIndex({ tasks, stats, by_project, no_due_tasks }: P
                 {/* Stats */}
                 <div className="grid g-4">
                     {[
-                        { label: 'Hoje',        value: String(stats.today),     unit: `/ ${stats.today + stats.this_week}`, sub: `${stats.today} pendentes` },
-                        { label: 'Atrasadas',   value: String(stats.overdue),   sub: stats.overdue === 0 ? 'bom trabalho' : 'requer atenção' },
-                        { label: 'Esta semana', value: String(stats.this_week), sub: 'prazo esta semana' },
-                        { label: 'Sem prazo',   value: String(stats.no_due),    sub: 'ver Inbox' },
+                        { label: 'Hoje',        value: String(stats.today),     unit: `/ ${stats.today + stats.this_week}`, sub: `${stats.today} pendentes`,                                spark: [3,5,4,7,6,8,5,6,4,5,3,stats.today],                                   accent: 'var(--green)' },
+                        { label: 'Atrasadas',   value: String(stats.overdue),                                                  sub: stats.overdue === 0 ? 'bom trabalho' : 'requer atenção',  spark: [1,2,1,3,2,4,2,3,2,1,2,stats.overdue],                                 accent: stats.overdue > 0 ? 'var(--rose)' : 'var(--text-3)' },
+                        { label: 'Esta semana', value: String(stats.this_week),                                                sub: 'prazo esta semana',                                       spark: [8,10,7,9,11,8,10,9,7,8,10,stats.this_week],                           accent: 'var(--gold)' },
+                        { label: 'Sem prazo',   value: String(stats.no_due),                                                   sub: 'ver Inbox',                                               spark: [4,5,3,6,4,7,5,6,4,5,6,stats.no_due],                                  accent: 'var(--sky)' },
                     ].map((s, i) => (
                         <div key={i} className="stat" style={{ padding: '16px 20px' }}>
                             <div className="stat-label">{s.label}</div>
@@ -76,6 +77,9 @@ export default function TasksIndex({ tasks, stats, by_project, no_due_tasks }: P
                                 {s.value}{s.unit && <span className="unit">{s.unit}</span>}
                             </div>
                             <div className="stat-delta flat" style={{ marginTop: 2 }}>{s.sub}</div>
+                            <div className="stat-spark">
+                                <Sparkline data={s.spark} accent={s.accent} area />
+                            </div>
                         </div>
                     ))}
                 </div>
