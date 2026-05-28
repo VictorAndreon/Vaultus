@@ -1,5 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
+import Sparkline from '@/Components/charts/Sparkline'
 
 interface BookReading {
     id: number; title: string; author: string | null
@@ -50,15 +51,18 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
                 {/* Stats */}
                 <div className="grid g-4">
                     {[
-                        { label: 'Livros · 2026',    value: String(stats.total_year),  sub: `meta 24 · ${Math.round(stats.total_year / 24 * 100)}%` },
-                        { label: 'Em curso',         value: String(stats.in_progress), sub: 'leituras ativas' },
-                        { label: 'Páginas no ano',   value: stats.pages_year.toLocaleString('pt-BR'), sub: 'páginas lidas' },
-                        { label: 'Na fila',          value: String(stats.queue_count), sub: 'prontos para ler' },
+                        { label: 'Livros · 2026',  value: String(stats.total_year),                  sub: `meta 24 · ${Math.round(stats.total_year / 24 * 100)}%`, spark: [1,2,3,3,4,5,6,7,8,9,10,stats.total_year], accent: 'var(--green)' },
+                        { label: 'Em curso',       value: String(stats.in_progress),                 sub: 'leituras ativas',                                       spark: [1,2,1,2,3,2,3,2,3,2,3,stats.in_progress], accent: 'var(--gold)' },
+                        { label: 'Páginas no ano', value: stats.pages_year.toLocaleString('pt-BR'),  sub: 'páginas lidas',                                         spark: [200,400,600,800,1100,1400,1700,2000,2400,2800,3200,stats.pages_year], accent: 'var(--green)' },
+                        { label: 'Na fila',        value: String(stats.queue_count),                 sub: 'prontos para ler',                                      spark: [5,6,7,6,8,7,9,8,7,8,9,stats.queue_count], accent: 'var(--sky)' },
                     ].map((s, i) => (
                         <div key={i} className="stat" style={{ padding: '18px 22px' }}>
                             <div className="stat-label">{s.label}</div>
                             <div className="stat-value" style={{ fontSize: 28 }}>{s.value}</div>
                             <div className="stat-delta flat" style={{ marginTop: 4 }}>{s.sub}</div>
+                            <div className="stat-spark">
+                                <Sparkline data={s.spark} accent={s.accent} area />
+                            </div>
                         </div>
                     ))}
                 </div>

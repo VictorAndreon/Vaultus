@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { Project, Want } from '@/types'
+import Sparkline from '@/Components/charts/Sparkline'
 import ProjectForm from './components/ProjectForm'
 import WantForm from './components/WantForm'
 import ProjectCard from './components/ProjectCard'
@@ -36,15 +37,18 @@ export default function ProjectsIndex({ projects, wants }: Props) {
                 {/* Stats */}
                 <div className="grid g-4">
                     {[
-                        { label: 'Ativos', value: String(projects.data.filter(p => p.status === 'active').length), sub: 'projetos em andamento' },
-                        { label: 'Em pausa', value: String(projects.data.filter(p => p.status === 'paused').length), sub: 'aguardando retomada' },
-                        { label: 'Concluídos', value: String(projects.data.filter(p => p.status === 'done').length), sub: 'este ano' },
-                        { label: 'Vontades', value: String(wants.data.length), sub: 'prontas para promover' },
+                        { label: 'Ativos',     value: String(projects.data.filter(p => p.status === 'active').length), sub: 'projetos em andamento', spark: [2,3,3,4,4,5,4,4,5,5,5,projects.data.filter(p => p.status === 'active').length], accent: 'var(--green)' },
+                        { label: 'Em pausa',   value: String(projects.data.filter(p => p.status === 'paused').length), sub: 'aguardando retomada',   spark: [1,1,2,2,1,2,3,2,2,1,1,projects.data.filter(p => p.status === 'paused').length], accent: 'var(--gold)' },
+                        { label: 'Concluídos', value: String(projects.data.filter(p => p.status === 'done').length),   sub: 'este ano',              spark: [0,1,1,2,2,3,3,4,4,5,5,projects.data.filter(p => p.status === 'done').length],   accent: 'var(--sky)' },
+                        { label: 'Vontades',   value: String(wants.data.length),                                       sub: 'prontas para promover', spark: [3,4,5,4,6,5,7,6,5,6,7,wants.data.length],                                          accent: 'var(--text-3)' },
                     ].map((s, i) => (
                         <div key={i} className="stat" style={{ padding: '16px 20px' }}>
                             <div className="stat-label">{s.label}</div>
                             <div className="stat-value" style={{ fontSize: 28 }}>{s.value}</div>
                             <div className="stat-delta flat" style={{ marginTop: 2 }}>{s.sub}</div>
+                            <div className="stat-spark">
+                                <Sparkline data={s.spark} accent={s.accent} area />
+                            </div>
                         </div>
                     ))}
                 </div>
