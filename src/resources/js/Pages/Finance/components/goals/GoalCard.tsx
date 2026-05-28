@@ -3,8 +3,8 @@ import { Icons } from '@/Components/Icons'
 import { FinancialGoal } from '@/types/finance'
 import { STATUS_MAP } from '@/lib/finance/constants'
 import { fmtBRL } from '@/lib/finance/formatters'
-import GoalIconBadge from './GoalIconBadge'
-import Sparkline from '../charts/Sparkline'
+import GoalIcon from '@/Components/GoalIcon'
+import Sparkline from '@/Components/charts/Sparkline'
 
 interface Props {
   g: FinancialGoal
@@ -24,7 +24,7 @@ export default function GoalCard({ g, onAporte, onEdit, onDelete }: Props) {
   return (
     <div className="card" style={{ padding: 22, position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-        <GoalIconBadge iconKey={g.icon} color={g.color} />
+        <GoalIcon iconKey={g.icon} color={g.color} size={44} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
             <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{g.name}</span>
@@ -87,7 +87,12 @@ export default function GoalCard({ g, onAporte, onEdit, onDelete }: Props) {
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
         <div style={{ flex: 1 }}>
           <div className="kicker" style={{ fontSize: 9.5, marginBottom: 6 }}>Evolução · 12 meses</div>
-          <Sparkline data={g.history.length > 1 ? g.history : [0, g.current_amount / 1000]} color={g.color} />
+          <Sparkline
+            data={g.history.length > 1 ? g.history : [0, g.current_amount / 1000]}
+            accent={g.color}
+            width={140}
+            height={28}
+          />
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <button className="icon-btn" style={{ width: 32, height: 32 }} onClick={onEdit}>

@@ -5,7 +5,7 @@ import CurrencyInput from '@/Components/CurrencyInput'
 import { FinancialGoal } from '@/types/finance'
 import { DEADLINE_MONTHS, GOAL_COLORS, GOAL_ICON_KEYS } from '@/lib/finance/constants'
 import { idempotentPost } from '@/lib/idempotentPost'
-import { GOAL_ICON_MAP } from './GoalIconBadge'
+import { GOAL_ICON_MAP } from '@/Components/GoalIcon'
 
 interface Props {
   goal: FinancialGoal | null
