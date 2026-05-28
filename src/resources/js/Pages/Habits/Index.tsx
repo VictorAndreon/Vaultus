@@ -5,6 +5,7 @@ import { Habit, HealthMetric } from '@/types'
 import HabitCard from './components/HabitCard'
 import HabitDrawer from './components/HabitDrawer'
 import HealthMetricsPanel from './components/HealthMetricsPanel'
+import AreaChart from '@/Components/charts/AreaChart'
 
 interface Props {
     habits: Habit[]
@@ -12,40 +13,6 @@ interface Props {
     today: string
     consistency: { labels: string[]; data: number[] }
     insights: { avg_rate: number; best_streak: number; current_streak: number }
-}
-
-function AreaChart({ data, h = 120, accent = 'var(--green)', labels }: {
-    data: number[]; h?: number; accent?: string; labels: string[]
-}) {
-    if (data.length < 2) return null
-    const w = 600
-    const min = Math.min(...data) * 0.9
-    const max = Math.max(...data) * 1.1 || 1
-    const range = max - min || 1
-    const pad = 24
-    const pts = data.map((v, i) => {
-        const x = pad + (i / (data.length - 1)) * (w - pad * 2)
-        const y = h - 24 - ((v - min) / range) * (h - 48)
-        return [x, y] as [number, number]
-    })
-    const linePath = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ')
-    const areaPath = linePath + ` L${pts[pts.length - 1][0]},${h - 24} L${pts[0][0]},${h - 24} Z`
-    return (
-        <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} preserveAspectRatio="none">
-            <defs>
-                <linearGradient id="hab-area-grad" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor={accent} stopOpacity="0.25" />
-                    <stop offset="100%" stopColor={accent} stopOpacity="0" />
-                </linearGradient>
-            </defs>
-            <path d={areaPath} fill="url(#hab-area-grad)" />
-            <path d={linePath} fill="none" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            {labels.map((l, i) => {
-                const x = pad + (i / (labels.length - 1)) * (w - pad * 2)
-                return <text key={i} x={x} y={h - 6} fontSize="10" fill="var(--text-4)" textAnchor="middle" fontFamily="var(--mono)">{l}</text>
-            })}
-        </svg>
-    )
 }
 
 export default function HabitsIndex({ habits, today_metrics, today, consistency, insights }: Props) {
@@ -107,7 +74,11 @@ export default function HabitsIndex({ habits, today_metrics, today, consistency,
                         <div className="card-head">
                             <div className="card-title">Consistência · <b>12 semanas</b></div>
                         </div>
-                        <AreaChart data={consistency.data} labels={consistency.labels} h={120} />
+                        <AreaChart
+                          height={120}
+                          gridlines
+                          data={consistency.data.map((value, i) => ({ label: consistency.labels[i] ?? '', value }))}
+                        />
                     </div>
 
                     <div className="card">
