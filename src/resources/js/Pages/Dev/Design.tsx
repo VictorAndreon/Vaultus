@@ -99,25 +99,33 @@ export default function DesignShowcase() {
                 </section>
                 <section id="area-chart">
                     <h2 className="h-2" style={{ marginBottom: 16 }}>Area chart</h2>
-                    <div className="card">
+                    <div className="card" style={{ marginBottom: 16 }}>
                         <div className="card-head">
-                            <div className="card-title"><b>PATRIMÔNIO</b> · 12 MESES</div>
+                            <div className="card-title"><b>PATRIMÔNIO</b> · 12 MESES (single + gradient + gridlines)</div>
                         </div>
-                        <AreaChart data={[
-                            { label: 'Mai', value: 420 },
-                            { label: 'Jun', value: 435 },
-                            { label: 'Jul', value: 444 },
-                            { label: 'Ago', value: 451 },
-                            { label: 'Set', value: 458 },
-                            { label: 'Out', value: 462 },
-                            { label: 'Nov', value: 472 },
-                            { label: 'Dez', value: 480 },
-                            { label: 'Jan', value: 484 },
-                            { label: 'Fev', value: 490 },
-                            { label: 'Mar', value: 494 },
-                            { label: 'Abr', value: 498 },
+                        <AreaChart gridlines data={[
+                            { label: 'Mai', value: 420 }, { label: 'Jun', value: 435 }, { label: 'Jul', value: 444 },
+                            { label: 'Ago', value: 451 }, { label: 'Set', value: 458 }, { label: 'Out', value: 462 },
+                            { label: 'Nov', value: 472 }, { label: 'Dez', value: 480 }, { label: 'Jan', value: 484 },
+                            { label: 'Fev', value: 490 }, { label: 'Mar', value: 494 }, { label: 'Abr', value: 498 },
                             { label: 'Mai', value: 502 },
                         ]} />
+                    </div>
+                    <div className="card">
+                        <div className="card-head">
+                            <div className="card-title"><b>FLUXO</b> · RECEITAS vs DESPESAS (dual + tooltip)</div>
+                        </div>
+                        <AreaChart
+                            height={180}
+                            gridlines
+                            showTooltip
+                            dual={{
+                                labels: ['Jun','Jul','Ago','Set','Out','Nov','Dez','Jan','Fev','Mar','Abr','Mai'],
+                                income:  [9.2, 9.4, 9.1, 9.6, 9.5, 9.8, 10.1, 9.9, 10.0, 10.2, 10.3, 10.5],
+                                expense: [6.4, 6.1, 6.7, 6.3, 6.9, 6.2, 6.8, 6.5, 7.0, 6.8, 6.6, 6.9],
+                                format: (n) => `R$ ${n.toFixed(1)}k`,
+                            }}
+                        />
                     </div>
                 </section>
                 <section id="donut">
