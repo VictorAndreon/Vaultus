@@ -20,7 +20,7 @@ interface DualSeries {
 interface Props {
   /** Single series mode */
   data?: Point[]
-  /** Dual-series mode (income vs expense). When set, ignores `data`. */
+  /** Dual-series mode (income vs expense). When set, ignores `data`, `accent`, `gradient` e `showEndDot`. */
   dual?: DualSeries
   height?: number
   accent?: string
@@ -173,7 +173,7 @@ function DualChart({
         <path d={toLine(income)} fill="none" stroke={incomeColor} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
         <path d={toLine(expense)} fill="none" stroke={expenseColor} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4,3" />
         {labels.map((l, i) => (
-          <text key={i} x={ptX(i)} y={height - 10} fontSize="10" fill="var(--text-4)" textAnchor="middle" fontFamily="var(--mono)">{l}</text>
+          <text key={i} x={ptX(i)} y={height - 10} fontSize="10" fill="var(--text-3)" textAnchor="middle" fontFamily="var(--mono)">{l}</text>
         ))}
         {showTooltip && hover !== null && (
           <>
