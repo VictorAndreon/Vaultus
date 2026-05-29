@@ -20,7 +20,8 @@ export default function NoteEditor({ note, notebooks, onClose }: Props) {
     setContent(note?.content ?? '')
     setNotebookId(note?.notebook_id ?? notebooks[0]?.id ?? 0)
     setTagsInput((note?.tags ?? []).join(', '))
-  }, [note?.id, notebooks])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note?.id])
 
   function submit(e: React.FormEvent) {
     e.preventDefault()

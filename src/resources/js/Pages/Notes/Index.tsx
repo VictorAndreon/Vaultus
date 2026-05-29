@@ -16,7 +16,10 @@ export default function NotesIndex({ notebooks, notes }: NotesPageProps) {
   function handleDelete() {
     if (!active) return
     if (!confirm(`Excluir a nota "${active.title}"?`)) return
-    router.delete(`/notes/${active.id}`, { preserveScroll: true })
+    router.delete(`/notes/${active.id}`, {
+      preserveScroll: true,
+      onSuccess: () => setActiveId(null),
+    })
   }
 
   return (

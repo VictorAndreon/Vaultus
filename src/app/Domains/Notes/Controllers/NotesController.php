@@ -45,11 +45,18 @@ class NotesController extends Controller
             ->firstOrFail();
 
         $validated = $request->validate([
-            'title'   => 'sometimes|string|max:255',
-            'content' => 'sometimes|string',
-            'tags'    => 'sometimes|array',
-            'tags.*'  => 'string|max:50',
+            'notebook_id' => 'sometimes|integer',
+            'title'       => 'sometimes|string|max:255',
+            'content'     => 'sometimes|string',
+            'tags'        => 'sometimes|array',
+            'tags.*'      => 'string|max:50',
         ]);
+
+        if (isset($validated['notebook_id'])) {
+            Notebook::where('user_id', $user->id)
+                ->where('id', $validated['notebook_id'])
+                ->firstOrFail();
+        }
 
         if (isset($validated['content']) && $validated['content'] !== $noteModel->content) {
             \App\Domains\Notes\Models\NoteVersion::create([
