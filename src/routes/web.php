@@ -141,6 +141,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/library', [LibraryController::class, 'index'])->name('library');
 
     Route::get('/notes', [\App\Domains\Notes\Controllers\NotesController::class, 'index'])->name('notes');
+    Route::post('/notes', [\App\Domains\Notes\Controllers\NotesController::class, 'store']);
+    Route::patch('/notes/{note}', [\App\Domains\Notes\Controllers\NotesController::class, 'update']);
+    Route::delete('/notes/{note}', [\App\Domains\Notes\Controllers\NotesController::class, 'destroy']);
 
     $stubs = ['contacts', 'reviews'];
     foreach ($stubs as $module) {
