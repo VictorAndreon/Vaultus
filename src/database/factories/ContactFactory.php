@@ -18,7 +18,7 @@ class ContactFactory extends Factory
             'email'   => fake()->safeEmail(),
             'phone'   => fake()->phoneNumber(),
             'photo'   => null,
-            'birthday'=> fake()->date(),
+            'birthday'=> fake()->optional(0.7)->dateTimeBetween('-80 years', '-18 years')?->format('Y-m-d'),
             'context' => fake()->randomElement(['Família', 'Trabalho', 'Saúde', 'Casa']),
             'next_step' => fake()->optional()->sentence(fake()->numberBetween(3, 6)),
             'last_contacted_at' => fake()->optional()->dateTimeBetween('-90 days', 'now'),

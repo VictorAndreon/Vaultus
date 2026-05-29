@@ -19,17 +19,21 @@ class ContactsController extends Controller
             ->get()
             ->map(function ($c) {
                 $initials = collect(explode(' ', $c->name))
+                    ->reject(fn($p) => preg_match('/^\p{L}{1,3}\.$/u', $p))
                     ->map(fn($p) => mb_substr($p, 0, 1))
                     ->take(2)
                     ->implode('');
 
                 $upcomingBirthday = null;
                 if ($c->birthday) {
-                    $thisYear = $c->birthday->copy()->setYear(now()->year);
-                    $next = $thisYear->isPast() ? $thisYear->addYear() : $thisYear;
+                    $year = now()->year;
+                    $month = $c->birthday->month;
+                    $daysInMonth = \Illuminate\Support\Carbon::create($year, $month, 1)->daysInMonth;
+                    $thisYear = \Illuminate\Support\Carbon::create($year, $month, min($c->birthday->day, $daysInMonth));
+                    $next = $thisYear->isBefore(today()) ? $thisYear->addYear() : $thisYear;
                     $upcomingBirthday = [
                         'date'      => $next->format('d/m'),
-                        'days_away' => (int) now()->startOfDay()->diffInDays($next, false),
+                        'days_away' => (int) now()->startOfDay()->diffInDays($next, true),
                     ];
                 }
 
