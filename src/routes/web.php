@@ -145,7 +145,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/notes/{note}', [\App\Domains\Notes\Controllers\NotesController::class, 'update']);
     Route::delete('/notes/{note}', [\App\Domains\Notes\Controllers\NotesController::class, 'destroy']);
 
-    $stubs = ['contacts', 'reviews'];
+    Route::get('/contacts', [\App\Domains\Contacts\Controllers\ContactsController::class, 'index'])->name('contacts');
+
+    $stubs = ['reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
     }
