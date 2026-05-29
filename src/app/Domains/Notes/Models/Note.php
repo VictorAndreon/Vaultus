@@ -14,10 +14,13 @@ class Note extends Model
 
     protected $fillable = ['notebook_id', 'title', 'content', 'is_sensitive', 'tags'];
 
-    protected $casts = [
-        'is_sensitive' => 'boolean',
-        'tags' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_sensitive' => 'boolean',
+            'tags' => 'array',
+        ];
+    }
 
     public function notebook(): BelongsTo
     {

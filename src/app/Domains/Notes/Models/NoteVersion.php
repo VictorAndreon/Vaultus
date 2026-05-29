@@ -11,9 +11,12 @@ class NoteVersion extends Model
 
     protected $fillable = ['note_id', 'content', 'created_at'];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime',
+        ];
+    }
 
     public function note(): BelongsTo
     {

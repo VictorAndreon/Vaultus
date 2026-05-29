@@ -14,10 +14,10 @@ class NoteFactory extends Factory
     {
         return [
             'notebook_id' => Notebook::factory(),
-            'title' => fake()->sentence(rand(3, 6)),
-            'content' => fake()->paragraphs(rand(2, 5), true),
+            'title' => fake()->sentence(fake()->numberBetween(3, 6)),
+            'content' => fake()->paragraphs(fake()->numberBetween(2, 5), true),
             'is_sensitive' => false,
-            'tags' => fake()->randomElements(['ideia', 'leitura', 'design', 'código', 'reflexão', 'tarefa'], rand(0, 3)),
+            'tags' => fake()->randomElements(['ideia', 'leitura', 'design', 'código', 'reflexão', 'tarefa'], fake()->numberBetween(0, 3)),
         ];
     }
 }
