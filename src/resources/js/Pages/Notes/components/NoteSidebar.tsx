@@ -9,10 +9,11 @@ interface Props {
 }
 
 export default function NoteSidebar({ notes, activeId, search, onSearch, onSelect }: Props) {
+  const q = search.toLowerCase()
   const filtered = search
     ? notes.filter(n =>
-        n.title.toLowerCase().includes(search.toLowerCase()) ||
-        n.content.toLowerCase().includes(search.toLowerCase())
+        n.title.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q)
       )
     : notes
 
@@ -21,6 +22,7 @@ export default function NoteSidebar({ notes, activeId, search, onSearch, onSelec
       <input
         type="text"
         placeholder="Buscar notas..."
+        aria-label="Buscar notas"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         style={{
