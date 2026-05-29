@@ -140,7 +140,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/tasks', [TasksController::class, 'index'])->name('tasks');
     Route::get('/library', [LibraryController::class, 'index'])->name('library');
 
-    $stubs = ['notes', 'contacts', 'reviews'];
+    Route::get('/notes', [\App\Domains\Notes\Controllers\NotesController::class, 'index'])->name('notes');
+
+    $stubs = ['contacts', 'reviews'];
     foreach ($stubs as $module) {
         Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
     }

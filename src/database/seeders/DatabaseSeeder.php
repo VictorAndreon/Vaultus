@@ -17,5 +17,9 @@ class DatabaseSeeder extends Seeder
                 'timezone' => 'America/Sao_Paulo',
             ]
         );
+
+        $this->call([
+            NotesSeeder::class,
+        ]);
     }
 }
