@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
+import { Icons } from '@/Components/Icons'
 import { ReviewsPageProps, CheckState, ReviewContent } from '@/types/reviews'
 import ReviewSection from './components/ReviewSection'
 
@@ -32,9 +33,18 @@ export default function ReviewsIndex({ reviews, current }: ReviewsPageProps) {
 
   if (!review) {
     return (
-      <AppLayout title="Revisão" eyebrow="Cadência" subtitle="Nenhuma revisão registrada.">
+      <AppLayout
+        title="Revisão"
+        eyebrow="Cadência"
+        subtitle="Nenhuma revisão registrada."
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={createCurrent}>
+            <Icons.Plus size={13} /> Nova revisão
+          </button>
+        }
+      >
         <div className="card" style={{ padding: 32, textAlign: 'center', fontStyle: 'italic', color: 'var(--text-4)' }}>
-          Nenhuma revisão ainda. Comece a próxima semana.
+          Nenhuma revisão ainda. Comece pela semana corrente.
         </div>
       </AppLayout>
     )
@@ -66,21 +76,57 @@ export default function ReviewsIndex({ reviews, current }: ReviewsPageProps) {
     patchContent({ ...content, [section]: updated })
   }
 
+  function createCurrent() {
+    const start = new Date()
+    const day = start.getDay() // 0=domingo .. 6=sábado
+    start.setDate(start.getDate() + (day === 0 ? -6 : 1 - day)) // segunda da semana corrente
+    const end = new Date(start)
+    end.setDate(end.getDate() + 6) // domingo
+    // Deriva o ISO dos componentes locais (evita off-by-one do toISOString/UTC em fusos negativos)
+    const iso = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const startIso = iso(start)
+
+    // Evita duplicar a revisão da semana corrente: se já existe, apenas seleciona
+    const existing = reviews.find(r => r.period_start_iso === startIso)
+    if (existing) {
+      setSelectedId(existing.id)
+      return
+    }
+
+    router.post('/reviews', {
+      type: 'weekly',
+      period_start: startIso,
+      period_end:   iso(end),
+      content: {
+        funcionou_bem: [],
+        pode_melhorar: [],
+        aprendizados: [],
+        proxima_semana: [],
+      },
+    }, { preserveScroll: true })
+  }
+
   return (
     <AppLayout
       title="Revisão"
       eyebrow="Cadência"
       subtitle="Revisão semanal: o que aconteceu, o que aprender, o que ajustar."
       actions={
-        <select
-          value={review.id}
-          onChange={(e) => setSelectedId(Number(e.target.value))}
-          style={{ padding: '6px 10px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 12.5 }}
-        >
-          {reviews.map(r => (
-            <option key={r.id} value={r.id}>Semana {r.week_number} · {r.year}</option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn btn-primary btn-sm" onClick={createCurrent}>
+            <Icons.Plus size={13} /> Nova revisão
+          </button>
+          <select
+            value={review.id}
+            onChange={(e) => setSelectedId(Number(e.target.value))}
+            style={{ padding: '6px 10px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 12.5 }}
+          >
+            {reviews.map(r => (
+              <option key={r.id} value={r.id}>Semana {r.week_number} · {r.year}</option>
+            ))}
+          </select>
+        </div>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
