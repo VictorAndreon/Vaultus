@@ -146,6 +146,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/notes/{note}', [\App\Domains\Notes\Controllers\NotesController::class, 'destroy']);
 
     Route::get('/contacts', [\App\Domains\Contacts\Controllers\ContactsController::class, 'index'])->name('contacts');
+    Route::post('/contacts', [\App\Domains\Contacts\Controllers\ContactsController::class, 'store']);
+    Route::patch('/contacts/{contact}', [\App\Domains\Contacts\Controllers\ContactsController::class, 'update']);
+    Route::delete('/contacts/{contact}', [\App\Domains\Contacts\Controllers\ContactsController::class, 'destroy']);
 
     $stubs = ['reviews'];
     foreach ($stubs as $module) {

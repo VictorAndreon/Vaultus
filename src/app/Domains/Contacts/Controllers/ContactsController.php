@@ -3,8 +3,10 @@
 namespace App\Domains\Contacts\Controllers;
 
 use App\Domains\Contacts\Models\Contact;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -59,6 +61,49 @@ class ContactsController extends Controller
 
         return Inertia::render('Contacts/Index', [
             'contacts' => $contacts,
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $this->validatedData($request);
+        Contact::create(array_merge(['user_id' => $request->user()->id], $validated));
+
+        return redirect()->route('contacts');
+    }
+
+    public function update(Request $request, int $contact): RedirectResponse
+    {
+        $model = Contact::where('user_id', $request->user()->id)
+            ->where('id', $contact)
+            ->firstOrFail();
+        $model->update($this->validatedData($request));
+
+        return redirect()->route('contacts');
+    }
+
+    public function destroy(Request $request, int $contact): RedirectResponse
+    {
+        Contact::where('user_id', $request->user()->id)
+            ->where('id', $contact)
+            ->firstOrFail()
+            ->delete();
+
+        return redirect()->route('contacts');
+    }
+
+    private function validatedData(Request $request): array
+    {
+        return $request->validate([
+            'name'              => 'required|string|max:255',
+            'email'             => 'nullable|email|max:255',
+            'phone'             => 'nullable|string|max:32',
+            'birthday'          => 'nullable|date|before_or_equal:today',
+            'context'           => ['nullable', 'string', Rule::in(['Família', 'Trabalho', 'Saúde', 'Casa'])],
+            'next_step'         => 'nullable|string|max:255',
+            'last_contacted_at' => 'nullable|date|before_or_equal:today',
+            'remind_after_days' => 'nullable|integer|min:1|max:365',
+            'notes'             => 'nullable|string',
         ]);
     }
 }
