@@ -90,6 +90,7 @@ class ReviewsController extends Controller
             'period_start'     => $r->period_start->format('d/m/Y'),
             'period_start_iso' => $r->period_start->format('Y-m-d'),
             'period_end'       => $r->period_end->format('d/m/Y'),
+            'period_end_iso'   => $r->period_end->format('Y-m-d'),
             'week_number'      => $weekNumber,
             'year'             => $year,
             'completion_pct'   => $total > 0 ? (int) round($filled / $total * 100) : 0,

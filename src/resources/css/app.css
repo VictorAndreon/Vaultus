@@ -459,6 +459,16 @@ h1.page-title em { color: var(--green); font-style: italic; }
   border-bottom: 1.5px solid oklch(18% 0.02 var(--h));
   transform: rotate(-45deg) translate(1px, -1px);
 }
+.check[data-checked="failed"] { background: var(--rose); border-color: var(--rose); }
+.check[data-checked="failed"]::after {
+  content: ""; width: 8px; height: 1.5px;
+  background: oklch(18% 0.02 var(--h));
+}
+.check[data-checked="neutral"] { background: var(--surface-3); border-color: var(--line-2); }
+.check[data-checked="neutral"]::after {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-4);
+}
 
 .seg {
   display: inline-flex; padding: 3px;
