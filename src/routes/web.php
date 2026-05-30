@@ -24,7 +24,6 @@ use App\Domains\Tasks\Controllers\TasksController;
 use App\Domains\Library\Controllers\LibraryController;
 use App\Http\Controllers\Dev\DesignShowcaseController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', fn() => redirect('/dashboard'));
 
@@ -150,10 +149,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/contacts/{contact}', [\App\Domains\Contacts\Controllers\ContactsController::class, 'update']);
     Route::delete('/contacts/{contact}', [\App\Domains\Contacts\Controllers\ContactsController::class, 'destroy']);
 
-    $stubs = ['reviews'];
-    foreach ($stubs as $module) {
-        Route::get("/{$module}", fn() => Inertia::render('Stub/Index', ['module' => $module]))->name($module);
-    }
+    Route::get('/reviews', [\App\Domains\Reviews\Controllers\ReviewsController::class, 'index'])->name('reviews');
+    Route::post('/reviews', [\App\Domains\Reviews\Controllers\ReviewsController::class, 'store']);
+    Route::patch('/reviews/{review}', [\App\Domains\Reviews\Controllers\ReviewsController::class, 'update']);
+    Route::delete('/reviews/{review}', [\App\Domains\Reviews\Controllers\ReviewsController::class, 'destroy']);
 
     // Dev — apenas ambiente local
     if (app()->environment('local')) {
