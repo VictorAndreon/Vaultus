@@ -3,6 +3,7 @@
 namespace App\Domains\Library\Controllers;
 
 use App\Domains\Library\Models\LibraryItem;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
@@ -85,6 +86,33 @@ class LibraryController extends Controller
                 'pages_year'    => (int) $pagesYear,
                 'queue_count'   => LibraryItem::where('user_id', $user->id)->where('type', 'book')->where('status', 'queue')->count(),
             ],
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $this->validatedData($request);
+        LibraryItem::create(array_merge([
+            'user_id' => $request->user()->id,
+            'type'    => 'book',
+        ], $validated));
+
+        return redirect()->route('library')->with('success', 'Livro adicionado.');
+    }
+
+    private function validatedData(Request $request): array
+    {
+        return $request->validate([
+            'title'        => 'required|string|max:255',
+            'author'       => 'nullable|string|max:255',
+            'status'       => 'required|string|in:reading,done,queue',
+            'genre'        => 'nullable|string|max:100',
+            'cover_url'    => 'nullable|url|max:1024',
+            'total_pages'  => 'nullable|integer|min:1|max:100000',
+            'current_page' => 'nullable|integer|min:0|max:100000',
+            'rating'       => 'nullable|integer|min:1|max:5',
+            'started_at'   => 'nullable|date',
+            'finished_at'  => 'nullable|date',
         ]);
     }
 }

@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import Sparkline from '@/Components/charts/Sparkline'
+import LibraryModal from './components/LibraryModal'
 
 interface BookReading {
     id: number; title: string; author: string | null
@@ -36,13 +38,15 @@ function Stars({ rating }: { rating: number | null }) {
 }
 
 export default function LibraryIndex({ reading, done_recent, queue, stats }: Props) {
+    const [modalOpen, setModalOpen] = useState(false)
+
     return (
         <AppLayout
             title="Biblioteca"
             eyebrow="Acervo"
             subtitle={`${stats.total_year} livros · ${stats.in_progress} em curso · ${stats.queue_count} na fila.`}
             actions={
-                <button className="btn btn-primary btn-sm">
+                <button className="btn btn-primary btn-sm" onClick={() => setModalOpen(true)}>
                     <Icons.Plus size={13} /> Adicionar livro
                 </button>
             }
@@ -147,6 +151,8 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
                     </div>
                 </div>
             </div>
+
+            {modalOpen && <LibraryModal onClose={() => setModalOpen(false)} />}
         </AppLayout>
     )
 }
