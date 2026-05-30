@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Note } from '@/types/notes'
 
 interface Props {
@@ -9,13 +10,14 @@ interface Props {
 }
 
 export default function NoteSidebar({ notes, activeId, search, onSearch, onSelect }: Props) {
+  const [activeTag, setActiveTag] = useState<string | null>(null)
   const q = search.toLowerCase()
-  const filtered = search
-    ? notes.filter(n =>
-        n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q)
-      )
-    : notes
+  const allTags = [...new Set(notes.flatMap(n => n.tags))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+
+  const filtered = notes.filter(n =>
+    (!q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)) &&
+    (!activeTag || n.tags.includes(activeTag))
+  )
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -36,7 +38,29 @@ export default function NoteSidebar({ notes, activeId, search, onSearch, onSelec
         }}
       />
 
-      <div className="kicker" style={{ marginTop: 8 }}>Todas · {filtered.length}</div>
+      {allTags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {allTags.map(tag => {
+            const active = tag === activeTag
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setActiveTag(active ? null : tag)}
+                aria-pressed={active}
+                className={active ? 'tag tag-green' : 'tag'}
+                style={{ cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                <span className="dot" />{tag}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="kicker" style={{ marginTop: 8 }}>
+        {activeTag ? `#${activeTag}` : 'Todas'} · {filtered.length}
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {filtered.length === 0 && (
