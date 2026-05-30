@@ -169,6 +169,7 @@ export default function ReviewsIndex({ reviews, current }: ReviewsPageProps) {
             title="O que ficou na bagagem"
             items={content.aprendizados}
             onAdd={() => addItem('aprendizados')}
+            onToggle={(i) => toggleItem('aprendizados', i)}
           />
           <ReviewSection
             kicker="PRÓXIMA SEMANA"
