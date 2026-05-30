@@ -23,3 +23,12 @@ export interface Contact {
 export interface ContactsPageProps {
   contacts: Contact[]
 }
+
+export const CATEGORIES = ['Família', 'Trabalho', 'Saúde', 'Casa'] as const
+
+export const CATEGORY_HUE: Record<string, number> = {
+  'Família': 140,
+  'Trabalho': 60,
+  'Saúde': 230,
+  'Casa': 320,
+}

@@ -1,10 +1,6 @@
-import { Contact } from '@/types/contacts'
+import { Contact, CATEGORY_HUE } from '@/types/contacts'
 import GradientAvatar from '@/Components/GradientAvatar'
 import { Icons } from '@/Components/Icons'
-
-const CATEGORY_HUE: Record<string, number> = {
-  'Família': 140, 'Trabalho': 60, 'Saúde': 230, 'Casa': 320,
-}
 
 interface Props {
   contact: Contact | null
@@ -48,7 +44,7 @@ export default function ContactDetail({ contact, onEdit, onDelete }: Props) {
             )}
             {contact.phone && (
               <span className="tag" style={{ background: 'var(--surface-2)' }}>
-                <Icons.Star size={11} /> {contact.phone}
+                <Icons.Smartphone size={11} /> {contact.phone}
               </span>
             )}
           </div>

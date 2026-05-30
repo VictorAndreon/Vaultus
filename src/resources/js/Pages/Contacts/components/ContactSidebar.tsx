@@ -1,7 +1,5 @@
-import { Contact } from '@/types/contacts'
+import { Contact, CATEGORIES, CATEGORY_HUE } from '@/types/contacts'
 import GradientAvatar from '@/Components/GradientAvatar'
-
-const CATEGORIES = ['Família', 'Trabalho', 'Saúde', 'Casa'] as const
 
 interface Props {
   contacts: Contact[]
@@ -16,13 +14,6 @@ function groupContacts(contacts: Contact[]): Record<string, Contact[]> {
     groups[key].push(c)
   }
   return groups
-}
-
-const CATEGORY_HUE: Record<string, number> = {
-  'Família':  140,
-  'Trabalho':  60,
-  'Saúde':    230,
-  'Casa':     320,
 }
 
 export default function ContactSidebar({ contacts, activeId, onSelect }: Props) {
