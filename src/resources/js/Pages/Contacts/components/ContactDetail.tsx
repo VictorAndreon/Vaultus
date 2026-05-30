@@ -25,8 +25,8 @@ export default function ContactDetail({ contact, onEdit, onDelete }: Props) {
       <div className="card" style={{ padding: 28 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 18 }}>
           <GradientAvatar initials={contact.initials} size={72} hue={hue} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 className="h-2" style={{ marginBottom: 4 }}>{contact.name}</h2>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+            <h2 className="h-2" style={{ lineHeight: 1.15 }}>{contact.name}</h2>
             {contact.context && <span className="tag tag-green"><span className="dot" />{contact.context}</span>}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
