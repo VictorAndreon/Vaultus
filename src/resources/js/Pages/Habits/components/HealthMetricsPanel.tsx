@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { HealthMetric } from '@/types'
 import { Icons } from '@/Components/Icons'
+import HealthMetricsModal from './HealthMetricsModal'
 
 interface Props { todayMetrics: HealthMetric | null }
 
@@ -36,13 +38,17 @@ function ScaleMetric({ label, value, selected, hue }: { label: string; value: st
 
 export default function HealthMetricsPanel({ todayMetrics }: Props) {
     const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+    const [modalOpen, setModalOpen] = useState(false)
 
     return (
         <div className="card">
             <div className="card-head">
                 <div className="card-title">Métricas de Hoje · <b className="mono">{today}</b></div>
-                <a className="card-link">Histórico <Icons.ChevronRight size={11} /></a>
+                <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(true)}>
+                    <Icons.Edit size={12} /> {todayMetrics ? 'Atualizar' : 'Registrar'}
+                </button>
             </div>
+            {modalOpen && <HealthMetricsModal todayMetrics={todayMetrics} onClose={() => setModalOpen(false)} />}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 28 }}>
                 <ScaleMetric label="Humor" value={todayMetrics?.mood != null ? (MOOD_LABELS[todayMetrics.mood] ?? String(todayMetrics.mood)) : '—'} selected={todayMetrics?.mood ?? 3} hue="green" />
                 <ScaleMetric label="Energia" value={todayMetrics?.energy != null ? (ENERGY_LABELS[todayMetrics.energy] ?? String(todayMetrics.energy)) : '—'} selected={todayMetrics?.energy ?? 3} hue="gold" />

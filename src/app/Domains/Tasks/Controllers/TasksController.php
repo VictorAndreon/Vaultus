@@ -2,6 +2,7 @@
 
 namespace App\Domains\Tasks\Controllers;
 
+use App\Domains\Projects\Models\Project;
 use App\Domains\Projects\Models\ProjectTask;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -62,6 +63,22 @@ class TasksController extends Controller
             ->values()
             ->toArray();
 
+        // Projetos (com colunas) p/ o modal de criação rápida de tarefa.
+        // Só os que têm ao menos uma coluna podem receber tarefa.
+        $projects = Project::where('user_id', $user->id)
+            ->whereIn('status', ['active', 'paused'])
+            ->with('columns:id,project_id,name')
+            ->orderBy('title')
+            ->get()
+            ->filter(fn($p) => $p->columns->isNotEmpty())
+            ->map(fn($p) => [
+                'id'      => $p->id,
+                'title'   => $p->title,
+                'columns' => $p->columns->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values()->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
         return Inertia::render('Tasks/Index', [
             'tasks'        => $tasks,
             'stats'        => [
@@ -71,6 +88,7 @@ class TasksController extends Controller
                 'no_due'    => $noDue->count(),
             ],
             'by_project'   => $byProject,
+            'projects'     => $projects,
             'no_due_tasks' => $noDue->take(5)->map(fn($t) => [
                 'id'    => $t->id,
                 'title' => $t->title,

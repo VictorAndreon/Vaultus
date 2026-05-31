@@ -3,6 +3,7 @@ import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import Sparkline from '@/Components/charts/Sparkline'
+import TaskQuickModal, { ProjectOption } from './components/TaskQuickModal'
 
 interface Task {
     id: number
@@ -20,6 +21,7 @@ interface Props {
     tasks: Task[]
     stats: { today: number; overdue: number; this_week: number; no_due: number }
     by_project: Array<{ project_name: string; count: number }>
+    projects: ProjectOption[]
     no_due_tasks: Array<{ id: number; title: string }>
 }
 
@@ -35,8 +37,9 @@ const PROJECT_COLORS = [
     'oklch(70% 0.13 320)', 'var(--text-3)',
 ]
 
-export default function TasksIndex({ tasks, stats, by_project, no_due_tasks }: Props) {
+export default function TasksIndex({ tasks, stats, by_project, projects, no_due_tasks }: Props) {
     const [localTasks, setLocalTasks] = useState(tasks)
+    const [createOpen, setCreateOpen] = useState(false)
 
     function toggleTask(id: number) {
         const task = localTasks.find(t => t.id === id)
@@ -58,7 +61,7 @@ export default function TasksIndex({ tasks, stats, by_project, no_due_tasks }: P
             actions={
                 <>
                     <button className="btn btn-ghost btn-sm"><Icons.Filter size={13} /> Filtros</button>
-                    <button className="btn btn-primary btn-sm"><Icons.Plus size={13} /> Nova tarefa</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => setCreateOpen(true)}><Icons.Plus size={13} /> Nova tarefa</button>
                 </>
             }
         >
@@ -174,6 +177,8 @@ export default function TasksIndex({ tasks, stats, by_project, no_due_tasks }: P
                     </aside>
                 </div>
             </div>
+
+            {createOpen && <TaskQuickModal projects={projects} onClose={() => setCreateOpen(false)} />}
         </AppLayout>
     )
 }

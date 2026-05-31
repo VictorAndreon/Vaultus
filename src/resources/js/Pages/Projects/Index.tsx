@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { Project, Want } from '@/types'
@@ -6,6 +7,7 @@ import Sparkline from '@/Components/charts/Sparkline'
 import ProjectForm from './components/ProjectForm'
 import WantForm from './components/WantForm'
 import ProjectCard from './components/ProjectCard'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 interface Props {
     projects: { data: Project[] }
@@ -14,10 +16,20 @@ interface Props {
 
 
 export default function ProjectsIndex({ projects, wants }: Props) {
+    const confirm = useConfirm()
     const [showProjectForm, setShowProjectForm] = useState(false)
     const [editingProject, setEditingProject]   = useState<Project | null>(null)
     const [showWantForm, setShowWantForm]       = useState(false)
     const [editingWant, setEditingWant]         = useState<Want | null>(null)
+
+    async function promoteWant(w: Want) {
+        if (!(await confirm({
+            title: `Promover "${w.title}" a projeto?`,
+            message: 'Um novo projeto será criado a partir desta vontade.',
+            confirmText: 'Promover',
+        }))) return
+        router.post(`/wants/${w.id}/promote`, {}, { preserveScroll: true })
+    }
 
     return (
         <AppLayout
@@ -95,7 +107,10 @@ export default function ProjectsIndex({ projects, wants }: Props) {
                                             <span className="dot" />{w.priority === 'high' ? 'alta' : w.priority === 'medium' ? 'média' : 'baixa'}
                                         </span>
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
+                                    <div style={{ textAlign: 'right', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                                        <button className="btn btn-ghost btn-sm" onClick={() => promoteWant(w)}>
+                                            <Icons.ArrowUpRight size={12} /> Promover
+                                        </button>
                                         <button className="btn btn-ghost btn-sm" onClick={() => { setEditingWant(w); setShowWantForm(true) }}>Editar</button>
                                     </div>
                                 </div>
