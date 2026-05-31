@@ -2,7 +2,6 @@ import React, { ReactNode, useState, useEffect } from 'react'
 import Sidebar from '@/Components/Sidebar'
 import Topbar from '@/Components/Topbar'
 import Toast from '@/Components/Toast'
-import { DialogProvider } from '@/Components/dialogs/DialogProvider'
 import { PageProps } from '@/types'
 import { usePage } from '@inertiajs/react'
 
@@ -44,7 +43,7 @@ export default function AppLayout({ children, title, eyebrow, subtitle, actions,
   const hasHead = showHead && (title || eyebrow || subtitle || actions)
 
   return (
-    <DialogProvider>
+    <>
       <div className="app">
         <Sidebar />
         <div className="main">
@@ -75,6 +74,6 @@ export default function AppLayout({ children, title, eyebrow, subtitle, actions,
         </div>
       </div>
       <Toast />
-    </DialogProvider>
+    </>
   )
 }

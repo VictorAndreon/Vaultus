@@ -1,6 +1,7 @@
 import '../css/app.css'
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot } from 'react-dom/client'
+import { DialogProvider } from '@/Components/dialogs/DialogProvider'
 
 createInertiaApp({
     resolve: (name) => {
@@ -8,7 +9,14 @@ createInertiaApp({
         return pages[`./Pages/${name}.tsx`]
     },
     setup({ el, App, props }) {
-        createRoot(el).render(<App {...props} />)
+        // DialogProvider precisa envolver TODA página (Inertia troca só o componente de App),
+        // por isso fica na raiz e não no AppLayout — senão useConfirm/usePrompt chamados no
+        // corpo da página ficariam acima do Provider e quebrariam.
+        createRoot(el).render(
+            <DialogProvider>
+                <App {...props} />
+            </DialogProvider>,
+        )
     },
     progress: { color: '#5aab7a' },
 })
