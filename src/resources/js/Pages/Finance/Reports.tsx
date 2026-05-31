@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react'
+import { Link, router } from '@inertiajs/react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { fmtBRL } from '@/lib/finance/formatters'
@@ -8,14 +8,24 @@ interface CategoryRow {
   total: number
   count: number
   pct: number
+  total_previous?: number
+  delta_pct?: number | null
+}
+
+interface Comparison {
+  from: string
+  to: string
+  total_previous: number
 }
 
 interface Props {
   categories: CategoryRow[]
   total_expense: number
   total_income: number
+  type: 'income' | 'expense'
   from: string
   to: string
+  comparison?: Comparison
 }
 
 const PALETTE = [
@@ -42,16 +52,21 @@ const PRESETS: Preset[] = [
     const n = new Date()
     return { from: ymd(new Date(n.getFullYear(), n.getMonth(), 1)), to: ymd(new Date(n.getFullYear(), n.getMonth() + 1, 0)) }
   }},
-  { key: '3m', label: '3 meses', range: () => ({ from: ymd(monthsAgo(3)), to: ymd(new Date()) }) },
-  { key: '6m', label: '6 meses', range: () => ({ from: ymd(monthsAgo(6)), to: ymd(new Date()) }) },
+  { key: '3m',  label: '3 meses',  range: () => ({ from: ymd(monthsAgo(3)),  to: ymd(new Date()) }) },
+  { key: '6m',  label: '6 meses',  range: () => ({ from: ymd(monthsAgo(6)),  to: ymd(new Date()) }) },
   { key: '12m', label: '12 meses', range: () => ({ from: ymd(monthsAgo(12)), to: ymd(new Date()) }) },
 ]
 
-export default function Reports({ categories, total_expense, total_income, from, to }: Props) {
+export default function Reports({ categories, total_expense, total_income, type, from, to, comparison }: Props) {
   const balance = total_income - total_expense
+  const totalCurrent = type === 'income' ? total_income : total_expense
 
-  function setRange(from: string, to: string) {
-    router.get('/finance/reports', { from, to }, { preserveScroll: true, preserveState: true, replace: true })
+  function setQuery(patch: Record<string, string | undefined>) {
+    const current: Record<string, string> = { from, to, type }
+    if (comparison) current.compare = '1'
+    const next = { ...current, ...patch }
+    Object.keys(next).forEach(k => { if (next[k] === undefined || next[k] === '') delete next[k] })
+    router.get('/finance/reports', next as any, { preserveScroll: true, preserveState: true, replace: true })
   }
 
   function activePreset(): string {
@@ -63,25 +78,37 @@ export default function Reports({ categories, total_expense, total_income, from,
   }
 
   const active = activePreset()
+  const exportUrl = `/finance/reports/export.csv?from=${from}&to=${to}&type=${type}`
 
   return (
     <AppLayout
       title="Relatórios"
       eyebrow="Finanças"
-      subtitle={`Despesas por categoria · ${from} a ${to}`}
+      subtitle={`${type === 'income' ? 'Receitas' : 'Despesas'} por categoria · ${from} a ${to}`}
       actions={
-        <div className="seg">
-          {PRESETS.map(p => (
-            <button key={p.key} data-active={active === p.key} onClick={() => { const r = p.range(); setRange(r.from, r.to) }}>
-              {p.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href={exportUrl} className="btn btn-ghost btn-sm" download>
+            <Icons.ArrowDownRight size={13} /> CSV
+          </a>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setQuery({ compare: comparison ? undefined : '1' })}
+            style={comparison ? { background: 'color-mix(in oklab, var(--green) 14%, transparent)' } : {}}
+          >
+            <Icons.Trend size={13} /> Comparar período
+          </button>
+          <div className="seg">
+            {PRESETS.map(p => (
+              <button key={p.key} data-active={active === p.key} onClick={() => { const r = p.range(); setQuery(r) }}>
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* Stat cards */}
         <div className="grid g-3">
           <div className="stat" style={{ padding: '22px 24px' }}>
             <div className="stat-label">Total de receitas</div>
@@ -102,51 +129,53 @@ export default function Reports({ categories, total_expense, total_income, from,
           </div>
         </div>
 
-        {/* Filtro custom */}
         <div className="card" style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <div className="kicker">Período personalizado</div>
-          <input
-            type="date"
-            className="input"
-            value={from}
-            onChange={e => setRange(e.target.value, to)}
-            style={{ width: 160 }}
-          />
+          <div className="seg" style={{ flex: 'none' }}>
+            <button data-active={type === 'expense'} onClick={() => setQuery({ type: 'expense' })}>Despesas</button>
+            <button data-active={type === 'income'}  onClick={() => setQuery({ type: 'income' })}>Receitas</button>
+          </div>
+          <div style={{ width: 1, height: 22, background: 'var(--line)' }} />
+          <div className="kicker">Período</div>
+          <input type="date" className="input" value={from} onChange={e => setQuery({ from: e.target.value })} style={{ width: 160 }} />
           <span className="muted">até</span>
-          <input
-            type="date"
-            className="input"
-            value={to}
-            onChange={e => setRange(from, e.target.value)}
-            style={{ width: 160 }}
-          />
+          <input type="date" className="input" value={to} onChange={e => setQuery({ to: e.target.value })} style={{ width: 160 }} />
+          {comparison && (
+            <div className="muted" style={{ fontSize: 11, marginLeft: 'auto' }}>
+              Comparando com {comparison.from} → {comparison.to} (total: {fmtBRL(comparison.total_previous)})
+            </div>
+          )}
         </div>
 
-        {/* Tabela de categorias */}
         <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="card-title">Despesas por categoria</div>
+            <div className="card-title">{type === 'income' ? 'Receitas' : 'Despesas'} por categoria</div>
             <div className="mono muted" style={{ fontSize: 11 }}>{categories.length} {categories.length === 1 ? 'categoria' : 'categorias'}</div>
           </div>
 
           {categories.length === 0 ? (
             <div style={{ padding: 32, color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic', textAlign: 'center' }}>
-              Nenhuma despesa no período selecionado.
+              Nenhum lançamento no período selecionado.
             </div>
           ) : (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '24px 1fr 80px 1fr 100px 110px', padding: '12px 24px', color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--line-soft)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: comparison ? '24px 1fr 70px 1fr 70px 90px 110px 30px' : '24px 1fr 80px 1fr 100px 110px 30px', padding: '12px 24px', color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--line-soft)' }}>
                 <div></div>
                 <div>Categoria</div>
                 <div style={{ textAlign: 'right' }}>Lançam.</div>
                 <div></div>
+                {comparison && <div style={{ textAlign: 'right' }}>Δ</div>}
                 <div style={{ textAlign: 'right' }}>%</div>
                 <div style={{ textAlign: 'right' }}>Total</div>
+                <div></div>
               </div>
               {categories.map((c, i) => {
                 const color = PALETTE[i % PALETTE.length]
+                const drillUrl = `/finance/transactions?categories=${encodeURIComponent(c.name)}&date_from=${from}&date_to=${to}&types=${type}`
+                const deltaColor = c.delta_pct == null
+                  ? 'var(--text-4)'
+                  : (c.delta_pct > 0 ? (type === 'expense' ? 'var(--rose)' : 'var(--success)') : (type === 'expense' ? 'var(--success)' : 'var(--rose)'))
                 return (
-                  <div key={c.name} style={{ display: 'grid', gridTemplateColumns: '24px 1fr 80px 1fr 100px 110px', alignItems: 'center', padding: '14px 24px', borderTop: i ? '1px solid var(--line-soft)' : 'none', fontSize: 13 }}>
+                  <div key={c.name} style={{ display: 'grid', gridTemplateColumns: comparison ? '24px 1fr 70px 1fr 70px 90px 110px 30px' : '24px 1fr 80px 1fr 100px 110px 30px', alignItems: 'center', padding: '14px 24px', borderTop: i ? '1px solid var(--line-soft)' : 'none', fontSize: 13 }}>
                     <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
                     <div style={{ color: 'var(--text-2)', fontWeight: 500 }}>{c.name}</div>
                     <div className="mono muted" style={{ fontSize: 12, textAlign: 'right' }}>{c.count}</div>
@@ -155,8 +184,16 @@ export default function Reports({ categories, total_expense, total_income, from,
                         <span style={{ width: c.pct + '%', background: color }} />
                       </div>
                     </div>
+                    {comparison && (
+                      <div className="mono" style={{ textAlign: 'right', fontSize: 11, color: deltaColor }}>
+                        {c.delta_pct == null ? 'novo' : (c.delta_pct > 0 ? `+${c.delta_pct}%` : `${c.delta_pct}%`)}
+                      </div>
+                    )}
                     <div className="mono" style={{ textAlign: 'right', color: 'var(--text-3)', fontSize: 12 }}>{c.pct}%</div>
                     <div className="mono" style={{ textAlign: 'right', color: 'var(--text)', fontWeight: 500 }}>{fmtBRL(c.total)}</div>
+                    <Link href={drillUrl} className="icon-btn" title="Ver transações" style={{ width: 24, height: 24, marginLeft: 'auto' }}>
+                      <Icons.ChevronRight size={11} />
+                    </Link>
                   </div>
                 )
               })}

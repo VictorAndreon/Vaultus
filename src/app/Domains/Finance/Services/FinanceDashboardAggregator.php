@@ -28,28 +28,32 @@ class FinanceDashboardAggregator
         'cash'       => ['label' => 'Dinheiro',       'color' => 'var(--yellow)'],
     ];
 
-    public function aggregate(User $user): array
+    public function aggregate(User $user, ?Carbon $periodFrom = null, ?Carbon $periodTo = null): array
     {
-        $now        = Carbon::now($user->timezone ?? 'America/Sao_Paulo');
-        $monthStart = $now->copy()->startOfMonth()->toDateString();
-        $monthEnd   = $now->copy()->endOfMonth()->toDateString();
+        $tz  = $user->timezone ?? 'America/Sao_Paulo';
+        $now = Carbon::now($tz);
+
+        // Período "principal" usado em month_income/month_expense/savings_rate/budgets.
+        // Quando from/to não vêm, default = mês corrente (mantém comportamento original).
+        $periodStart = ($periodFrom ?? $now->copy()->startOfMonth())->toDateString();
+        $periodEnd   = ($periodTo   ?? $now->copy()->endOfMonth()  )->toDateString();
 
         // Contas visíveis (oculta subcontas internas de metas)
         $accounts = $user->accounts()->userVisible()->with('transactions')->get();
         // Subcontas internas entram apenas no net worth — sem elas, um aporte reduziria o patrimônio.
         $goalAccounts = $user->accounts()->internalGoalAccounts()->with('transactions')->get();
 
-        [$allTx, $monthTx] = $this->splitTransactions($accounts, $monthStart, $monthEnd);
+        [$allTx, $periodTx] = $this->splitTransactions($accounts, $periodStart, $periodEnd);
 
         return [
             'net_worth'             => $this->netWorth($accounts->concat($goalAccounts)),
-            'month_income'          => $this->sumByType($monthTx, 'income'),
-            'month_expense'         => $this->sumByType($monthTx, 'expense'),
-            'savings_rate'          => $this->savingsRate($monthTx),
+            'month_income'          => $this->sumByType($periodTx, 'income'),
+            'month_expense'         => $this->sumByType($periodTx, 'expense'),
+            'savings_rate'          => $this->savingsRate($periodTx),
             'savings_goal_pct'      => $user->savings_goal_pct ?? 20,
             'flow_chart'            => $this->flowChart($allTx, $now),
             'donut'                 => $this->donut($accounts),
-            'budgets'               => $this->budgets($user, $monthTx),
+            'budgets'               => $this->budgets($user, $periodTx),
             'budget_category_names' => $user->budgetCategories()->pluck('name')->values()->toArray(),
             'transactions'          => $this->recentTransactions($allTx),
             'goals'                 => $this->goals($user),
@@ -57,6 +61,9 @@ class FinanceDashboardAggregator
             'upcoming_payments'     => $this->upcomingPayments($user, $now),
             'wishlist'              => $this->wishlist($user),
             'month_label'           => self::PT_MONTHS[$now->month - 1],
+            'period_from'           => $periodStart,
+            'period_to'             => $periodEnd,
+            'period_is_default'     => $periodFrom === null && $periodTo === null,
         ];
     }
 

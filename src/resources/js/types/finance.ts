@@ -97,4 +97,7 @@ export interface FinanceIndexProps {
   upcoming_payments: UpcomingPayment[]
   wishlist: WishlistItem[]
   budget_category_names: string[]
+  period_from: string
+  period_to: string
+  period_is_default: boolean
 }

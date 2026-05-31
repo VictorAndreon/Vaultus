@@ -186,6 +186,26 @@ class FinanceDashboardAggregatorTest extends TestCase
         $this->assertCount(1, $transfers, 'Esperava uma única linha por par de transferência');
     }
 
+    public function test_dashboard_accepts_custom_period_for_income_expense_savings(): void
+    {
+        $user = User::factory()->create();
+        $acc  = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 10000]);
+
+        $acc->transactions()->create(['type' => 'income',  'amount_encrypted' => 5000, 'description' => 'sal jan', 'occurred_at' => '2026-01-05']);
+        $acc->transactions()->create(['type' => 'expense', 'amount_encrypted' => 1000, 'description' => 'gas jan', 'occurred_at' => '2026-01-10']);
+        $acc->transactions()->create(['type' => 'income',  'amount_encrypted' => 6000, 'description' => 'sal mai', 'occurred_at' => '2026-05-05']);
+        $acc->transactions()->create(['type' => 'expense', 'amount_encrypted' => 2000, 'description' => 'gas mai', 'occurred_at' => '2026-05-10']);
+
+        $this->actingAs($user)
+            ->get('/finance?from=2026-01-01&to=2026-01-31')
+            ->assertInertia(fn ($page) => $page
+                ->where('month_income', 5000)
+                ->where('month_expense', 1000)
+                ->where('period_from', '2026-01-01')
+                ->where('period_to', '2026-01-31')
+            );
+    }
+
     public function test_transfers_do_not_inflate_month_income_or_expense(): void
     {
         $user   = User::factory()->create();
