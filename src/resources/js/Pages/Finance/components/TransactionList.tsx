@@ -3,6 +3,7 @@ import { router } from '@inertiajs/react'
 import { Transaction, PaginatedResponse } from '@/types'
 import { Icons } from '@/Components/Icons'
 import { EXPENSE_FALLBACK_CATEGORIES, INCOME_CATEGORIES } from '@/lib/finance/constants'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 const TRANSACTION_CATEGORIES = [
   ...EXPENSE_FALLBACK_CATEGORIES.filter(c => c !== 'Outros'),
@@ -25,6 +26,7 @@ function fmtDate(d: string) {
 }
 
 export default function TransactionList({ transactions, accountId, onEdit }: Props) {
+  const confirm = useConfirm()
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all')
   const [categoryFilter, setCategoryFilter] = useState('')
 
@@ -34,8 +36,8 @@ export default function TransactionList({ transactions, accountId, onEdit }: Pro
     return true
   })
 
-  function handleDelete(id: number) {
-    if (!confirm('Excluir esta transação?')) return
+  async function handleDelete(id: number) {
+    if (!(await confirm({ title: 'Excluir esta transação?', variant: 'danger', confirmText: 'Excluir' }))) return
     router.delete('/finance/transactions/' + id, {}, { preserveScroll: true })
   }
 

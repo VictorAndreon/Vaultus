@@ -1,6 +1,8 @@
 import React, { ReactNode, useState, useEffect } from 'react'
 import Sidebar from '@/Components/Sidebar'
 import Topbar from '@/Components/Topbar'
+import Toast from '@/Components/Toast'
+import { DialogProvider } from '@/Components/dialogs/DialogProvider'
 import { PageProps } from '@/types'
 import { usePage } from '@inertiajs/react'
 
@@ -42,34 +44,37 @@ export default function AppLayout({ children, title, eyebrow, subtitle, actions,
   const hasHead = showHead && (title || eyebrow || subtitle || actions)
 
   return (
-    <div className="app">
-      <Sidebar />
-      <div className="main">
-        <Topbar
-          user={auth.user}
-          title={title ?? 'Dashboard'}
-          theme={theme}
-          onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-        />
-        <div className="content">
-          {hasHead && (
-            <div className="page-head">
-              <div className="page-head-left">
-                {eyebrow && (
-                  <div className="eyebrow">
-                    <span>{eyebrow}</span>
-                    {showSyncPill && <span className="pill">Sincronizado · agora</span>}
-                  </div>
-                )}
-                {title && <h1 className="page-title">{renderTitle(title)}</h1>}
-                {subtitle && <div className="page-subtitle">{subtitle}</div>}
+    <DialogProvider>
+      <div className="app">
+        <Sidebar />
+        <div className="main">
+          <Topbar
+            user={auth.user}
+            title={title ?? 'Dashboard'}
+            theme={theme}
+            onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          />
+          <div className="content">
+            {hasHead && (
+              <div className="page-head">
+                <div className="page-head-left">
+                  {eyebrow && (
+                    <div className="eyebrow">
+                      <span>{eyebrow}</span>
+                      {showSyncPill && <span className="pill">Sincronizado · agora</span>}
+                    </div>
+                  )}
+                  {title && <h1 className="page-title">{renderTitle(title)}</h1>}
+                  {subtitle && <div className="page-subtitle">{subtitle}</div>}
+                </div>
+                {actions && <div className="page-actions">{actions}</div>}
               </div>
-              {actions && <div className="page-actions">{actions}</div>}
-            </div>
-          )}
-          {children}
+            )}
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+      <Toast />
+    </DialogProvider>
   )
 }

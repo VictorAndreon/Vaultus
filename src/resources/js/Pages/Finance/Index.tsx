@@ -21,6 +21,7 @@ import BudgetModal from './components/budgets/BudgetModal'
 import UpcomingPaymentModal from './components/upcoming/UpcomingPaymentModal'
 import TransactionModal from './components/transactions/TransactionModal'
 import WishlistModal from './components/wishlist/WishlistModal'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 export default function FinanceIndex({
   net_worth, month_income, month_expense, savings_rate, savings_goal_pct,
@@ -28,6 +29,7 @@ export default function FinanceIndex({
   accounts_list, upcoming_payments, wishlist, budget_category_names,
   period_from, period_to, period_is_default,
 }: FinanceIndexProps) {
+  const confirm = useConfirm()
   const [goalFilter, setGoalFilter] = useState<'todas' | 'no-prazo' | 'atencao' | 'atrasado'>('todas')
   const [aporteGoal, setAporteGoal] = useState<FinancialGoal | null>(null)
   const [goalModal, setGoalModal] = useState<{ goal: FinancialGoal | null } | null>(null)
@@ -52,8 +54,8 @@ export default function FinanceIndex({
     })
   }
 
-  function handleDeleteGoal(g: FinancialGoal) {
-    if (!confirm(`Excluir a meta "${g.name}"?`)) return
+  async function handleDeleteGoal(g: FinancialGoal) {
+    if (!(await confirm({ title: `Excluir a meta "${g.name}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
     router.delete(`/finance/goals/${g.id}`, { preserveScroll: true })
   }
 
@@ -255,8 +257,8 @@ export default function FinanceIndex({
                     <button className="icon-btn" style={{ width: 24, height: 24, flex: 'none' }} onClick={() => setUpcomingModal({ payment: p })}>
                       <Icons.Edit size={11} />
                     </button>
-                    <button className="icon-btn" style={{ width: 24, height: 24, flex: 'none', color: 'var(--rose)' }} onClick={() => {
-                      if (confirm(`Remover "${p.description}"?`)) router.delete(`/finance/upcoming-payments/${p.id}`, { preserveScroll: true })
+                    <button className="icon-btn" style={{ width: 24, height: 24, flex: 'none', color: 'var(--rose)' }} onClick={async () => {
+                      if (await confirm({ title: `Remover "${p.description}"?`, variant: 'danger', confirmText: 'Remover' })) router.delete(`/finance/upcoming-payments/${p.id}`, { preserveScroll: true })
                     }}>
                       <Icons.Trash size={11} />
                     </button>
@@ -379,8 +381,8 @@ export default function FinanceIndex({
                           className="icon-btn"
                           title="Excluir"
                           style={{ width: 26, height: 26, color: 'var(--rose)' }}
-                          onClick={() => {
-                            if (confirm(`Excluir "${w.name}"?`)) {
+                          onClick={async () => {
+                            if (await confirm({ title: `Excluir "${w.name}"?`, variant: 'danger', confirmText: 'Excluir' })) {
                               router.delete(`/finance/wishlist/${w.id}`, { preserveScroll: true })
                             }
                           }}
@@ -437,8 +439,8 @@ export default function FinanceIndex({
                       className="icon-btn"
                       title="Excluir"
                       style={{ width: 24, height: 24, color: 'var(--rose)' }}
-                      onClick={() => {
-                        if (confirm(`Excluir "${t.description}"?`)) {
+                      onClick={async () => {
+                        if (await confirm({ title: `Excluir "${t.description}"?`, variant: 'danger', confirmText: 'Excluir' })) {
                           router.delete(`/finance/transactions/${t.id}`, { preserveScroll: true })
                         }
                       }}

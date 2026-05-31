@@ -34,7 +34,7 @@ class NotesController extends Controller
             'tags'         => $validated['tags'] ?? [],
         ]);
 
-        return redirect()->route('notes');
+        return redirect()->route('notes')->with('success', 'Nota criada.');
     }
 
     public function update(Request $request, int $note)
@@ -68,7 +68,7 @@ class NotesController extends Controller
 
         $noteModel->update($validated);
 
-        return redirect()->route('notes');
+        return redirect()->route('notes')->with('success', 'Nota atualizada.');
     }
 
     public function destroy(Request $request, int $note)
@@ -80,7 +80,7 @@ class NotesController extends Controller
 
         $noteModel->delete();
 
-        return redirect()->route('notes');
+        return redirect()->route('notes')->with('success', 'Nota excluída.');
     }
 
     public function index(Request $request): Response

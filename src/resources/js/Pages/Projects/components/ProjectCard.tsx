@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react'
 import { Project } from '@/types'
 import { Icons } from '@/Components/Icons'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 interface Props { project: Project; onEdit: (p: Project) => void }
 
@@ -12,8 +13,10 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export default function ProjectCard({ project, onEdit }: Props) {
-    function handleDelete() {
-        if (!confirm(`Excluir o projeto "${project.title}"?`)) return
+    const confirm = useConfirm()
+
+    async function handleDelete() {
+        if (!(await confirm({ title: `Excluir o projeto "${project.title}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
         router.delete('/projects/' + project.id, {}, { preserveScroll: true })
     }
 

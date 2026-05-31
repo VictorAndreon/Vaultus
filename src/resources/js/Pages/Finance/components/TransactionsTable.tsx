@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react'
 import { Icons } from '@/Components/Icons'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 interface AccountRef { id: number; name: string; type: string }
 
@@ -33,13 +34,15 @@ function fmtDate(d: string) {
 }
 
 export default function TransactionsTable({ transactions }: { transactions: PaginatedTransactions }) {
+  const confirm = useConfirm()
+
   function go(url: string | null) {
     if (!url) return
     router.get(url, {}, { preserveScroll: true, preserveState: true })
   }
 
-  function handleDelete(id: number) {
-    if (!confirm('Excluir esta transação?')) return
+  async function handleDelete(id: number) {
+    if (!(await confirm({ title: 'Excluir esta transação?', variant: 'danger', confirmText: 'Excluir' }))) return
     router.delete('/finance/transactions/' + id, { preserveScroll: true })
   }
 

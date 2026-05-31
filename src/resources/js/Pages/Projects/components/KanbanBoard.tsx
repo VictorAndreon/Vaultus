@@ -4,12 +4,14 @@ import { router } from '@inertiajs/react'
 import { Project, ProjectColumn, ProjectTask } from '@/types'
 import KanbanColumn from './KanbanColumn'
 import TaskForm from './TaskForm'
+import { usePrompt } from '@/Components/dialogs/DialogProvider'
 
 interface Props {
     project: Project & { columns: ProjectColumn[] }
 }
 
 export default function KanbanBoard({ project }: Props) {
+    const prompt = usePrompt()
     const [taskForm, setTaskForm] = useState<{
         open: boolean
         task: ProjectTask | null
@@ -36,8 +38,8 @@ export default function KanbanBoard({ project }: Props) {
         )
     }
 
-    function addColumn() {
-        const name = prompt('Nome da nova coluna:')
+    async function addColumn() {
+        const name = await prompt({ title: 'Nova coluna', label: 'Nome', placeholder: 'Ex.: Em revisão' })
         if (!name?.trim()) return
         router.post(
             '/projects/' + project.id + '/columns',

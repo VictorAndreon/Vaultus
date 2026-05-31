@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { ProjectTask, ProjectColumn } from '@/types'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 interface Props {
     task: ProjectTask | null
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function TaskForm({ task, projectId, columns, defaultColumnId, onClose }: Props) {
+    const confirm = useConfirm()
     const [title, setTitle]       = useState(task?.title ?? '')
     const [desc, setDesc]         = useState(task?.description ?? '')
     const [priority, setPriority] = useState<ProjectTask['priority']>(task?.priority ?? 'medium')
@@ -44,8 +46,9 @@ export default function TaskForm({ task, projectId, columns, defaultColumnId, on
         onClose()
     }
 
-    function handleDelete() {
-        if (!task || !confirm('Excluir tarefa?')) return
+    async function handleDelete() {
+        if (!task) return
+        if (!(await confirm({ title: 'Excluir tarefa?', variant: 'danger', confirmText: 'Excluir' }))) return
         router.delete('/projects/tasks/' + task.id, {}, { preserveScroll: true })
         onClose()
     }

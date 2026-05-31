@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Project, ProjectNote, ProjectColumn, ProjectLink } from '@/types'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 type FullProject = Project & { columns: ProjectColumn[]; notes: ProjectNote[]; links: ProjectLink[] }
 interface Props { project: FullProject }
 
 export default function ProjectNotesList({ project }: Props) {
+    const confirm = useConfirm()
     const [newContent, setNewContent] = useState('')
     const [editingId, setEditingId]   = useState<number | null>(null)
     const [editContent, setEditContent] = useState('')
@@ -27,8 +29,8 @@ export default function ProjectNotesList({ project }: Props) {
         setEditingId(null)
     }
 
-    function deleteNote(id: number) {
-        if (!confirm('Excluir nota?')) return
+    async function deleteNote(id: number) {
+        if (!(await confirm({ title: 'Excluir nota?', variant: 'danger', confirmText: 'Excluir' }))) return
         router.delete('/projects/notes/' + id, {}, { preserveScroll: true })
     }
 

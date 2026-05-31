@@ -69,7 +69,7 @@ class ContactsController extends Controller
         $validated = $this->validatedData($request);
         Contact::create(array_merge(['user_id' => $request->user()->id], $validated));
 
-        return redirect()->route('contacts');
+        return redirect()->route('contacts')->with('success', 'Contato criado.');
     }
 
     public function update(Request $request, int $contact): RedirectResponse
@@ -79,7 +79,7 @@ class ContactsController extends Controller
             ->firstOrFail();
         $model->update($this->validatedData($request));
 
-        return redirect()->route('contacts');
+        return redirect()->route('contacts')->with('success', 'Contato atualizado.');
     }
 
     public function destroy(Request $request, int $contact): RedirectResponse
@@ -89,7 +89,7 @@ class ContactsController extends Controller
             ->firstOrFail()
             ->delete();
 
-        return redirect()->route('contacts');
+        return redirect()->route('contacts')->with('success', 'Contato excluído.');
     }
 
     private function validatedData(Request $request): array

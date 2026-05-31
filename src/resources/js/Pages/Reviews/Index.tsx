@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { ReviewsPageProps, CheckState, ReviewContent } from '@/types/reviews'
 import ReviewSection from './components/ReviewSection'
+import { usePrompt } from '@/Components/dialogs/DialogProvider'
 
 const STATE_CYCLE: Record<string, CheckState> = {
   empty: 'filled',
@@ -20,6 +21,7 @@ const EMPTY_CONTENT: ReviewContent = {
 }
 
 export default function ReviewsIndex({ reviews, current }: ReviewsPageProps) {
+  const prompt = usePrompt()
   const [selectedId, setSelectedId] = useState<number | null>((current ?? reviews[0])?.id ?? null)
   // Deriva o review do prop fresco (mantém completion_pct atual após cada revisit do Inertia)
   const review = reviews.find(r => r.id === selectedId) ?? null
@@ -69,8 +71,8 @@ export default function ReviewsIndex({ reviews, current }: ReviewsPageProps) {
     patchContent({ ...content, [section]: updated })
   }
 
-  function addItem(section: keyof ReviewContent) {
-    const text = prompt('Item:')
+  async function addItem(section: keyof ReviewContent) {
+    const text = await prompt({ title: 'Novo item', label: 'Item', placeholder: 'Descreva o item…' })
     if (!text?.trim()) return
     const updated = [...content[section], { text: text.trim(), state: 'empty' as CheckState }]
     patchContent({ ...content, [section]: updated })

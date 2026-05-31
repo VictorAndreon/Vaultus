@@ -6,16 +6,18 @@ import { NotesPageProps, Note } from '@/types/notes'
 import NoteSidebar from './components/NoteSidebar'
 import NoteReader from './components/NoteReader'
 import NoteEditor from './components/NoteEditor'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 export default function NotesIndex({ notebooks, notes }: NotesPageProps) {
+  const confirm = useConfirm()
   const [activeId, setActiveId] = useState<number | null>(notes[0]?.id ?? null)
   const [search, setSearch] = useState('')
   const [editorOpen, setEditorOpen] = useState<{ note: Note | null } | null>(null)
   const active = notes.find(n => n.id === activeId) ?? null
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!active) return
-    if (!confirm(`Excluir a nota "${active.title}"?`)) return
+    if (!(await confirm({ title: `Excluir a nota "${active.title}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
     router.delete(`/notes/${active.id}`, {
       preserveScroll: true,
       onSuccess: () => setActiveId(null),

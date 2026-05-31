@@ -36,7 +36,7 @@ class ReviewsController extends Controller
         $validated = $this->validatedData($request);
         Review::create(array_merge(['user_id' => $request->user()->id], $validated));
 
-        return redirect()->route('reviews');
+        return redirect()->route('reviews')->with('success', 'Revisão criada.');
     }
 
     public function update(Request $request, int $review): RedirectResponse
@@ -56,7 +56,7 @@ class ReviewsController extends Controller
             ->firstOrFail()
             ->delete();
 
-        return redirect()->route('reviews');
+        return redirect()->route('reviews')->with('success', 'Revisão excluída.');
     }
 
     private function validatedData(Request $request): array

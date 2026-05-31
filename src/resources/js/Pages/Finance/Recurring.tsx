@@ -5,6 +5,7 @@ import { Icons } from '@/Components/Icons'
 import { fmtBRL } from '@/lib/finance/formatters'
 import RecurringRuleModal from './components/recurring/RecurringRuleModal'
 import { AccountItem } from '@/types/finance'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 export interface RecurringRule {
   id: number
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function Recurring({ rules, accounts }: Props) {
+  const confirm = useConfirm()
   const [modal, setModal] = useState<{ rule: RecurringRule | null } | null>(null)
   const incomes  = rules.filter(r => r.type === 'income')
   const expenses = rules.filter(r => r.type === 'expense')
@@ -37,8 +39,8 @@ export default function Recurring({ rules, accounts }: Props) {
     router.patch(`/finance/recurring/${rule.id}`, { is_active: !rule.is_active }, { preserveScroll: true })
   }
 
-  function destroy(rule: RecurringRule) {
-    if (!confirm(`Excluir a regra "${rule.description}"?`)) return
+  async function destroy(rule: RecurringRule) {
+    if (!(await confirm({ title: `Excluir a regra "${rule.description}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
     router.delete(`/finance/recurring/${rule.id}`, { preserveScroll: true })
   }
 

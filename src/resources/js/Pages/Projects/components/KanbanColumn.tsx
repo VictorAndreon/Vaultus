@@ -3,6 +3,7 @@ import { Droppable } from '@hello-pangea/dnd'
 import { router } from '@inertiajs/react'
 import { ProjectColumn, ProjectTask } from '@/types'
 import TaskCard from './TaskCard'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 interface Props {
     column: ProjectColumn
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function KanbanColumn({ column, projectId, onAddTask, onEditTask }: Props) {
+    const confirm = useConfirm()
     const [editingName, setEditingName] = useState(false)
     const [name, setName] = useState(column.name)
 
@@ -22,8 +24,13 @@ export default function KanbanColumn({ column, projectId, onAddTask, onEditTask 
         }
     }
 
-    function deleteColumn() {
-        if (!confirm(`Excluir coluna "${column.name}" e todas as suas tarefas?`)) return
+    async function deleteColumn() {
+        if (!(await confirm({
+            title: `Excluir coluna "${column.name}"?`,
+            message: 'Todas as tarefas desta coluna também serão excluídas.',
+            variant: 'danger',
+            confirmText: 'Excluir',
+        }))) return
         router.delete(`/projects/${projectId}/columns/${column.id}`, {}, { preserveScroll: true })
     }
 

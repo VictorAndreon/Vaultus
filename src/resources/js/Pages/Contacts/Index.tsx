@@ -6,15 +6,17 @@ import { ContactsPageProps, Contact } from '@/types/contacts'
 import ContactSidebar from './components/ContactSidebar'
 import ContactDetail from './components/ContactDetail'
 import ContactModal from './components/ContactModal'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
 export default function ContactsIndex({ contacts }: ContactsPageProps) {
+  const confirm = useConfirm()
   const [activeId, setActiveId] = useState<number | null>(contacts[0]?.id ?? null)
   const [modal, setModal] = useState<{ contact: Contact | null } | null>(null)
   const active = contacts.find(c => c.id === activeId) ?? null
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!active) return
-    if (!confirm(`Excluir o contato "${active.name}"?`)) return
+    if (!(await confirm({ title: `Excluir o contato "${active.name}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
     router.delete(`/contacts/${active.id}`, {
       preserveScroll: true,
       onSuccess: () => setActiveId(null),
