@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Icons } from '@/Components/Icons'
 import { Habit } from '@/types'
+import FrequencyBadge from './FrequencyBadge'
 
 interface Props { habit: Habit; today: string; onEdit: (h: Habit) => void; isFirst: boolean }
 
@@ -25,25 +26,22 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
         router.delete(`/habits/${habit.id}`, {}, { preserveScroll: true })
     }
 
-    // Week dots — Seg–Dom da semana atual
-    const todayDate = new Date()
-    const dayOfWeek = todayDate.getDay() // 0=dom, 1=seg...
-    const monday = new Date(todayDate)
-    monday.setDate(todayDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+    // Week dots — Seg–Dom da semana atual. Derivado de `today` (já no timezone
+    // do usuário) em UTC, para não depender do fuso do navegador.
+    const [ty, tm, td] = today.split('-').map(Number)
+    const todayUTC = new Date(Date.UTC(ty, tm - 1, td))
+    const dayOfWeek = todayUTC.getUTCDay() // 0=dom, 1=seg...
+    const monday = new Date(todayUTC)
+    monday.setUTCDate(todayUTC.getUTCDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
 
     const weekDates = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday)
-        d.setDate(monday.getDate() + i)
+        d.setUTCDate(monday.getUTCDate() + i)
         return d.toISOString().slice(0, 10)
     })
 
-    const rate = Math.round(
-        (habit.recent_check_ins?.filter(d => {
-            const cutoff = new Date(today)
-            cutoff.setDate(cutoff.getDate() - 29)
-            return new Date(d) >= cutoff
-        }).length ?? 0) / 30 * 100
-    )
+    // Taxa de 30 dias calculada no backend (coerente com a frequência do hábito).
+    const rate = habit.rate_30d ?? 0
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px 180px 100px 120px', padding: '18px 24px', borderTop: isFirst ? 'none' : '1px solid var(--line-soft)', alignItems: 'center' }}>
@@ -53,8 +51,13 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
                     <div style={{ width: 8, height: 8, borderRadius: 50, background: color }} />
                     <div className="h-3">{habit.name}</div>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, marginLeft: 18 }}>
-                    {habit.icon ?? ''} {habit.frequency_type === 'daily' ? 'Todo dia' : `${habit.frequency_times}x · semana`}
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, marginLeft: 18, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {habit.icon && <span>{habit.icon}</span>}
+                    <FrequencyBadge
+                        frequencyType={habit.frequency_type}
+                        frequencyDays={habit.frequency_days}
+                        frequencyTimes={habit.frequency_times}
+                    />
                 </div>
             </div>
 
@@ -88,7 +91,7 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
 
             {/* Streak */}
             <div className="mono" style={{ fontSize: 13, color: 'var(--text)' }}>
-                {habit.current_streak ?? 0} <span style={{ color: 'var(--text-4)', fontSize: 11 }}>dias</span>
+                {habit.current_streak ?? 0} <span style={{ color: 'var(--text-4)', fontSize: 11 }}>{habit.streak_unit ?? 'dias'}</span>
             </div>
 
             {/* Ações */}

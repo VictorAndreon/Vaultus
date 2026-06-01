@@ -8,6 +8,13 @@ interface Props { todayMetrics: HealthMetric | null }
 const MOOD_LABELS: Record<number, string> = { 1: 'Difícil', 2: 'Cansado', 3: 'Neutro', 4: 'Calmo', 5: 'Realizado' }
 const ENERGY_LABELS: Record<number, string> = { 1: 'Esgotado', 2: 'Baixo', 3: 'Médio', 4: 'Alta', 5: 'Ótimo' }
 
+// Métricas vêm como string decimal ("7.50") ou null. Mostra '—' só quando ausente
+// (0 é um valor válido) e formata em pt-BR sem zeros à direita ("7,5").
+function fmtMetric(value: string | null): string {
+    if (value == null) return '—'
+    return String(Number(value)).replace('.', ',')
+}
+
 function NumMetric({ label, value, unit, hint }: { label: string; value: string; unit?: string; hint?: string }) {
     return (
         <div>
@@ -52,9 +59,9 @@ export default function HealthMetricsPanel({ todayMetrics }: Props) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 28 }}>
                 <ScaleMetric label="Humor" value={todayMetrics?.mood != null ? (MOOD_LABELS[todayMetrics.mood] ?? String(todayMetrics.mood)) : '—'} selected={todayMetrics?.mood ?? 3} hue="green" />
                 <ScaleMetric label="Energia" value={todayMetrics?.energy != null ? (ENERGY_LABELS[todayMetrics.energy] ?? String(todayMetrics.energy)) : '—'} selected={todayMetrics?.energy ?? 3} hue="gold" />
-                <NumMetric label="Sono" value={todayMetrics?.sleep_hours ? String(todayMetrics.sleep_hours) : '—'} unit="h" hint="meta 7,5h" />
-                <NumMetric label="Água" value={todayMetrics?.water_liters ? String(todayMetrics.water_liters) : '—'} unit="L" hint="meta 2,5L" />
-                <NumMetric label="Peso" value={todayMetrics?.weight_kg ? String(todayMetrics.weight_kg) : '—'} unit="kg" />
+                <NumMetric label="Sono" value={fmtMetric(todayMetrics?.sleep_hours ?? null)} unit="h" hint="meta 7,5h" />
+                <NumMetric label="Água" value={fmtMetric(todayMetrics?.water_liters ?? null)} unit="L" hint="meta 2,5L" />
+                <NumMetric label="Peso" value={fmtMetric(todayMetrics?.weight_kg ?? null)} unit="kg" />
             </div>
         </div>
     )

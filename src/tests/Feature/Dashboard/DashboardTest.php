@@ -3,12 +3,44 @@
 namespace Tests\Feature\Dashboard;
 
 use App\Domains\Auth\Models\User;
+use App\Domains\Dashboard\Services\DashboardAggregator;
+use App\Domains\Habits\Models\Habit;
+use App\Domains\Habits\Models\HabitCheckIn;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_habit_rate_is_coherent_and_never_exceeds_100(): void
+    {
+        Carbon::setTestNow('2026-05-10'); // domingo; mês corrente May 1–10
+        $user = User::factory()->create(['timezone' => 'UTC']);
+
+        // Hábito esperado hoje — mantém expectedToday > 0 (a fórmula antiga
+        // dividia por isso e poderia estourar 100%).
+        Habit::factory()->create(['user_id' => $user->id, 'frequency_type' => 'daily']);
+
+        // Dois hábitos "só segunda", mas com check-in em TODOS os 10 dias do mês.
+        // Como hoje é domingo, nenhum entra em expectedToday: a fórmula antiga
+        // (20 check-ins / (10 dias × 1 esperado)) daria 200%.
+        foreach (range(1, 2) as $i) {
+            $h = Habit::factory()->weekly([1])->create(['user_id' => $user->id]);
+            foreach (range(1, 10) as $day) {
+                HabitCheckIn::factory()->create([
+                    'habit_id' => $h->id,
+                    'date'     => sprintf('2026-05-%02d', $day),
+                ]);
+            }
+        }
+
+        $stats = (new DashboardAggregator())->getStats($user);
+
+        $this->assertLessThanOrEqual(100, $stats['habit_rate']);
+        $this->assertGreaterThanOrEqual(0, $stats['habit_rate']);
+    }
 
     public function test_dashboard_requires_auth(): void
     {

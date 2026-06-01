@@ -44,13 +44,20 @@ class DashboardAggregator
         $maxStreak = $activeHabits->max('current_streak') ?? 0;
 
         $startOfMonth   = $now->copy()->startOfMonth()->toDateString();
-        $monthCheckIns  = $activeHabits->sum(
-            fn($h) => $h->checkIns->filter(fn($ci) => $ci->date->toDateString() >= $startOfMonth)->count()
-        );
-        $daysElapsed    = $now->day;
-        $habitRate      = $expectedToday->count() > 0
-            ? (int) round($monthCheckIns / ($daysElapsed * $expectedToday->count()) * 100)
-            : 0;
+
+        // Taxa de aderência do mês, coerente com a frequência de cada hábito
+        // (x_per_week medido por semana; daily/weekly por dia esperado). Antes o
+        // numerador somava check-ins de todos os hábitos e o denominador usava só
+        // os esperados hoje, podendo ultrapassar 100%.
+        $monthStart    = $now->copy()->startOfMonth();
+        $totalExpected = 0;
+        $totalDone     = 0;
+        foreach ($activeHabits as $h) {
+            [$expected, $done] = $h->adherenceInRange($monthStart, $now);
+            $totalExpected += $expected;
+            $totalDone     += $done;
+        }
+        $habitRate      = $totalExpected > 0 ? (int) round($totalDone / $totalExpected * 100) : 0;
         $topHabit       = $activeHabits->sortByDesc(
             fn($h) => $h->checkIns->filter(fn($ci) => $ci->date->toDateString() >= $startOfMonth)->count()
         )->first();

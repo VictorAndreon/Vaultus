@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             NotesSeeder::class,
             ContactsSeeder::class,
             ReviewsSeeder::class,
+            HabitsSeeder::class,
         ]);
     }
 }

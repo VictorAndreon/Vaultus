@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { Habit, FrequencyType } from '@/types'
+import StreakDisplay from './StreakDisplay'
 
 interface Props {
     habit: Habit | null   // null = criar novo
@@ -17,8 +18,12 @@ const DAY_OPTIONS = [
     { value: 6, label: 'Sab' },
 ]
 
+const errorStyle: React.CSSProperties = { color: 'var(--danger)', fontSize: 11, marginTop: 4 }
+
 export default function HabitDrawer({ habit, onClose }: Props) {
     const isEditing = !!habit
+    const [errors, setErrors] = useState<Record<string, string>>({})
+    const [submitting, setSubmitting] = useState(false)
 
     const [form, setForm] = useState({
         name:            habit?.name            ?? '',
@@ -61,16 +66,18 @@ export default function HabitDrawer({ habit, onClose }: Props) {
             frequency_times: form.frequency_type === 'x_per_week' ? form.frequency_times : null,
         }
 
+        const options = {
+            preserveScroll: true,
+            onStart:   () => { setSubmitting(true); setErrors({}) },
+            onError:   (e: Record<string, string>) => setErrors(e),
+            onSuccess: onClose,
+            onFinish:  () => setSubmitting(false),
+        }
+
         if (isEditing) {
-            router.patch(`/habits/${habit.id}`, payload, {
-                preserveScroll: true,
-                onSuccess: onClose,
-            })
+            router.patch(`/habits/${habit.id}`, payload, options)
         } else {
-            router.post('/habits', payload, {
-                preserveScroll: true,
-                onSuccess: onClose,
-            })
+            router.post('/habits', payload, options)
         }
     }
 
@@ -92,6 +99,17 @@ export default function HabitDrawer({ habit, onClose }: Props) {
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {/* Streak atual (apenas ao editar) */}
+                    {isEditing && habit && (
+                        <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--line-soft)' }}>
+                            <StreakDisplay
+                                currentStreak={habit.current_streak}
+                                bestStreak={habit.best_streak}
+                                frequencyType={habit.frequency_type}
+                            />
+                        </div>
+                    )}
+
                     {/* Nome */}
                     <div>
                         <label className="kicker" style={{ display: 'block', marginBottom: 6 }}>Nome *</label>
@@ -102,6 +120,7 @@ export default function HabitDrawer({ habit, onClose }: Props) {
                             className="input"
                             placeholder="Ex: Meditar"
                         />
+                        {errors.name && <div style={errorStyle}>{errors.name}</div>}
                     </div>
 
                     {/* Ícone */}
@@ -159,6 +178,7 @@ export default function HabitDrawer({ habit, onClose }: Props) {
                                     </button>
                                 ))}
                             </div>
+                            {errors.frequency_days && <div style={errorStyle}>{errors.frequency_days}</div>}
                         </div>
                     )}
 
@@ -175,13 +195,14 @@ export default function HabitDrawer({ habit, onClose }: Props) {
                                 className="input"
                                 style={{ width: 80 }}
                             />
+                            {errors.frequency_times && <div style={errorStyle}>{errors.frequency_times}</div>}
                         </div>
                     )}
                 </div>
 
                 <div style={{ padding: '16px 20px', borderTop: '1px solid var(--line)' }}>
-                    <button className="btn btn-primary" style={{ width: '100%' }} onClick={submit} disabled={!form.name.trim()}>
-                        {isEditing ? 'Salvar alterações' : 'Criar hábito'}
+                    <button className="btn btn-primary" style={{ width: '100%' }} onClick={submit} disabled={!form.name.trim() || submitting}>
+                        {submitting ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Criar hábito'}
                     </button>
                 </div>
             </div>

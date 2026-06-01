@@ -70,25 +70,37 @@ class StreakService
             return;
         }
 
-        // Semana atual começa na segunda
-        $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
-        // Começar da semana anterior (semana atual pode estar incompleta)
-        $weekStart = $currentWeekStart->copy()->subWeek();
-        $earliest = $checkIns->min()->copy()->startOfWeek(Carbon::MONDAY);
-        $streak = 0;
+        // Alvo mínimo de check-ins por semana. Guard contra frequency_times
+        // ausente/zero (estado inválido): degrada para 1x/semana em vez de
+        // tratar QUALQUER contagem como meta cumprida (>= null vira >= 0).
+        $target = max(1, (int) $habit->frequency_times);
+
+        // Inicia na semana atual: se a meta já foi cumprida, conta de imediato.
+        $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
+        $earliest  = $checkIns->min()->copy()->startOfWeek(Carbon::MONDAY);
+        $streak    = 0;
+        $isCurrentWeek = true;
 
         while ($weekStart->gte($earliest)) {
             $weekEnd = $weekStart->copy()->addDays(6);
+            // Compara por data pura (YYYY-MM-DD): os check-ins são parseados sem
+            // fuso, então `between` de Carbon deslocaria a fronteira da semana no
+            // timezone do usuário e excluiria a segunda-feira.
+            $from  = $weekStart->toDateString();
+            $to    = $weekEnd->toDateString();
             $count = $checkIns->filter(
-                fn($d) => $d->between($weekStart, $weekEnd)
+                fn($d) => $d->toDateString() >= $from && $d->toDateString() <= $to
             )->count();
 
-            if ($count >= $habit->frequency_times) {
+            if ($count >= $target) {
                 $streak++;
-            } else {
+            } elseif (! $isCurrentWeek) {
+                // Semana passada sem a meta quebra o streak.
+                // A semana corrente incompleta não penaliza (ainda em andamento).
                 break;
             }
 
+            $isCurrentWeek = false;
             $weekStart->subWeek();
         }
 

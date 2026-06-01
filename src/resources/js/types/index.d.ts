@@ -32,10 +32,12 @@ export interface Habit {
     color: string | null
     current_streak: number
     best_streak: number
+    streak_unit: string                // 'dias' | 'semanas' (depende da frequência)
     is_active: boolean
     checked_in_today: boolean
     recent_check_ins: string[]         // array de 'YYYY-MM-DD'
     week_check_ins_count: number | null // só para x_per_week
+    rate_30d: number                   // taxa de aderência 0–100, coerente com a frequência
 }
 
 export interface HealthMetric {

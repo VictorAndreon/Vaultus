@@ -5,6 +5,7 @@ namespace Tests\Feature\Habits;
 use App\Domains\Auth\Models\User;
 use App\Domains\Habits\Models\Habit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class HabitCrudTest extends TestCase
@@ -85,6 +86,43 @@ class HabitCrudTest extends TestCase
             'user_id'         => $user->id,
             'frequency_times' => 3,
         ]);
+    }
+
+    /**
+     * Reproduz o payload EXATO do HabitDrawer: os campos de frequência não usados
+     * são enviados como null explícito (não omitidos). O store deve aceitá-los.
+     */
+    #[DataProvider('drawerPayloadProvider')]
+    public function test_creates_habit_from_drawer_payload_with_explicit_nulls(string $type, array $extra): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/habits', array_merge([
+                'name'            => 'Hábito Drawer',
+                'icon'            => null,
+                'category'        => null,
+                'frequency_type'  => $type,
+                'frequency_days'  => null,
+                'frequency_times' => null,
+            ], $extra))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('habits', [
+            'user_id'        => $user->id,
+            'name'           => 'Hábito Drawer',
+            'frequency_type' => $type,
+        ]);
+    }
+
+    public static function drawerPayloadProvider(): array
+    {
+        return [
+            'daily'      => ['daily', []],
+            'weekly'     => ['weekly', ['frequency_days' => [1, 3, 5]]],
+            'x_per_week' => ['x_per_week', ['frequency_times' => 3]],
+        ];
     }
 
     public function test_can_update_habit(): void

@@ -10,7 +10,8 @@ class HabitResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $today = Carbon::now($request->user()?->timezone ?? 'UTC')->toDateString();
+        $now   = Carbon::now($request->user()?->timezone ?? 'UTC');
+        $today = $now->toDateString();
 
         return [
             'id'                   => $this->id,
@@ -23,7 +24,11 @@ class HabitResource extends JsonResource
             'color'                => $this->color,
             'current_streak'       => $this->current_streak,
             'best_streak'          => $this->best_streak,
+            'streak_unit'          => $this->frequency_type === 'x_per_week' ? 'semanas' : 'dias',
             'is_active'            => $this->is_active,
+            'rate_30d'             => $this->whenLoaded('checkIns', fn() =>
+                $this->adherenceRate($now->copy()->subDays(29), $now)
+            ),
             'checked_in_today'     => $this->whenLoaded('checkIns', fn() =>
                 $this->checkIns->contains(fn($ci) => $ci->date->toDateString() === $today)
             ),

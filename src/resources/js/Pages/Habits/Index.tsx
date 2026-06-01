@@ -12,7 +12,13 @@ interface Props {
     today_metrics: HealthMetric | null
     today: string
     consistency: { labels: string[]; data: number[] }
-    insights: { avg_rate: number; best_streak: number; current_streak: number }
+    insights: {
+        avg_rate: number
+        best_streak: number
+        best_streak_unit: string
+        current_streak: number
+        current_streak_unit: string
+    }
 }
 
 export default function HabitsIndex({ habits, today_metrics, today, consistency, insights }: Props) {
@@ -93,11 +99,11 @@ export default function HabitsIndex({ habits, today_metrics, today, consistency,
                             <div style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14, display: 'flex', gap: 24 }}>
                                 <div>
                                     <div className="kicker">Streak atual</div>
-                                    <div className="mono" style={{ fontSize: 20, color: 'var(--text)', marginTop: 4 }}>{insights.current_streak} dias</div>
+                                    <div className="mono" style={{ fontSize: 20, color: 'var(--text)', marginTop: 4 }}>{insights.current_streak} {insights.current_streak_unit}</div>
                                 </div>
                                 <div>
                                     <div className="kicker">Melhor streak</div>
-                                    <div className="mono" style={{ fontSize: 20, color: 'var(--text)', marginTop: 4 }}>{insights.best_streak} dias</div>
+                                    <div className="mono" style={{ fontSize: 20, color: 'var(--text)', marginTop: 4 }}>{insights.best_streak} {insights.best_streak_unit}</div>
                                 </div>
                             </div>
                         </div>

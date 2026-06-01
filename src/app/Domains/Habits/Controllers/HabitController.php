@@ -20,50 +20,47 @@ class HabitController extends Controller
         $now      = Carbon::now($timezone);
         $today    = $now->toDateString();
 
+        // Janela única de 12 semanas: cobre os week dots (7d), a taxa de 30d e
+        // o gráfico de consistência — sem segunda query nem histórico ilimitado.
+        $windowStart = $now->copy()->startOfWeek(Carbon::MONDAY)->subWeeks(11)->toDateString();
+
         $habits = $user->habits()
             ->active()
-            ->with(['checkIns' => fn($q) => $q->where('date', '>=',
-                $now->copy()->subDays(6)->toDateString()
-            )])
+            ->with(['checkIns' => fn($q) => $q->where('date', '>=', $windowStart)])
             ->get();
 
         $todayMetric = HealthMetric::where('user_id', $user->id)
             ->whereDate('date', $today)
             ->first();
 
-        // 12 semanas de consistência
-        $activeHabits = $user->habits()->active()->with(['checkIns'])->get();
-        $weeklyRate   = [];
-        $weekLabels   = [];
+        // 12 semanas de consistência, agregada entre hábitos e coerente por tipo
+        // (x_per_week medido por semana; daily/weekly por dia esperado).
+        $weeklyRate = [];
+        $weekLabels = [];
 
         for ($w = 11; $w >= 0; $w--) {
-            $weekStart = $now->copy()->startOfWeek()->subWeeks($w);
-            $label     = 'S' . (12 - $w);
+            $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->subWeeks($w);
+            $weekEnd   = $weekStart->copy()->addDays(6);
+            if ($weekEnd->gt($now)) {
+                $weekEnd = $now->copy();
+            }
 
             $totalExpected = 0;
             $totalDone     = 0;
-
-            foreach ($activeHabits as $habit) {
-                for ($d = 0; $d < 7; $d++) {
-                    $day = $weekStart->copy()->addDays($d);
-                    if ($day->isAfter($now)) continue;
-                    if ($habit->isExpectedOn($day, $timezone)) {
-                        $totalExpected++;
-                        $dateStr = $day->toDateString();
-                        if ($habit->checkIns->contains(fn($ci) => $ci->date->toDateString() === $dateStr)) {
-                            $totalDone++;
-                        }
-                    }
-                }
+            foreach ($habits as $habit) {
+                [$expected, $done] = $habit->adherenceInRange($weekStart, $weekEnd);
+                $totalExpected += $expected;
+                $totalDone     += $done;
             }
 
             $weeklyRate[] = $totalExpected > 0 ? (int) round($totalDone / $totalExpected * 100) : 0;
-            $weekLabels[] = $label;
+            $weekLabels[] = 'S' . (12 - $w);
         }
 
-        $avgRate       = count($weeklyRate) ? (int) round(array_sum($weeklyRate) / count($weeklyRate)) : 0;
-        $bestStreak    = $activeHabits->max('best_streak') ?? 0;
-        $currentStreak = $activeHabits->max('current_streak') ?? 0;
+        $avgRate    = count($weeklyRate) ? (int) round(array_sum($weeklyRate) / count($weeklyRate)) : 0;
+        $topCurrent = $habits->sortByDesc('current_streak')->first();
+        $topBest    = $habits->sortByDesc('best_streak')->first();
+        $unitOf     = fn($h) => $h && $h->frequency_type === 'x_per_week' ? 'semanas' : 'dias';
 
         return Inertia::render('Habits/Index', [
             'habits'        => $habits->map(fn($h) => new HabitResource($h)),
@@ -74,9 +71,11 @@ class HabitController extends Controller
                 'data'   => $weeklyRate,
             ],
             'insights'      => [
-                'avg_rate'       => $avgRate,
-                'best_streak'    => $bestStreak,
-                'current_streak' => $currentStreak,
+                'avg_rate'            => $avgRate,
+                'best_streak'        => $topBest?->best_streak ?? 0,
+                'best_streak_unit'    => $unitOf($topBest),
+                'current_streak'     => $topCurrent?->current_streak ?? 0,
+                'current_streak_unit' => $unitOf($topCurrent),
             ],
         ]);
     }
@@ -87,9 +86,9 @@ class HabitController extends Controller
             'name'             => 'required|string|max:255',
             'icon'             => 'nullable|string|max:10',
             'frequency_type'   => 'required|in:daily,weekly,x_per_week',
-            'frequency_days'   => 'required_if:frequency_type,weekly|array',
+            'frequency_days'   => 'nullable|required_if:frequency_type,weekly|array',
             'frequency_days.*' => 'integer|min:0|max:6',
-            'frequency_times'  => 'required_if:frequency_type,x_per_week|integer|min:1|max:7',
+            'frequency_times'  => 'nullable|required_if:frequency_type,x_per_week|integer|min:1|max:7',
             'category'         => 'nullable|string|max:100',
         ]);
 
