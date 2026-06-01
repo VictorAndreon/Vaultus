@@ -14,6 +14,7 @@ export interface EditableBook {
   cover_url: string | null
   total_pages: number | null
   current_page: number | null
+  progress_percent: number
   rating: number | null
   started_at: string | null
   finished_at: string | null
