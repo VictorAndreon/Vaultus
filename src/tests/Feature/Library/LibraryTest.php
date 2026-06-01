@@ -147,4 +147,33 @@ class LibraryTest extends TestCase
 
         $this->assertDatabaseHas('library_items', ['id' => $book->id, 'title' => 'Alheio']);
     }
+
+    public function test_destroy_soft_deletes_own_book(): void
+    {
+        $user = User::factory()->create();
+        $book = LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Apagar', 'status' => 'queue',
+        ]);
+
+        $this->actingAs($user)
+            ->delete("/library/{$book->id}")
+            ->assertRedirect('/library');
+
+        $this->assertSoftDeleted('library_items', ['id' => $book->id]);
+    }
+
+    public function test_destroy_forbidden_for_other_users_book(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $book = LibraryItem::create([
+            'user_id' => $owner->id, 'type' => 'book', 'title' => 'Alheio', 'status' => 'queue',
+        ]);
+
+        $this->actingAs($other)
+            ->delete("/library/{$book->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('library_items', ['id' => $book->id, 'deleted_at' => null]);
+    }
 }

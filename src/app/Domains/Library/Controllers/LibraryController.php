@@ -110,6 +110,15 @@ class LibraryController extends Controller
         return redirect()->route('library')->with('success', 'Livro atualizado.');
     }
 
+    public function destroy(Request $request, LibraryItem $libraryItem): RedirectResponse
+    {
+        abort_if($libraryItem->user_id !== $request->user()->id, 403);
+
+        $libraryItem->delete();
+
+        return redirect()->route('library')->with('success', 'Livro removido.');
+    }
+
     private function validatedData(Request $request): array
     {
         $validated = $request->validate([
