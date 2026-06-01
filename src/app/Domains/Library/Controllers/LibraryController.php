@@ -101,6 +101,15 @@ class LibraryController extends Controller
         return redirect()->route('library')->with('success', 'Livro adicionado.');
     }
 
+    public function update(Request $request, LibraryItem $libraryItem): RedirectResponse
+    {
+        abort_if($libraryItem->user_id !== $request->user()->id, 403);
+
+        $libraryItem->update($this->validatedData($request));
+
+        return redirect()->route('library')->with('success', 'Livro atualizado.');
+    }
+
     private function validatedData(Request $request): array
     {
         $validated = $request->validate([

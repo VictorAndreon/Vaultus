@@ -113,4 +113,38 @@ class LibraryTest extends TestCase
 
         $this->assertDatabaseHas('library_items', ['title' => 'Largado', 'status' => 'abandoned']);
     }
+
+    public function test_update_changes_own_book(): void
+    {
+        $user = User::factory()->create();
+        $book = LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Antigo',
+            'status' => 'queue',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/library/{$book->id}", [
+                'title' => 'Novo', 'status' => 'reading', 'current_page' => 10, 'total_pages' => 300,
+            ])
+            ->assertRedirect('/library');
+
+        $this->assertDatabaseHas('library_items', [
+            'id' => $book->id, 'title' => 'Novo', 'status' => 'reading', 'current_page' => 10,
+        ]);
+    }
+
+    public function test_update_forbidden_for_other_users_book(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $book = LibraryItem::create([
+            'user_id' => $owner->id, 'type' => 'book', 'title' => 'Alheio', 'status' => 'reading',
+        ]);
+
+        $this->actingAs($other)
+            ->patch("/library/{$book->id}", ['title' => 'Hack', 'status' => 'reading'])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('library_items', ['id' => $book->id, 'title' => 'Alheio']);
+    }
 }

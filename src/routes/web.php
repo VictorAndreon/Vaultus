@@ -139,6 +139,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/tasks', [TasksController::class, 'index'])->name('tasks');
     Route::get('/library', [LibraryController::class, 'index'])->name('library');
     Route::post('/library', [LibraryController::class, 'store']);
+    Route::patch('/library/{libraryItem}', [LibraryController::class, 'update']);
 
     Route::get('/notes', [\App\Domains\Notes\Controllers\NotesController::class, 'index'])->name('notes');
     Route::post('/notes', [\App\Domains\Notes\Controllers\NotesController::class, 'store']);
