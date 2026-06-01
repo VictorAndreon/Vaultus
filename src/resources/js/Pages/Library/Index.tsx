@@ -2,27 +2,18 @@ import { useState } from 'react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import Sparkline from '@/Components/charts/Sparkline'
-import LibraryModal from './components/LibraryModal'
+import LibraryModal, { EditableBook } from './components/LibraryModal'
 
-interface BookReading {
-    id: number; title: string; author: string | null
-    progress_percent: number; current_page: number; total_pages: number | null
-    cover_url: string | null; started_at: string | null
-}
-
-interface BookDone {
-    id: number; title: string; author: string | null
-    rating: number | null; finished_at: string | null
-}
-
-interface BookQueue {
-    id: number; title: string; author: string | null; added: string
-}
+interface BookReading extends EditableBook { started_label: string | null }
+interface BookDone extends EditableBook { finished_label: string | null }
+interface BookQueue extends EditableBook { added: string }
+type BookAbandoned = EditableBook
 
 interface Props {
     reading: BookReading[]
     done_recent: BookDone[]
     queue: BookQueue[]
+    abandoned: BookAbandoned[]
     stats: { total_year: number; in_progress: number; pages_year: number; queue_count: number }
 }
 
@@ -37,8 +28,8 @@ function Stars({ rating }: { rating: number | null }) {
     )
 }
 
-export default function LibraryIndex({ reading, done_recent, queue, stats }: Props) {
-    const [modalOpen, setModalOpen] = useState(false)
+export default function LibraryIndex({ reading, done_recent, queue, abandoned, stats }: Props) {
+    const [editing, setEditing] = useState<EditableBook | null | undefined>(undefined)
 
     return (
         <AppLayout
@@ -46,7 +37,7 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
             eyebrow="Acervo"
             subtitle={`${stats.total_year} livros · ${stats.in_progress} em curso · ${stats.queue_count} na fila.`}
             actions={
-                <button className="btn btn-primary btn-sm" onClick={() => setModalOpen(true)}>
+                <button className="btn btn-primary btn-sm" onClick={() => setEditing(null)}>
                     <Icons.Plus size={13} /> Adicionar livro
                 </button>
             }
@@ -79,17 +70,17 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
                     ) : (
                         <div className="grid g-3">
                             {reading.map(b => (
-                                <div key={b.id} className="card" style={{ padding: 20 }}>
+                                <div key={b.id} className="card" style={{ padding: 20, cursor: 'pointer' }} onClick={() => setEditing(b)}>
                                     <div style={{ display: 'flex', gap: 18 }}>
                                         {b.cover_url ? (
-                                            <img src={b.cover_url} style={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }} />
+                                            <img src={b.cover_url} alt={b.title} loading="lazy" style={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }} />
                                         ) : (
                                             <div className="ph" style={{ width: 80, height: 120, flex: 'none', fontSize: 0 }} />
                                         )}
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <h3 className="h-3" style={{ fontSize: 15 }}>{b.title}</h3>
                                             {b.author && <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{b.author}</div>}
-                                            {b.started_at && <div className="mono" style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 8 }}>iniciado · {b.started_at}</div>}
+                                            {b.started_label && <div className="mono" style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 8 }}>iniciado · {b.started_label}</div>}
                                             {b.total_pages && (
                                                 <div style={{ marginTop: 14 }}>
                                                     <div className="meter"><span style={{ width: `${b.progress_percent}%` }} /></div>
@@ -116,14 +107,18 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
                                 <div style={{ padding: '18px 20px', color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum livro concluído ainda.</div>
                             ) : (
                                 done_recent.map((b, i) => (
-                                    <div key={b.id} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none' }}>
-                                        <div className="ph" style={{ width: 32, height: 46, flex: 'none', fontSize: 0 }} />
+                                    <div key={b.id} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none', cursor: 'pointer' }} onClick={() => setEditing(b)}>
+                                        {b.cover_url ? (
+                                            <img src={b.cover_url} alt={b.title} loading="lazy" style={{ width: 32, height: 46, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }} />
+                                        ) : (
+                                            <div className="ph" style={{ width: 32, height: 46, flex: 'none', fontSize: 0 }} />
+                                        )}
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div className="h-3" style={{ fontSize: 14 }}>{b.title}</div>
                                             {b.author && <div className="muted" style={{ fontSize: 12 }}>{b.author}</div>}
                                         </div>
                                         <Stars rating={b.rating} />
-                                        {b.finished_at && <div className="mono muted" style={{ fontSize: 11, minWidth: 60, textAlign: 'right' }}>{b.finished_at}</div>}
+                                        {b.finished_label && <div className="mono muted" style={{ fontSize: 11, minWidth: 60, textAlign: 'right' }}>{b.finished_label}</div>}
                                     </div>
                                 ))
                             )}
@@ -137,7 +132,7 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
                                 <div style={{ padding: '18px 20px', color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Fila vazia.</div>
                             ) : (
                                 queue.map((b, i) => (
-                                    <div key={b.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none' }}>
+                                    <div key={b.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none', cursor: 'pointer' }} onClick={() => setEditing(b)}>
                                         <div className="mono muted-2" style={{ fontSize: 11, width: 24 }}>{(i + 1).toString().padStart(2, '0')}</div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ fontSize: 13.5 }}>{b.title}</div>
@@ -150,9 +145,29 @@ export default function LibraryIndex({ reading, done_recent, queue, stats }: Pro
                         </div>
                     </div>
                 </div>
+
+                {/* Abandonados */}
+                {abandoned.length > 0 && (
+                    <div>
+                        <div className="kicker" style={{ marginBottom: 12 }}>Abandonados · {abandoned.length}</div>
+                        <div className="card" style={{ padding: 0 }}>
+                            {abandoned.map((b, i) => (
+                                <div key={b.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none', cursor: 'pointer' }} onClick={() => setEditing(b)}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 13.5 }}>{b.title}</div>
+                                        {b.author && <div className="muted" style={{ fontSize: 11.5 }}>{b.author}</div>}
+                                    </div>
+                                    {b.total_pages != null && (
+                                        <div className="mono muted" style={{ fontSize: 11 }}>parou na pág {b.current_page} ({b.progress_percent}%)</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {modalOpen && <LibraryModal onClose={() => setModalOpen(false)} />}
+            {editing !== undefined && <LibraryModal item={editing} onClose={() => setEditing(undefined)} />}
         </AppLayout>
     )
 }
