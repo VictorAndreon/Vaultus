@@ -20,16 +20,9 @@ class LibraryController extends Controller
             ->where('status', 'reading')
             ->orderBy('started_at', 'desc')
             ->get()
-            ->map(fn($b) => [
-                'id'               => $b->id,
-                'title'            => $b->title,
-                'author'           => $b->author,
-                'progress_percent' => $b->progress_percent,
-                'current_page'     => $b->current_page ?? 0,
-                'total_pages'      => $b->total_pages,
-                'cover_url'        => $b->cover_url,
-                'started_at'       => $b->started_at?->format('M Y'),
-            ])
+            ->map(fn($b) => array_merge($this->bookPayload($b), [
+                'started_label' => $b->started_at?->format('M Y'),
+            ]))
             ->values()
             ->toArray();
 
@@ -39,13 +32,9 @@ class LibraryController extends Controller
             ->orderBy('finished_at', 'desc')
             ->limit(8)
             ->get()
-            ->map(fn($b) => [
-                'id'          => $b->id,
-                'title'       => $b->title,
-                'author'      => $b->author,
-                'rating'      => $b->rating,
-                'finished_at' => $b->finished_at?->format('M Y'),
-            ])
+            ->map(fn($b) => array_merge($this->bookPayload($b), [
+                'finished_label' => $b->finished_at?->format('M Y'),
+            ]))
             ->values()
             ->toArray();
 
@@ -55,12 +44,19 @@ class LibraryController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(fn($b) => [
-                'id'     => $b->id,
-                'title'  => $b->title,
-                'author' => $b->author,
-                'added'  => $b->created_at->format('M'),
-            ])
+            ->map(fn($b) => array_merge($this->bookPayload($b), [
+                'added' => $b->created_at->format('M'),
+            ]))
+            ->values()
+            ->toArray();
+
+        $abandoned = LibraryItem::where('user_id', $user->id)
+            ->where('type', 'book')
+            ->where('status', 'abandoned')
+            ->orderBy('updated_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(fn($b) => $this->bookPayload($b))
             ->values()
             ->toArray();
 
@@ -81,13 +77,32 @@ class LibraryController extends Controller
             'reading'     => $reading,
             'done_recent' => $doneRecent,
             'queue'       => $queue,
+            'abandoned'   => $abandoned,
             'stats'       => [
-                'total_year'    => $totalYear,
-                'in_progress'   => count($reading),
-                'pages_year'    => (int) $pagesYear,
-                'queue_count'   => LibraryItem::where('user_id', $user->id)->where('type', 'book')->where('status', 'queue')->count(),
+                'total_year'  => $totalYear,
+                'in_progress' => count($reading),
+                'pages_year'  => (int) $pagesYear,
+                'queue_count' => LibraryItem::where('user_id', $user->id)->where('type', 'book')->where('status', 'queue')->count(),
             ],
         ]);
+    }
+
+    private function bookPayload(LibraryItem $b): array
+    {
+        return [
+            'id'               => $b->id,
+            'title'            => $b->title,
+            'author'           => $b->author,
+            'status'           => $b->status,
+            'genre'            => $b->genre,
+            'cover_url'        => $b->cover_url,
+            'total_pages'      => $b->total_pages,
+            'current_page'     => $b->current_page ?? 0,
+            'rating'           => $b->rating,
+            'progress_percent' => $b->progress_percent,
+            'started_at'       => $b->started_at?->format('Y-m-d'),
+            'finished_at'      => $b->finished_at?->format('Y-m-d'),
+        ];
     }
 
     public function store(Request $request): RedirectResponse

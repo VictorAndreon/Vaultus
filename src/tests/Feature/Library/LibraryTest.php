@@ -176,4 +176,29 @@ class LibraryTest extends TestCase
 
         $this->assertDatabaseHas('library_items', ['id' => $book->id, 'deleted_at' => null]);
     }
+
+    public function test_index_returns_abandoned_list_and_editable_fields(): void
+    {
+        $user = User::factory()->create();
+        LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Largado',
+            'status' => 'abandoned', 'total_pages' => 200, 'current_page' => 40,
+            'started_at' => '2026-05-01',
+        ]);
+        LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Lendo',
+            'status' => 'reading', 'total_pages' => 300, 'current_page' => 90,
+            'started_at' => '2026-05-10',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/library')
+            ->assertInertia(fn($page) => $page
+                ->has('abandoned', 1)
+                ->where('abandoned.0.title', 'Largado')
+                ->where('abandoned.0.current_page', 40)
+                ->where('reading.0.status', 'reading')
+                ->where('reading.0.started_at', '2026-05-10')
+            );
+    }
 }
