@@ -6,6 +6,7 @@ use App\Domains\Library\Models\LibraryItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class LibraryController extends Controller
@@ -102,10 +103,10 @@ class LibraryController extends Controller
 
     private function validatedData(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'author'       => 'nullable|string|max:255',
-            'status'       => 'required|string|in:reading,done,queue',
+            'status'       => 'required|string|in:reading,done,queue,abandoned',
             'genre'        => 'nullable|string|max:100',
             'cover_url'    => 'nullable|url|max:1024',
             'total_pages'  => 'nullable|integer|min:1|max:100000',
@@ -114,5 +115,18 @@ class LibraryController extends Controller
             'started_at'   => 'nullable|date',
             'finished_at'  => 'nullable|date',
         ]);
+
+        if (isset($validated['current_page'], $validated['total_pages'])
+            && $validated['current_page'] > $validated['total_pages']) {
+            throw ValidationException::withMessages([
+                'current_page' => 'A página atual não pode exceder o total de páginas.',
+            ]);
+        }
+
+        if (($validated['status'] ?? null) === 'done' && empty($validated['finished_at'])) {
+            $validated['finished_at'] = now()->toDateString();
+        }
+
+        return $validated;
     }
 }

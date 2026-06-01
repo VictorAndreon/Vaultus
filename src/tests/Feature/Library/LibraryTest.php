@@ -57,4 +57,60 @@ class LibraryTest extends TestCase
                 ->has('queue', 1)
             );
     }
+
+    public function test_store_creates_a_book(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/library', [
+                'title'  => 'Sapiens',
+                'author' => 'Yuval Harari',
+                'status' => 'reading',
+            ])
+            ->assertRedirect('/library');
+
+        $this->assertDatabaseHas('library_items', [
+            'user_id' => $user->id, 'type' => 'book',
+            'title' => 'Sapiens', 'status' => 'reading',
+        ]);
+    }
+
+    public function test_store_done_without_finished_at_defaults_to_today(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/library', ['title' => 'Done', 'status' => 'done']);
+
+        $this->assertDatabaseHas('library_items', [
+            'title' => 'Done', 'status' => 'done',
+            'finished_at' => now()->toDateString(),
+        ]);
+    }
+
+    public function test_store_rejects_current_page_greater_than_total(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/library', [
+                'title' => 'X', 'status' => 'reading',
+                'total_pages' => 100, 'current_page' => 150,
+            ])
+            ->assertSessionHasErrors('current_page');
+
+        $this->assertDatabaseMissing('library_items', ['title' => 'X']);
+    }
+
+    public function test_store_accepts_abandoned_status(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/library', ['title' => 'Largado', 'status' => 'abandoned'])
+            ->assertRedirect('/library');
+
+        $this->assertDatabaseHas('library_items', ['title' => 'Largado', 'status' => 'abandoned']);
+    }
 }
