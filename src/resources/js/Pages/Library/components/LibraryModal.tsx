@@ -1,10 +1,26 @@
 import { useState } from 'react'
-import { router } from '@inertiajs/react'
+import { router, usePage } from '@inertiajs/react'
 import { Icons } from '@/Components/Icons'
+import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
-type Status = 'reading' | 'done' | 'queue'
+type Status = 'reading' | 'done' | 'queue' | 'abandoned'
+
+export interface EditableBook {
+  id: number
+  title: string
+  author: string | null
+  status: Status
+  genre: string | null
+  cover_url: string | null
+  total_pages: number | null
+  current_page: number | null
+  rating: number | null
+  started_at: string | null
+  finished_at: string | null
+}
 
 interface Props {
+  item?: EditableBook | null
   onClose: () => void
 }
 
@@ -13,17 +29,23 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 13,
 }
 
-export default function LibraryModal({ onClose }: Props) {
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [status, setStatus] = useState<Status>('reading')
-  const [genre, setGenre] = useState('')
-  const [coverUrl, setCoverUrl] = useState('')
-  const [totalPages, setTotalPages] = useState('')
-  const [currentPage, setCurrentPage] = useState('')
-  const [rating, setRating] = useState('')
-  const [startedAt, setStartedAt] = useState('')
-  const [finishedAt, setFinishedAt] = useState('')
+const errStyle: React.CSSProperties = { color: 'var(--rose)', fontSize: 11, marginTop: 4 }
+
+export default function LibraryModal({ item, onClose }: Props) {
+  const confirm = useConfirm()
+  const errors = usePage().props.errors as Record<string, string> | undefined
+  const isEdit = !!item
+
+  const [title, setTitle] = useState(item?.title ?? '')
+  const [author, setAuthor] = useState(item?.author ?? '')
+  const [status, setStatus] = useState<Status>(item?.status ?? 'reading')
+  const [genre, setGenre] = useState(item?.genre ?? '')
+  const [coverUrl, setCoverUrl] = useState(item?.cover_url ?? '')
+  const [totalPages, setTotalPages] = useState(item?.total_pages != null ? String(item.total_pages) : '')
+  const [currentPage, setCurrentPage] = useState(item?.current_page != null ? String(item.current_page) : '')
+  const [rating, setRating] = useState(item?.rating != null ? String(item.rating) : '')
+  const [startedAt, setStartedAt] = useState(item?.started_at ?? '')
+  const [finishedAt, setFinishedAt] = useState(item?.finished_at ?? '')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,7 +61,15 @@ export default function LibraryModal({ onClose }: Props) {
       started_at: status !== 'queue' ? (startedAt || null) : null,
       finished_at: status === 'done' ? (finishedAt || null) : null,
     }
-    router.post('/library', payload, { preserveScroll: true, onSuccess: onClose })
+    const opts = { preserveScroll: true, onSuccess: onClose }
+    if (isEdit) router.patch(`/library/${item!.id}`, payload, opts)
+    else router.post('/library', payload, opts)
+  }
+
+  async function handleDelete() {
+    if (!item) return
+    if (!(await confirm({ title: `Remover "${item.title}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
+    router.delete(`/library/${item.id}`, { preserveScroll: true, onSuccess: onClose })
   }
 
   return (
@@ -51,13 +81,14 @@ export default function LibraryModal({ onClose }: Props) {
         style={{ width: 560, maxWidth: '90vw', maxHeight: '85vh', overflow: 'auto', padding: 28, display: 'flex', flexDirection: 'column', gap: 12 }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="h-3">Adicionar livro</h3>
+          <h3 className="h-3">{isEdit ? 'Editar livro' : 'Adicionar livro'}</h3>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Fechar"><Icons.X size={13} /></button>
         </div>
 
         <label>
           <div className="kicker" style={{ marginBottom: 4 }}>Título</div>
           <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+          {errors?.title && <div style={errStyle}>{errors.title}</div>}
         </label>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -78,11 +109,13 @@ export default function LibraryModal({ onClose }: Props) {
               <option value="reading">Em leitura</option>
               <option value="queue">Na fila</option>
               <option value="done">Concluído</option>
+              <option value="abandoned">Abandonado</option>
             </select>
           </label>
           <label>
             <div className="kicker" style={{ marginBottom: 4 }}>Capa (URL)</div>
             <input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://…" style={inputStyle} />
+            {errors?.cover_url && <div style={errStyle}>{errors.cover_url}</div>}
           </label>
         </div>
 
@@ -91,10 +124,11 @@ export default function LibraryModal({ onClose }: Props) {
             <div className="kicker" style={{ marginBottom: 4 }}>Total de páginas</div>
             <input type="number" min={1} value={totalPages} onChange={(e) => setTotalPages(e.target.value)} style={inputStyle} />
           </label>
-          {status === 'reading' && (
+          {(status === 'reading' || status === 'abandoned') && (
             <label>
               <div className="kicker" style={{ marginBottom: 4 }}>Página atual</div>
               <input type="number" min={0} value={currentPage} onChange={(e) => setCurrentPage(e.target.value)} style={inputStyle} />
+              {errors?.current_page && <div style={errStyle}>{errors.current_page}</div>}
             </label>
           )}
         </div>
@@ -121,9 +155,16 @@ export default function LibraryModal({ onClose }: Props) {
           </label>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 6 }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="btn btn-primary btn-sm">Adicionar</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <div>
+            {isEdit && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={handleDelete} style={{ color: 'var(--rose)' }}>Excluir</button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary btn-sm">{isEdit ? 'Salvar' : 'Adicionar'}</button>
+          </div>
         </div>
       </form>
     </div>
