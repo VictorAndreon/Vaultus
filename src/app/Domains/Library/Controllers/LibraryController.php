@@ -3,6 +3,7 @@
 namespace App\Domains\Library\Controllers;
 
 use App\Domains\Library\Models\LibraryItem;
+use App\Domains\Library\Services\BookCoverService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -130,22 +131,27 @@ class LibraryController extends Controller
         ];
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, BookCoverService $covers): RedirectResponse
     {
-        $validated = $this->validatedData($request);
+        $data = $this->validatedData($request);
+        $data = array_merge($data, $this->resolveCover($request, $covers, null));
+
         LibraryItem::create(array_merge([
             'user_id' => $request->user()->id,
             'type'    => 'book',
-        ], $validated));
+        ], $data));
 
         return redirect()->route('library')->with('success', 'Livro adicionado.');
     }
 
-    public function update(Request $request, LibraryItem $libraryItem): RedirectResponse
+    public function update(Request $request, LibraryItem $libraryItem, BookCoverService $covers): RedirectResponse
     {
         abort_if($libraryItem->user_id !== $request->user()->id, 403);
 
-        $libraryItem->update($this->validatedData($request));
+        $data = $this->validatedData($request);
+        $data = array_merge($data, $this->resolveCover($request, $covers, $libraryItem));
+
+        $libraryItem->update($data);
 
         return redirect()->route('library')->with('success', 'Livro atualizado.');
     }
@@ -167,6 +173,8 @@ class LibraryController extends Controller
             'status'       => 'required|string|in:reading,done,queue,abandoned',
             'genre'        => 'nullable|string|max:100',
             'cover_url'    => 'nullable|url|max:1024',
+            'cover_file'   => 'nullable|image|mimes:jpeg,png,webp,gif|max:5120',
+            'remove_cover' => 'nullable|boolean',
             'total_pages'  => 'nullable|integer|min:1|max:100000',
             'current_page' => 'nullable|integer|min:0|max:100000',
             'rating'       => 'nullable|integer|min:1|max:5',
@@ -186,6 +194,42 @@ class LibraryController extends Controller
             $validated['finished_at'] = now($tz)->toDateString();
         }
 
+        unset($validated['cover_url'], $validated['cover_file'], $validated['remove_cover']);
+
         return $validated;
+    }
+
+    /**
+     * Resolve a capa a partir do request, na ordem: arquivo enviado > nova URL >
+     * remover > manter. Em troca/remoção, apaga o arquivo antigo.
+     *
+     * @return array<string, string|null>
+     */
+    private function resolveCover(Request $request, BookCoverService $covers, ?LibraryItem $existing): array
+    {
+        $old = $existing?->cover_path;
+
+        if ($request->hasFile('cover_file')) {
+            $path = $covers->fromUpload($request->file('cover_file'), $request->user()->id);
+            $covers->delete($old);
+
+            return ['cover_path' => $path, 'cover_url' => null];
+        }
+
+        $url = $request->input('cover_url');
+        if (filled($url)) {
+            $path = $covers->fromUrl($url, $request->user()->id);
+            $covers->delete($old);
+
+            return ['cover_path' => $path, 'cover_url' => null];
+        }
+
+        if ($request->boolean('remove_cover')) {
+            $covers->delete($old);
+
+            return ['cover_path' => null, 'cover_url' => null];
+        }
+
+        return []; // nenhum dos três → mantém a capa atual
     }
 }
