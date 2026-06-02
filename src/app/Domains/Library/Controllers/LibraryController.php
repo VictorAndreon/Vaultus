@@ -6,6 +6,7 @@ use App\Domains\Library\Models\LibraryItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -100,6 +101,17 @@ class LibraryController extends Controller
         ]);
     }
 
+    public function cover(Request $request, LibraryItem $libraryItem)
+    {
+        abort_if($libraryItem->user_id !== $request->user()->id, 403);
+        abort_if(! $libraryItem->cover_path, 404);                                       // sem capa local
+        abort_if(! Storage::disk('public')->exists($libraryItem->cover_path), 404);      // registro órfão
+
+        return Storage::disk('public')->response($libraryItem->cover_path, null, [
+            'Cache-Control' => 'private, max-age=86400',
+        ]);
+    }
+
     private function bookPayload(LibraryItem $b): array
     {
         return [
@@ -108,7 +120,7 @@ class LibraryController extends Controller
             'author'           => $b->author,
             'status'           => $b->status,
             'genre'            => $b->genre,
-            'cover_url'        => $b->cover_url,
+            'cover_url'        => $b->cover_display_url,
             'total_pages'      => $b->total_pages,
             'current_page'     => $b->current_page ?? 0,
             'rating'           => $b->rating,

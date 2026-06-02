@@ -138,6 +138,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/tasks', [TasksController::class, 'index'])->name('tasks');
     Route::get('/library', [LibraryController::class, 'index'])->name('library');
+    Route::get('/library/{libraryItem}/cover', [LibraryController::class, 'cover'])->name('library.cover');
     Route::post('/library', [LibraryController::class, 'store']);
     Route::patch('/library/{libraryItem}', [LibraryController::class, 'update']);
     Route::delete('/library/{libraryItem}', [LibraryController::class, 'destroy']);

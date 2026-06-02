@@ -33,6 +33,15 @@ class LibraryItem extends Model
         return min(100, (int) round($this->current_page / $this->total_pages * 100));
     }
 
+    public function getCoverDisplayUrlAttribute(): ?string
+    {
+        if ($this->cover_path) {
+            return route('library.cover', $this->id);
+        }
+
+        return $this->cover_url;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
