@@ -153,6 +153,31 @@ class GoalDepositAsTransferTest extends TestCase
         ]);
     }
 
+    public function test_deposit_without_occurred_at_uses_user_timezone_not_utc()
+    {
+        // Em UTC já é 02/06 01:30; em São Paulo (UTC-3) ainda é 01/06 22:30.
+        $user   = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        $source = Account::factory()->create(['user_id' => $user->id, 'type' => 'checking', 'balance_encrypted' => 5000]);
+        $goal   = $user->financialGoals()->create([
+            'name'                    => 'Sem data',
+            'target_amount_encrypted' => 10000,
+        ]);
+
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-06-02 01:30:00', 'UTC'), function () use ($user, $source, $goal) {
+            $this->actingAs($user)->post("/finance/goals/{$goal->id}/deposit", [
+                'amount'     => 200,
+                'account_id' => $source->id,
+            ]);
+        });
+
+        // O aporte deve ser datado com o "hoje" local (01/06), não a data UTC (02/06).
+        $this->assertDatabaseHas('transactions', [
+            'account_id'             => $source->id,
+            'transfer_to_account_id' => $goal->virtualAccount->id,
+            'occurred_at'            => '2026-06-01',
+        ]);
+    }
+
     public function test_deposit_above_source_balance_is_rejected()
     {
         $user   = User::factory()->create();

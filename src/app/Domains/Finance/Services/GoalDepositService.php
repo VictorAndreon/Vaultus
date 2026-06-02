@@ -42,7 +42,10 @@ class GoalDepositService
         abort_if($virtual === null, 500, 'Meta sem subconta virtual associada.');
 
         return DB::transaction(function () use ($source, $virtual, $amount, $occurredAt, $note) {
-            $date = $occurredAt ?? now()->toDateString();
+            // "Hoje" deve ser o dia local do usuário, não o dia UTC do servidor — senão
+            // um aporte feito à noite (ex.: 22h em São Paulo = 01h UTC) cairia em amanhã.
+            $tz   = $source->user->timezone ?? 'America/Sao_Paulo';
+            $date = $occurredAt ?? now($tz)->toDateString();
 
             $shared = [
                 'type'             => 'transfer',

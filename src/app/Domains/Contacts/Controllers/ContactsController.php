@@ -16,10 +16,14 @@ class ContactsController extends Controller
     {
         $user = $request->user();
 
+        // Datas relativas (aniversários) calculadas no fuso do usuário, não em UTC.
+        $tz    = $user->timezone ?? 'America/Sao_Paulo';
+        $today = \Illuminate\Support\Carbon::now($tz)->startOfDay();
+
         $contacts = Contact::where('user_id', $user->id)
             ->orderBy('name')
             ->get()
-            ->map(function ($c) {
+            ->map(function ($c) use ($tz, $today) {
                 $initials = collect(explode(' ', $c->name))
                     ->reject(fn($p) => preg_match('/^\p{L}{1,3}\.$/u', $p))
                     ->map(fn($p) => mb_substr($p, 0, 1))
@@ -28,14 +32,14 @@ class ContactsController extends Controller
 
                 $upcomingBirthday = null;
                 if ($c->birthday) {
-                    $year = now()->year;
                     $month = $c->birthday->month;
-                    $daysInMonth = \Illuminate\Support\Carbon::create($year, $month, 1)->daysInMonth;
-                    $thisYear = \Illuminate\Support\Carbon::create($year, $month, min($c->birthday->day, $daysInMonth));
-                    $next = $thisYear->isBefore(today()) ? $thisYear->addYear() : $thisYear;
+                    $daysInMonth = \Illuminate\Support\Carbon::create($today->year, $month, 1)->daysInMonth;
+                    // Cria a data no mesmo fuso de $today, para o diffInDays não sofrer drift de horas.
+                    $thisYear = \Illuminate\Support\Carbon::create($today->year, $month, min($c->birthday->day, $daysInMonth), 0, 0, 0, $tz);
+                    $next = $thisYear->lt($today) ? $thisYear->copy()->addYear() : $thisYear;
                     $upcomingBirthday = [
                         'date'      => $next->format('d/m'),
-                        'days_away' => (int) now()->startOfDay()->diffInDays($next, true),
+                        'days_away' => (int) $today->diffInDays($next, true),
                     ];
                 }
 

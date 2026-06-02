@@ -22,7 +22,10 @@ class ReviewsController extends Controller
             ->values()
             ->toArray();
 
-        $currentWeekStart = now()->startOfWeek()->format('Y-m-d');
+        // Semana corrente no fuso do usuário — perto da virada de sábado→domingo,
+        // o servidor em UTC já estaria na semana seguinte e a review atual não seria marcada.
+        $tz = $user->timezone ?? 'America/Sao_Paulo';
+        $currentWeekStart = \Illuminate\Support\Carbon::now($tz)->startOfWeek()->format('Y-m-d');
         $current = collect($reviews)->firstWhere('period_start_iso', $currentWeekStart);
 
         return Inertia::render('Reviews/Index', [

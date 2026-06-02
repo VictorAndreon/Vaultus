@@ -215,6 +215,24 @@ class LibraryTest extends TestCase
         $this->assertDatabaseHas('library_items', ['title' => 'TZ', 'finished_at' => '2026-06-01']);
     }
 
+    public function test_stats_year_uses_user_timezone_not_utc(): void
+    {
+        // UTC: 01/01/2026 01:00 (já virou 2026). São Paulo: 31/12/2025 22:00 (ainda 2025).
+        $user = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Fim de ano',
+            'status' => 'done', 'finished_at' => '2025-12-31', 'total_pages' => 100,
+        ]);
+
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-01-01 01:00:00', 'UTC'), function () use ($user) {
+            $this->actingAs($user)
+                ->get('/library')
+                ->assertInertia(fn($page) => $page
+                    ->where('stats.total_year', 1)
+                    ->where('stats.pages_year', 100));
+        });
+    }
+
     public function test_finished_label_is_localized_to_portuguese(): void
     {
         $user = User::factory()->create();

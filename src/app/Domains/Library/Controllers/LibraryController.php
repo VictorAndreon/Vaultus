@@ -60,10 +60,15 @@ class LibraryController extends Controller
             ->values()
             ->toArray();
 
+        // Ano/mês "corrente" no fuso do usuário — na virada do ano, o servidor em UTC
+        // contaria os livros no ano errado (o write de finished_at já usa o fuso local).
+        $tz       = $user->timezone ?? 'America/Sao_Paulo';
+        $nowLocal = now($tz);
+
         $doneThisYear = LibraryItem::where('user_id', $user->id)
             ->where('type', 'book')
             ->where('status', 'done')
-            ->whereYear('finished_at', now()->year)
+            ->whereYear('finished_at', $nowLocal->year)
             ->get(['finished_at', 'total_pages']);
 
         // Séries reais acumuladas por mês do ano (começam em 0 = início do ano).
@@ -71,7 +76,7 @@ class LibraryController extends Controller
         $pagesSpark = [0];
         $cumBooks = 0;
         $cumPages = 0;
-        for ($m = 1; $m <= now()->month; $m++) {
+        for ($m = 1; $m <= $nowLocal->month; $m++) {
             $inMonth = $doneThisYear->filter(fn($b) => (int) $b->finished_at->format('n') === $m);
             $cumBooks += $inMonth->count();
             $cumPages += (int) $inMonth->sum('total_pages');
