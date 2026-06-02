@@ -201,4 +201,17 @@ class LibraryTest extends TestCase
                 ->where('reading.0.started_at', '2026-05-10')
             );
     }
+
+    public function test_done_finished_at_uses_user_timezone_not_utc(): void
+    {
+        // Em UTC já é 02/06 01:30; em São Paulo (UTC-3) ainda é 01/06 22:30.
+        $user = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-06-02 01:30:00', 'UTC'), function () use ($user) {
+            $this->actingAs($user)->post('/library', ['title' => 'TZ', 'status' => 'done']);
+        });
+
+        // Deve gravar a data LOCAL do usuário (01/06), não a data UTC (02/06).
+        $this->assertDatabaseHas('library_items', ['title' => 'TZ', 'finished_at' => '2026-06-01']);
+    }
 }

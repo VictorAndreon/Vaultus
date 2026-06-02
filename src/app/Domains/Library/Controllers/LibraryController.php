@@ -157,7 +157,8 @@ class LibraryController extends Controller
         }
 
         if (($validated['status'] ?? null) === 'done' && empty($validated['finished_at'])) {
-            $validated['finished_at'] = now()->toDateString();
+            $tz = $request->user()->timezone ?? 'America/Sao_Paulo';
+            $validated['finished_at'] = now($tz)->toDateString();
         }
 
         return $validated;
