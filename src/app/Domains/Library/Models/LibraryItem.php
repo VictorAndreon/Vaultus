@@ -12,7 +12,7 @@ class LibraryItem extends Model
 
     protected $fillable = [
         'user_id', 'type', 'title', 'status', 'author',
-        'total_pages', 'current_page', 'cover_url',
+        'total_pages', 'current_page', 'cover_url', 'cover_path',
         'rating', 'genre', 'started_at', 'finished_at',
     ];
 
