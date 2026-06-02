@@ -214,4 +214,34 @@ class LibraryTest extends TestCase
         // Deve gravar a data LOCAL do usuário (01/06), não a data UTC (02/06).
         $this->assertDatabaseHas('library_items', ['title' => 'TZ', 'finished_at' => '2026-06-01']);
     }
+
+    public function test_finished_label_is_localized_to_portuguese(): void
+    {
+        $user = User::factory()->create();
+        LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Concluído',
+            'status' => 'done', 'finished_at' => '2026-06-15',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/library')
+            ->assertInertia(fn($page) => $page->where('done_recent.0.finished_label', 'jun 2026'));
+    }
+
+    public function test_stats_expose_real_cumulative_spark_series(): void
+    {
+        $user = User::factory()->create();
+        LibraryItem::create(['user_id' => $user->id, 'type' => 'book', 'title' => 'A', 'status' => 'done', 'finished_at' => now(), 'total_pages' => 100]);
+        LibraryItem::create(['user_id' => $user->id, 'type' => 'book', 'title' => 'B', 'status' => 'done', 'finished_at' => now(), 'total_pages' => 200]);
+
+        $this->actingAs($user)
+            ->get('/library')
+            ->assertInertia(fn($page) => $page
+                ->where('stats.books_spark.0', 0)                 // base = início do ano
+                ->where('stats.pages_spark.0', 0)
+                ->where('stats.books_spark.' . now()->month, 2)   // acumulado no mês corrente
+                ->where('stats.pages_spark.' . now()->month, 300)
+                ->where('stats.total_year', 2)
+            );
+    }
 }

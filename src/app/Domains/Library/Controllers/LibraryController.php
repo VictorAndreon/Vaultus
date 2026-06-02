@@ -21,7 +21,7 @@ class LibraryController extends Controller
             ->orderBy('started_at', 'desc')
             ->get()
             ->map(fn($b) => array_merge($this->bookPayload($b), [
-                'started_label' => $b->started_at?->format('M Y'),
+                'started_label' => $b->started_at?->locale('pt_BR')->translatedFormat('M Y'),
             ]))
             ->values()
             ->toArray();
@@ -33,7 +33,7 @@ class LibraryController extends Controller
             ->limit(8)
             ->get()
             ->map(fn($b) => array_merge($this->bookPayload($b), [
-                'finished_label' => $b->finished_at?->format('M Y'),
+                'finished_label' => $b->finished_at?->locale('pt_BR')->translatedFormat('M Y'),
             ]))
             ->values()
             ->toArray();
@@ -45,7 +45,7 @@ class LibraryController extends Controller
             ->limit(10)
             ->get()
             ->map(fn($b) => array_merge($this->bookPayload($b), [
-                'added' => $b->created_at->format('M'),
+                'added' => $b->created_at->locale('pt_BR')->translatedFormat('M'),
             ]))
             ->values()
             ->toArray();
@@ -60,18 +60,24 @@ class LibraryController extends Controller
             ->values()
             ->toArray();
 
-        $totalYear = LibraryItem::where('user_id', $user->id)
+        $doneThisYear = LibraryItem::where('user_id', $user->id)
             ->where('type', 'book')
             ->where('status', 'done')
             ->whereYear('finished_at', now()->year)
-            ->count();
+            ->get(['finished_at', 'total_pages']);
 
-        $pagesYear = LibraryItem::where('user_id', $user->id)
-            ->where('type', 'book')
-            ->whereNotNull('total_pages')
-            ->where('status', 'done')
-            ->whereYear('finished_at', now()->year)
-            ->sum('total_pages');
+        // Séries reais acumuladas por mês do ano (começam em 0 = início do ano).
+        $booksSpark = [0];
+        $pagesSpark = [0];
+        $cumBooks = 0;
+        $cumPages = 0;
+        for ($m = 1; $m <= now()->month; $m++) {
+            $inMonth = $doneThisYear->filter(fn($b) => (int) $b->finished_at->format('n') === $m);
+            $cumBooks += $inMonth->count();
+            $cumPages += (int) $inMonth->sum('total_pages');
+            $booksSpark[] = $cumBooks;
+            $pagesSpark[] = $cumPages;
+        }
 
         return Inertia::render('Library/Index', [
             'reading'     => $reading,
@@ -79,10 +85,12 @@ class LibraryController extends Controller
             'queue'       => $queue,
             'abandoned'   => $abandoned,
             'stats'       => [
-                'total_year'  => $totalYear,
+                'total_year'  => $doneThisYear->count(),
                 'in_progress' => count($reading),
-                'pages_year'  => (int) $pagesYear,
+                'pages_year'  => (int) $doneThisYear->sum('total_pages'),
                 'queue_count' => LibraryItem::where('user_id', $user->id)->where('type', 'book')->where('status', 'queue')->count(),
+                'books_spark' => $booksSpark,
+                'pages_spark' => $pagesSpark,
             ],
         ]);
     }
