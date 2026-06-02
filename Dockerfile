@@ -6,6 +6,8 @@ RUN apk add --no-cache \
     icu-dev \
     oniguruma-dev \
     libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
     gpg \
     gpg-agent \
     rsync \
@@ -13,6 +15,7 @@ RUN apk add --no-cache \
     autoconf \
     g++ \
     make \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo_pgsql \
         pgsql \
