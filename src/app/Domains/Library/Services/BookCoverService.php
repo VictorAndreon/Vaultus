@@ -3,6 +3,7 @@
 namespace App\Domains\Library\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -24,6 +25,85 @@ class BookCoverService
         }
 
         return $this->processAndStore($binary, $userId, 'cover_file');
+    }
+
+    public function fromUrl(string $url, int $userId): string
+    {
+        $binary = $this->downloadSafely($url);
+
+        return $this->processAndStore($binary, $userId, 'cover_url');
+    }
+
+    private function downloadSafely(string $url): string
+    {
+        $parts  = parse_url($url);
+        $scheme = strtolower($parts['scheme'] ?? '');
+
+        if (! in_array($scheme, ['http', 'https'], true) || empty($parts['host'])) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'A URL da capa deve começar com http:// ou https://.',
+            ]);
+        }
+
+        $this->assertPublicHost($parts['host']);
+
+        try {
+            $response = Http::connectTimeout(5)
+                ->timeout(10)
+                ->withOptions(['allow_redirects' => false]) // redirect p/ host interno burlaria o guard
+                ->get($url);
+        } catch (\Throwable) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'Não foi possível baixar a imagem dessa URL.',
+            ]);
+        }
+
+        if (! $response->successful()) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'Não foi possível baixar a imagem dessa URL.',
+            ]);
+        }
+
+        if ((int) $response->header('Content-Length') > self::MAX_BYTES) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'A imagem excede o limite de 5 MB.',
+            ]);
+        }
+
+        $body = $response->body();
+
+        if ($body === '' || strlen($body) > self::MAX_BYTES) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'A imagem está vazia ou excede o limite de 5 MB.',
+            ]);
+        }
+
+        return $body;
+    }
+
+    private function assertPublicHost(string $host): void
+    {
+        // parse_url preserva os colchetes em literais IPv6 (ex.: "[::1]") — remove antes de validar.
+        // gethostbynamel só resolve IPv4; hostnames somente-AAAA acabam bloqueados (aceitável aqui).
+        $stripped = preg_replace('/^\[(.+)\]$/', '$1', $host);
+
+        $ips = filter_var($stripped, FILTER_VALIDATE_IP)
+            ? [$stripped]
+            : (gethostbynamel($stripped) ?: []);
+
+        if (empty($ips)) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'Não foi possível resolver o endereço da imagem.',
+            ]);
+        }
+
+        foreach ($ips as $ip) {
+            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                throw ValidationException::withMessages([
+                    'cover_url' => 'Essa URL aponta para um endereço não permitido.',
+                ]);
+            }
+        }
     }
 
     public function delete(?string $path): void
