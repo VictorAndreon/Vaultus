@@ -31,7 +31,7 @@ export default function ProjectNotesList({ project }: Props) {
 
     async function deleteNote(id: number) {
         if (!(await confirm({ title: 'Excluir nota?', variant: 'danger', confirmText: 'Excluir' }))) return
-        router.delete('/projects/notes/' + id, {}, { preserveScroll: true })
+        router.delete('/projects/notes/' + id, { preserveScroll: true })
     }
 
     return (

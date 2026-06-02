@@ -15,15 +15,21 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
     const toggle = () => {
         const prev = checkedIn
         setCheckedIn(!prev)
-        const method = prev ? 'delete' : 'post'
-        router[method](`/habits/${habit.id}/check-in`, {}, {
+        const opts = {
             preserveState: true, preserveScroll: true,
             onError: () => setCheckedIn(prev),
-        })
+        }
+        // delete(url, options) e post(url, data, options) têm assinaturas distintas
+        // no Inertia v3 — não dá para chamar dinamicamente sem perder as options.
+        if (prev) {
+            router.delete(`/habits/${habit.id}/check-in`, opts)
+        } else {
+            router.post(`/habits/${habit.id}/check-in`, {}, opts)
+        }
     }
 
     const archive = () => {
-        router.delete(`/habits/${habit.id}`, {}, { preserveScroll: true })
+        router.delete(`/habits/${habit.id}`, { preserveScroll: true })
     }
 
     // Week dots — Seg–Dom da semana atual. Derivado de `today` (já no timezone

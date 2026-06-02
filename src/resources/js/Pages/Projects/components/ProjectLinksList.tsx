@@ -18,7 +18,7 @@ export default function ProjectLinksList({ project }: Props) {
     }
 
     function deleteLink(id: number) {
-        router.delete('/projects/links/' + id, {}, { preserveScroll: true })
+        router.delete('/projects/links/' + id, { preserveScroll: true })
     }
 
     return (

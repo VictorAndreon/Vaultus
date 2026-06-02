@@ -31,7 +31,7 @@ export default function KanbanColumn({ column, projectId, onAddTask, onEditTask 
             variant: 'danger',
             confirmText: 'Excluir',
         }))) return
-        router.delete(`/projects/${projectId}/columns/${column.id}`, {}, { preserveScroll: true })
+        router.delete(`/projects/${projectId}/columns/${column.id}`, { preserveScroll: true })
     }
 
     return (

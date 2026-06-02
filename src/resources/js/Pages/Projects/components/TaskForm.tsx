@@ -49,7 +49,7 @@ export default function TaskForm({ task, projectId, columns, defaultColumnId, on
     async function handleDelete() {
         if (!task) return
         if (!(await confirm({ title: 'Excluir tarefa?', variant: 'danger', confirmText: 'Excluir' }))) return
-        router.delete('/projects/tasks/' + task.id, {}, { preserveScroll: true })
+        router.delete('/projects/tasks/' + task.id, { preserveScroll: true })
         onClose()
     }
 

@@ -17,7 +17,7 @@ export default function ProjectCard({ project, onEdit }: Props) {
 
     async function handleDelete() {
         if (!(await confirm({ title: `Excluir o projeto "${project.title}"?`, variant: 'danger', confirmText: 'Excluir' }))) return
-        router.delete('/projects/' + project.id, {}, { preserveScroll: true })
+        router.delete('/projects/' + project.id, { preserveScroll: true })
     }
 
     return (

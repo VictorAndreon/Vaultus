@@ -38,7 +38,7 @@ export default function TransactionList({ transactions, accountId, onEdit }: Pro
 
   async function handleDelete(id: number) {
     if (!(await confirm({ title: 'Excluir esta transação?', variant: 'danger', confirmText: 'Excluir' }))) return
-    router.delete('/finance/transactions/' + id, {}, { preserveScroll: true })
+    router.delete('/finance/transactions/' + id, { preserveScroll: true })
   }
 
   return (
