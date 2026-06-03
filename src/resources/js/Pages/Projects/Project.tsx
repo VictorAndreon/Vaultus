@@ -48,7 +48,7 @@ export default function ProjectPage({ project: { data: project } }: Props) {
                             </div>
                             <h2 className="h-display" style={{ fontSize: 28 }}>{project.title}</h2>
                             {project.description && (
-                                <div style={{ color: 'var(--text-3)', marginTop: 6, fontSize: 13.5, maxWidth: '60ch' }}>{project.description}</div>
+                                <div style={{ color: 'var(--text-3)', marginTop: 8, fontSize: 13.5, lineHeight: 1.55, whiteSpace: 'pre-wrap', maxWidth: '60ch' }}>{project.description}</div>
                             )}
                         </div>
                     </div>

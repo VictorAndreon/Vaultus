@@ -72,7 +72,7 @@ export default function ProjectNotesList({ project }: Props) {
                     rows={3}
                     className="input"
                 />
-                <button className="btn btn-primary btn-sm" onClick={addNote}>Adicionar</button>
+                <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end' }} onClick={addNote}>Adicionar</button>
             </div>
         </div>
     )
