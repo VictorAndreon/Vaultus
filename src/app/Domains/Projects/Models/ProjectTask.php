@@ -28,4 +28,9 @@ class ProjectTask extends Model
     {
         return $this->belongsTo(ProjectColumn::class, 'project_column_id');
     }
+
+    public function isDone(): bool
+    {
+        return $this->completed_at !== null || ($this->column?->isDoneColumn() ?? false);
+    }
 }
