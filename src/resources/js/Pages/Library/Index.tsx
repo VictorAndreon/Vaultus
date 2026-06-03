@@ -17,6 +17,24 @@ interface Props {
     stats: { total_year: number; in_progress: number; pages_year: number; queue_count: number; books_spark: number[]; pages_spark: number[] }
 }
 
+// Capa com fallback: cai no placeholder .ph se a imagem falhar (404 da rota local,
+// arquivo sumido do disco, ou capa externa legada bloqueada pela CSP).
+function CoverImg({ src, alt, w, h }: { src: string | null; alt: string; w: number; h: number }) {
+    const [failed, setFailed] = useState(false)
+    if (!src || failed) {
+        return <div className="ph" style={{ width: w, height: h, flex: 'none', fontSize: 0 }} />
+    }
+    return (
+        <img
+            src={src}
+            alt={alt}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            style={{ width: w, height: h, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }}
+        />
+    )
+}
+
 function Stars({ rating }: { rating: number | null }) {
     if (!rating) return null
     return (
@@ -74,11 +92,7 @@ export default function LibraryIndex({ reading, done_recent, queue, abandoned, s
                             {reading.map(b => (
                                 <div key={b.id} className="card" style={{ padding: 20, cursor: 'pointer' }} onClick={() => setEditing(b)}>
                                     <div style={{ display: 'flex', gap: 18 }}>
-                                        {b.cover_url ? (
-                                            <img src={b.cover_url} alt={b.title} loading="lazy" style={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }} />
-                                        ) : (
-                                            <div className="ph" style={{ width: 80, height: 120, flex: 'none', fontSize: 0 }} />
-                                        )}
+                                        <CoverImg src={b.cover_url} alt={b.title} w={80} h={120} />
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <h3 className="h-3" style={{ fontSize: 15 }}>{b.title}</h3>
                                             {b.author && <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{b.author}</div>}
@@ -110,11 +124,7 @@ export default function LibraryIndex({ reading, done_recent, queue, abandoned, s
                             ) : (
                                 done_recent.map((b, i) => (
                                     <div key={b.id} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderTop: i ? '1px solid var(--line-soft)' : 'none', cursor: 'pointer' }} onClick={() => setEditing(b)}>
-                                        {b.cover_url ? (
-                                            <img src={b.cover_url} alt={b.title} loading="lazy" style={{ width: 32, height: 46, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }} />
-                                        ) : (
-                                            <div className="ph" style={{ width: 32, height: 46, flex: 'none', fontSize: 0 }} />
-                                        )}
+                                        <CoverImg src={b.cover_url} alt={b.title} w={32} h={46} />
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div className="h-3" style={{ fontSize: 14 }}>{b.title}</div>
                                             {b.author && <div className="muted" style={{ fontSize: 12 }}>{b.author}</div>}
