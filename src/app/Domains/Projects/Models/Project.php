@@ -32,6 +32,22 @@ class Project extends Model
         return $this->hasMany(ProjectTask::class);
     }
 
+    public function tasksDoneCount(): int
+    {
+        return $this->tasks->filter(fn (ProjectTask $t) => $t->isDone())->count();
+    }
+
+    public function progressPercent(): int
+    {
+        $total = $this->tasks->count();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        return (int) round($this->tasksDoneCount() / $total * 100);
+    }
+
     public function notes()
     {
         return $this->hasMany(ProjectNote::class)->latest();

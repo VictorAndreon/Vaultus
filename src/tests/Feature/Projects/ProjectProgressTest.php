@@ -48,4 +48,31 @@ class ProjectProgressTest extends TestCase
         $this->assertTrue($byFlag->isDone());
         $this->assertTrue($byColumn->isDone());
     }
+
+    public function test_progress_percent_counts_done_over_total(): void
+    {
+        $user    = User::factory()->create();
+        $project = Project::create(['user_id' => $user->id, 'title' => 'P', 'status' => 'active']);
+        $todo    = ProjectColumn::create(['project_id' => $project->id, 'name' => 'A fazer', 'position' => 0]);
+        $done    = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 1]);
+
+        ProjectTask::create(['project_id' => $project->id, 'project_column_id' => $todo->id, 'title' => 't1', 'position' => 0, 'priority' => 'low']);
+        ProjectTask::create(['project_id' => $project->id, 'project_column_id' => $todo->id, 'title' => 't2', 'position' => 1, 'priority' => 'low', 'completed_at' => now()]);
+        ProjectTask::create(['project_id' => $project->id, 'project_column_id' => $done->id, 'title' => 't3', 'position' => 0, 'priority' => 'low']);
+        ProjectTask::create(['project_id' => $project->id, 'project_column_id' => $todo->id, 'title' => 't4', 'position' => 2, 'priority' => 'low']);
+
+        $project->load('tasks.column');
+
+        $this->assertSame(2, $project->tasksDoneCount());
+        $this->assertSame(50, $project->progressPercent());
+    }
+
+    public function test_progress_percent_is_zero_without_tasks(): void
+    {
+        $user    = User::factory()->create();
+        $project = Project::create(['user_id' => $user->id, 'title' => 'P', 'status' => 'active']);
+        $project->load('tasks.column');
+
+        $this->assertSame(0, $project->progressPercent());
+    }
 }
