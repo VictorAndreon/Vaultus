@@ -17,4 +17,20 @@ class ProjectColumn extends Model
     {
         return $this->hasMany(ProjectTask::class, 'project_column_id')->orderBy('position');
     }
+
+    public static function nameIsDone(?string $name): bool
+    {
+        if ($name === null) {
+            return false;
+        }
+
+        $lower = mb_strtolower($name);
+
+        return str_contains($lower, 'done') || str_contains($lower, 'conclu');
+    }
+
+    public function isDoneColumn(): bool
+    {
+        return self::nameIsDone($this->name);
+    }
 }
