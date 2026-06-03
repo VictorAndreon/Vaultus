@@ -17,7 +17,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Index', [
             'projects' => ProjectResource::collection(
-                $user->projects()->withCount('tasks')->latest()->get()
+                $user->projects()->withCount('tasks')->with('tasks.column')->latest()->get()
             ),
             'wants' => WantResource::collection(
                 $user->wants()->unpromoted()->orderByDesc('priority')->latest()->get()

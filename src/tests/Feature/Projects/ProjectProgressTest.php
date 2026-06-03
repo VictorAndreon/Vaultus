@@ -75,4 +75,24 @@ class ProjectProgressTest extends TestCase
 
         $this->assertSame(0, $project->progressPercent());
     }
+
+    public function test_index_exposes_progress_percent(): void
+    {
+        $user    = User::factory()->create();
+        $project = Project::create(['user_id' => $user->id, 'title' => 'P', 'status' => 'active']);
+        $todo    = ProjectColumn::create(['project_id' => $project->id, 'name' => 'A fazer', 'position' => 0]);
+        $done    = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 1]);
+
+        ProjectTask::create(['project_id' => $project->id, 'project_column_id' => $todo->id, 'title' => 't1', 'position' => 0, 'priority' => 'low']);
+        ProjectTask::create(['project_id' => $project->id, 'project_column_id' => $done->id, 'title' => 't2', 'position' => 0, 'priority' => 'low']);
+
+        $this->actingAs($user)
+            ->get('/projects')
+            ->assertInertia(fn ($p) => $p
+                ->component('Projects/Index')
+                ->where('projects.data.0.progress_percent', 50)
+                ->where('projects.data.0.tasks_done', 1)
+                ->where('projects.data.0.tasks_total', 2)
+            );
+    }
 }
