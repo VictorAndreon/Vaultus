@@ -10,13 +10,6 @@ use Carbon\Carbon;
 
 class DashboardAggregator
 {
-    private function isDoneColumn(?string $name): bool
-    {
-        if (! $name) return false;
-        $lower = strtolower($name);
-        return str_contains($lower, 'done') || str_contains($lower, 'conclu');
-    }
-
     public function getStats(User $user): array
     {
         $now   = Carbon::now($user->timezone);
@@ -105,7 +98,7 @@ class DashboardAggregator
                 'project_name' => $t->project->title,
                 'priority'     => $t->priority,
                 'due_at'       => $t->due_at?->format('H:i'),
-                'is_done'      => $t->completed_at !== null || $this->isDoneColumn($t->column?->name),
+                'is_done'      => $t->isDone(),
             ])
             ->toArray();
     }
@@ -119,11 +112,11 @@ class DashboardAggregator
             ->get()
             ->map(function ($p) {
                 $all    = $p->tasks;
-                $done   = $all->filter(fn($t) => $this->isDoneColumn($t->column?->name));
+                $done   = $all->filter(fn($t) => $t->isDone());
                 $total  = $all->count();
                 $doneN  = $done->count();
                 $pct    = $total > 0 ? (int) round($doneN / $total * 100) : 0;
-                $next   = $all->first(fn($t) => ! $this->isDoneColumn($t->column?->name));
+                $next   = $all->first(fn($t) => ! $t->isDone());
 
                 return [
                     'id'               => $p->id,

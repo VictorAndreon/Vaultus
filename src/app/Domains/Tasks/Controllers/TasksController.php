@@ -26,10 +26,7 @@ class TasksController extends Controller
         ->orderBy('due_at')
         ->get();
 
-        $isDone = fn($t) => $t->completed_at !== null || ($t->column && (
-            str_contains(strtolower($t->column->name), 'done') ||
-            str_contains(strtolower($t->column->name), 'conclu')
-        ));
+        $isDone = fn ($t) => $t->isDone();
 
         $tasks = $allTasks->map(fn($t) => [
             'id'           => $t->id,
