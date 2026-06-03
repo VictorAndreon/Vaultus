@@ -77,6 +77,13 @@ class BookCoverServiceTest extends TestCase
         (new BookCoverService())->fromUrl('http://169.254.169.254/latest/meta-data', 7);
     }
 
+    public function test_from_url_blocks_ipv6_loopback_ssrf(): void
+    {
+        $this->expectException(ValidationException::class);
+        // [::1] = loopback IPv6. gethostbynamel (só-IPv4) não o veria; dns_get_record(AAAA) sim.
+        (new BookCoverService())->fromUrl('http://[::1]/latest/meta-data', 7);
+    }
+
     public function test_from_url_rejects_oversize(): void
     {
         Http::fake(['http://93.184.216.34/*' => Http::response('x', 200, ['Content-Length' => (string) (6 * 1024 * 1024)])]);

@@ -84,12 +84,18 @@ class BookCoverService
     private function assertPublicHost(string $host): void
     {
         // parse_url preserva os colchetes em literais IPv6 (ex.: "[::1]") — remove antes de validar.
-        // gethostbynamel só resolve IPv4; hostnames somente-AAAA acabam bloqueados (aceitável aqui).
         $stripped = preg_replace('/^\[(.+)\]$/', '$1', $host);
 
-        $ips = filter_var($stripped, FILTER_VALIDATE_IP)
-            ? [$stripped]
-            : (gethostbynamel($stripped) ?: []);
+        if (filter_var($stripped, FILTER_VALIDATE_IP)) {
+            $ips = [$stripped];
+        } else {
+            // Resolve A (IPv4) e AAAA (IPv6): o cliente HTTP pode conectar por qualquer
+            // família, então ambas precisam ser validadas (gethostbynamel só veria IPv4).
+            $ips = array_values(array_filter(array_map(
+                fn ($r) => $r['ip'] ?? $r['ipv6'] ?? null,
+                dns_get_record($stripped, DNS_A + DNS_AAAA) ?: []
+            )));
+        }
 
         if (empty($ips)) {
             throw ValidationException::withMessages([
