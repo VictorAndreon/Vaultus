@@ -3,6 +3,7 @@
 namespace App\Domains\Projects\Controllers;
 
 use App\Domains\Projects\Models\Project;
+use App\Domains\Projects\Models\ProjectColumn;
 use App\Domains\Projects\Models\ProjectTask;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -51,15 +52,71 @@ class ProjectTaskController extends Controller
         return back();
     }
 
-    public function toggleDone(Request $request, ProjectTask $task): \Illuminate\Http\Response
+    public function toggleDone(Request $request, ProjectTask $task): \Illuminate\Http\RedirectResponse
     {
         abort_if($task->project->user_id !== $request->user()->id, 403);
 
-        $task->update([
-            'completed_at' => $task->completed_at ? null : now(),
-        ]);
+        DB::transaction(function () use ($task) {
+            if ($task->completed_at === null) {
+                $task->update(['completed_at' => now()]);
+                $doneColumn = $this->resolveDoneColumn($task->project);
+                $this->placeTaskInColumn($task, $doneColumn->id);
+            } else {
+                $task->update(['completed_at' => null]);
 
-        return response()->noContent();
+                if ($task->column && $task->column->isDoneColumn()) {
+                    $target = $task->project->columns()
+                        ->get()
+                        ->filter(fn (ProjectColumn $c) => ! $c->isDoneColumn())
+                        ->sortByDesc('position')
+                        ->first();
+
+                    if ($target) {
+                        $this->placeTaskInColumn($task, $target->id);
+                    }
+                }
+            }
+        });
+
+        return back();
+    }
+
+    /**
+     * Coluna "Concluído" do projeto (a primeira por posição). Cria uma se não existir.
+     */
+    private function resolveDoneColumn(Project $project): ProjectColumn
+    {
+        $existing = $project->columns()->get()->first(fn (ProjectColumn $c) => $c->isDoneColumn());
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return $project->columns()->create([
+            'name'     => 'Concluído',
+            'position' => $project->columns()->count(),
+        ]);
+    }
+
+    /**
+     * Move a tarefa para a coluna informada e renormaliza as posições dos irmãos.
+     * $position = null → append no fim da coluna.
+     */
+    private function placeTaskInColumn(ProjectTask $task, int $columnId, ?int $position = null): void
+    {
+        $task->update(['project_column_id' => $columnId]);
+
+        $siblings = ProjectTask::where('project_column_id', $columnId)
+            ->where('id', '!=', $task->id)
+            ->orderBy('position')
+            ->get();
+
+        $insertAt = $position ?? $siblings->count();
+        $siblings->splice($insertAt, 0, [$task]);
+
+        foreach ($siblings as $i => $t) {
+            $t->update(['position' => $i]);
+        }
     }
 
     public function destroy(Request $request, ProjectTask $task)

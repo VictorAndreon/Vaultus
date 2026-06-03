@@ -110,4 +110,67 @@ class ProjectTaskTest extends TestCase
         $this->actingAs($user2)->delete("/projects/tasks/{$task->id}")->assertForbidden();
         $this->actingAs($user2)->patch("/projects/tasks/{$task->id}/move", ['project_column_id' => $column->id, 'position' => 0])->assertForbidden();
     }
+
+    public function test_checkin_marks_completed_and_moves_to_done_column(): void
+    {
+        $user    = User::factory()->create();
+        [$project, $todo] = $this->makeProjectWithColumn($user);
+        $done = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 1]);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $todo->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/toggle-done")
+            ->assertRedirect();
+
+        $task->refresh();
+        $this->assertNotNull($task->completed_at);
+        $this->assertSame($done->id, $task->project_column_id);
+    }
+
+    public function test_checkin_creates_done_column_when_missing(): void
+    {
+        $user    = User::factory()->create();
+        [$project, $todo] = $this->makeProjectWithColumn($user);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $todo->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/toggle-done")
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('project_columns', [
+            'project_id' => $project->id,
+            'name'       => 'Concluído',
+        ]);
+
+        $task->refresh();
+        $created = ProjectColumn::where('project_id', $project->id)->where('name', 'Concluído')->first();
+        $this->assertSame($created->id, $task->project_column_id);
+        $this->assertNotNull($task->completed_at);
+    }
+
+    public function test_uncheck_clears_completed_and_moves_out_of_done(): void
+    {
+        $user    = User::factory()->create();
+        [$project, $todo] = $this->makeProjectWithColumn($user); // 'Todo' position 0
+        $progress = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Em progresso', 'position' => 1]);
+        $done     = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 2]);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $done->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low', 'completed_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/toggle-done")
+            ->assertRedirect();
+
+        $task->refresh();
+        $this->assertNull($task->completed_at);
+        $this->assertSame($progress->id, $task->project_column_id); // última coluna não-concluída
+    }
 }
