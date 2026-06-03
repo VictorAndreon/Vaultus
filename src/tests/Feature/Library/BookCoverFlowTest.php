@@ -157,6 +157,28 @@ class BookCoverFlowTest extends TestCase
         Storage::disk('public')->assertExists($item->cover_path);
     }
 
+    public function test_update_via_spoofed_post_uploads_cover(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        $item = LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'X', 'status' => 'queue',
+        ]);
+
+        // Fluxo real do frontend: PHP não parseia multipart em PATCH, então o Inertia
+        // envia POST com _method=patch (method spoofing do Laravel roteia para update).
+        $this->actingAs($user)->post("/library/{$item->id}", [
+            '_method'    => 'patch',
+            'title'      => 'X',
+            'status'     => 'queue',
+            'cover_file' => UploadedFile::fake()->image('c.png', 400, 600),
+        ])->assertRedirect('/library');
+
+        $item->refresh();
+        $this->assertNotNull($item->cover_path);
+        Storage::disk('public')->assertExists($item->cover_path);
+    }
+
     public function test_update_remove_cover_clears_it(): void
     {
         Storage::fake('public');

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { router, usePage } from '@inertiajs/react'
+import type { FormDataConvertible } from '@inertiajs/core'
 import { Icons } from '@/Components/Icons'
 import { useConfirm } from '@/Components/dialogs/DialogProvider'
 
@@ -41,30 +42,87 @@ export default function LibraryModal({ item, onClose }: Props) {
   const [author, setAuthor] = useState(item?.author ?? '')
   const [status, setStatus] = useState<Status>(item?.status ?? 'reading')
   const [genre, setGenre] = useState(item?.genre ?? '')
-  const [coverUrl, setCoverUrl] = useState(item?.cover_url ?? '')
+  // Campo de URL = uma NOVA URL externa a baixar; começa vazio mesmo em edição
+  // (item.cover_url é a URL de exibição/rota local — reenviá-la tentaria "baixar" a si mesma).
+  const [coverUrl, setCoverUrl] = useState('')
   const [totalPages, setTotalPages] = useState(item?.total_pages != null ? String(item.total_pages) : '')
   const [currentPage, setCurrentPage] = useState(item?.current_page != null ? String(item.current_page) : '')
   const [rating, setRating] = useState(item?.rating != null ? String(item.rating) : '')
   const [startedAt, setStartedAt] = useState(item?.started_at ?? '')
   const [finishedAt, setFinishedAt] = useState(item?.finished_at ?? '')
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const objectUrl = useRef<string | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [removeCover, setRemoveCover] = useState(false)
+  const [previewError, setPreviewError] = useState(false)
+
+  const existingCover = item?.cover_url ?? null
+  const previewSrc = filePreview ?? (removeCover || previewError ? null : existingCover)
+
+  // Libera o object URL do preview ao desmontar (evita vazamento de memória do blob).
+  useEffect(() => () => { if (objectUrl.current) URL.revokeObjectURL(objectUrl.current) }, [])
+
+  function clearFile() {
+    if (objectUrl.current) { URL.revokeObjectURL(objectUrl.current); objectUrl.current = null }
+    setCoverFile(null)
+    setFilePreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null
+    if (objectUrl.current) { URL.revokeObjectURL(objectUrl.current); objectUrl.current = null }
+    setCoverFile(f)
+    if (f) {
+      objectUrl.current = URL.createObjectURL(f)
+      setFilePreview(objectUrl.current)
+      setCoverUrl('')        // arquivo tem prioridade sobre URL
+      setRemoveCover(false)
+    } else {
+      setFilePreview(null)
+    }
+  }
+
+  function onUrlChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setCoverUrl(e.target.value)
+    if (e.target.value) { clearFile(); setRemoveCover(false) }
+  }
+
+  function onRemoveCover() {
+    clearFile()
+    setCoverUrl('')
+    setRemoveCover(true)
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    const payload = {
+    const base: Record<string, FormDataConvertible> = {
       title,
       author: author || null,
       status,
       genre: genre || null,
-      cover_url: coverUrl || null,
       total_pages: totalPages ? Number(totalPages) : null,
       current_page: currentPage ? Number(currentPage) : null,
       rating: status === 'done' && rating ? Number(rating) : null,
       started_at: status !== 'queue' ? (startedAt || null) : null,
       finished_at: status === 'done' ? (finishedAt || null) : null,
     }
+    // No máximo um campo de capa (arquivo > URL > remover); nenhum = mantém a atual.
+    if (coverFile) base.cover_file = coverFile
+    else if (coverUrl) base.cover_url = coverUrl
+    else if (removeCover) base.remove_cover = true
+
     const opts = { preserveScroll: true, onSuccess: onClose }
-    if (isEdit) router.patch(`/library/${item!.id}`, payload, opts)
-    else router.post('/library', payload, opts)
+    if (!isEdit) {
+      router.post('/library', base, opts)
+    } else if (coverFile) {
+      // PHP não parseia multipart em PATCH — method-spoofing via POST + _method.
+      router.post(`/library/${item!.id}`, { ...base, _method: 'patch' }, opts)
+    } else {
+      router.patch(`/library/${item!.id}`, base, opts)
+    }
   }
 
   async function handleDelete() {
@@ -103,21 +161,46 @@ export default function LibraryModal({ item, onClose }: Props) {
           </label>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <label>
-            <div className="kicker" style={{ marginBottom: 4 }}>Status</div>
-            <select value={status} onChange={(e) => setStatus(e.target.value as Status)} style={inputStyle}>
-              <option value="reading">Em leitura</option>
-              <option value="queue">Na fila</option>
-              <option value="done">Concluído</option>
-              <option value="abandoned">Abandonado</option>
-            </select>
-          </label>
-          <label>
-            <div className="kicker" style={{ marginBottom: 4 }}>Capa (URL)</div>
-            <input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://…" style={inputStyle} />
-            {errors?.cover_url && <div style={errStyle}>{errors.cover_url}</div>}
-          </label>
+        <label>
+          <div className="kicker" style={{ marginBottom: 4 }}>Status</div>
+          <select value={status} onChange={(e) => setStatus(e.target.value as Status)} style={inputStyle}>
+            <option value="reading">Em leitura</option>
+            <option value="queue">Na fila</option>
+            <option value="done">Concluído</option>
+            <option value="abandoned">Abandonado</option>
+          </select>
+        </label>
+
+        <div>
+          <div className="kicker" style={{ marginBottom: 4 }}>Capa</div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ width: 60, height: 86, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface-2)', overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+              {previewSrc
+                ? <img src={previewSrc} alt="" onError={() => setPreviewError(true)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <Icons.Library size={18} style={{ color: 'var(--text-4)' }} />}
+            </div>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} />
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()}>
+                  {coverFile ? 'Trocar arquivo' : 'Enviar arquivo'}
+                </button>
+                {(existingCover || coverFile) && !removeCover && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={onRemoveCover} style={{ color: 'var(--rose)' }}>Remover capa</button>
+                )}
+              </div>
+              {coverFile && <div className="muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{coverFile.name}</div>}
+              {errors?.cover_file && <div style={errStyle}>{errors.cover_file}</div>}
+              <input type="url" value={coverUrl} onChange={onUrlChange} placeholder="ou cole uma URL https://…" style={inputStyle} />
+              {errors?.cover_url && <div style={errStyle}>{errors.cover_url}</div>}
+              {removeCover && (
+                <div className="muted" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  A capa será removida ao salvar.
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRemoveCover(false)}>Desfazer</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
