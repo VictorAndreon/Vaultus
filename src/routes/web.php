@@ -136,6 +136,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/links', [ProjectLinkController::class, 'store']);
     Route::delete('/projects/links/{link}', [ProjectLinkController::class, 'destroy']);
 
+    Route::post('/tasks/capture', [ProjectTaskController::class, 'capture']);
     Route::get('/tasks', [TasksController::class, 'index'])->name('tasks');
     Route::get('/library', [LibraryController::class, 'index'])->name('library');
     Route::get('/library/{libraryItem}/cover', [LibraryController::class, 'cover'])->name('library.cover');

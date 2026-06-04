@@ -37,6 +37,35 @@ class ProjectTaskController extends Controller
         return back();
     }
 
+    public function capture(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $validated = $request->validate([
+            'title'      => 'required|string|max:255',
+            'project_id' => 'required|integer',
+        ]);
+
+        $project = Project::where('id', $validated['project_id'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $firstColumn = $project->columns()->orderBy('position')->first();
+        abort_if($firstColumn === null, 422, 'Projeto sem colunas.');
+
+        $maxPos = $project->tasks()
+            ->where('project_column_id', $firstColumn->id)
+            ->max('position') ?? -1;
+
+        $project->tasks()->create([
+            'project_column_id' => $firstColumn->id,
+            'title'             => $validated['title'],
+            'priority'          => 'medium',
+            'position'          => $maxPos + 1,
+            'triaged_at'        => null,
+        ]);
+
+        return back();
+    }
+
     public function update(Request $request, ProjectTask $task)
     {
         abort_if($task->project->user_id !== $request->user()->id, 403);

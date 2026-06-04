@@ -57,4 +57,31 @@ class TaskInboxTest extends TestCase
         $this->assertNotNull($task);
         $this->assertNotNull($task->triaged_at);
     }
+
+    public function test_quick_capture_creates_untriaged_task_in_first_column(): void
+    {
+        $user = User::factory()->create();
+        [$project, $first, $second] = $this->makeProject($user);
+
+        $this->actingAs($user)
+            ->post('/tasks/capture', ['title' => 'Capturada', 'project_id' => $project->id])
+            ->assertRedirect();
+
+        $task = ProjectTask::where('title', 'Capturada')->first();
+        $this->assertNotNull($task);
+        $this->assertNull($task->triaged_at);
+        $this->assertSame($first->id, $task->project_column_id);
+        $this->assertSame('medium', $task->priority);
+    }
+
+    public function test_cannot_capture_into_other_users_project(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        [$project] = $this->makeProject($owner);
+
+        $this->actingAs($other)
+            ->post('/tasks/capture', ['title' => 'X', 'project_id' => $project->id])
+            ->assertNotFound();
+    }
 }
