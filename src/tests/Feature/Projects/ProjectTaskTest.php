@@ -173,4 +173,48 @@ class ProjectTaskTest extends TestCase
         $this->assertNull($task->completed_at);
         $this->assertSame($progress->id, $task->project_column_id); // última coluna não-concluída
     }
+
+    public function test_move_into_done_column_sets_completed_at(): void
+    {
+        $user    = User::factory()->create();
+        [$project, $todo] = $this->makeProjectWithColumn($user);
+        $done = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 1]);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $todo->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/move", [
+                'project_column_id' => $done->id,
+                'position'          => 0,
+            ])
+            ->assertRedirect();
+
+        $task->refresh();
+        $this->assertSame($done->id, $task->project_column_id);
+        $this->assertNotNull($task->completed_at);
+    }
+
+    public function test_move_out_of_done_column_clears_completed_at(): void
+    {
+        $user    = User::factory()->create();
+        [$project, $todo] = $this->makeProjectWithColumn($user);
+        $done = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 1]);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $done->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low', 'completed_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/move", [
+                'project_column_id' => $todo->id,
+                'position'          => 0,
+            ])
+            ->assertRedirect();
+
+        $task->refresh();
+        $this->assertSame($todo->id, $task->project_column_id);
+        $this->assertNull($task->completed_at);
+    }
 }

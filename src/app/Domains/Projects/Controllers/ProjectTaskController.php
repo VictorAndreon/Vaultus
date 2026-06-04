@@ -138,17 +138,15 @@ class ProjectTaskController extends Controller
         ]);
 
         DB::transaction(function () use ($task, $validated) {
-            $task->update(['project_column_id' => $validated['project_column_id']]);
+            $this->placeTaskInColumn($task, $validated['project_column_id'], $validated['position']);
 
-            $siblings = ProjectTask::where('project_column_id', $validated['project_column_id'])
-                ->where('id', '!=', $task->id)
-                ->orderBy('position')
-                ->get();
+            $destColumn = ProjectColumn::find($validated['project_column_id']);
+            $destIsDone = $destColumn?->isDoneColumn() ?? false;
 
-            $siblings->splice($validated['position'], 0, [$task]);
-
-            foreach ($siblings as $i => $t) {
-                $t->update(['position' => $i]);
+            if ($destIsDone && $task->completed_at === null) {
+                $task->update(['completed_at' => now()]);
+            } elseif (! $destIsDone && $task->completed_at !== null) {
+                $task->update(['completed_at' => null]);
             }
         });
 
