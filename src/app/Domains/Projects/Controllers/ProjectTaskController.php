@@ -208,6 +208,12 @@ class ProjectTaskController extends Controller
             } elseif (! $destIsDone && $task->completed_at !== null) {
                 $task->update(['completed_at' => null]);
             }
+
+            // Auto-triagem: sair da 1ª coluna marca como triada (set-once).
+            $firstColumnId = $task->project->columns()->orderBy('position')->value('id');
+            if ($task->triaged_at === null && $validated['project_column_id'] !== $firstColumnId) {
+                $task->update(['triaged_at' => now()]);
+            }
         });
 
         return back();

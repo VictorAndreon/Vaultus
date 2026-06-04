@@ -141,4 +141,43 @@ class TaskInboxTest extends TestCase
             ->patch("/projects/tasks/{$task->id}/triage", ['priority' => 'high'])
             ->assertForbidden();
     }
+
+    public function test_move_out_of_first_column_marks_triaged(): void
+    {
+        $user = User::factory()->create();
+        [$project, $first, $second] = $this->makeProject($user);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $first->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/move", [
+                'project_column_id' => $second->id,
+                'position'          => 0,
+            ])
+            ->assertRedirect();
+
+        $this->assertNotNull($task->fresh()->triaged_at);
+    }
+
+    public function test_move_back_to_first_column_keeps_triaged(): void
+    {
+        $user = User::factory()->create();
+        [$project, $first, $second] = $this->makeProject($user);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $second->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low', 'triaged_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/move", [
+                'project_column_id' => $first->id,
+                'position'          => 0,
+            ])
+            ->assertRedirect();
+
+        // Uma vez triada, sempre triada — mover de volta não desfaz.
+        $this->assertNotNull($task->fresh()->triaged_at);
+    }
 }
