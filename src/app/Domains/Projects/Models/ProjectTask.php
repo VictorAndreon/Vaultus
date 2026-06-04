@@ -9,13 +9,14 @@ class ProjectTask extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['project_id', 'project_column_id', 'title', 'description', 'priority', 'tag', 'position', 'due_at', 'completed_at'];
+    protected $fillable = ['project_id', 'project_column_id', 'title', 'description', 'priority', 'tag', 'position', 'due_at', 'completed_at', 'triaged_at'];
 
     protected function casts(): array
     {
         return [
             'due_at'       => 'datetime',
             'completed_at' => 'datetime',
+            'triaged_at'   => 'datetime',
         ];
     }
 
@@ -32,5 +33,10 @@ class ProjectTask extends Model
     public function isDone(): bool
     {
         return $this->completed_at !== null || ($this->column?->isDoneColumn() ?? false);
+    }
+
+    public function isTriaged(): bool
+    {
+        return $this->triaged_at !== null;
     }
 }
