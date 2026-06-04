@@ -126,6 +126,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/tasks/{task}/toggle-done', [ProjectTaskController::class, 'toggleDone']);
     Route::delete('/projects/tasks/{task}', [ProjectTaskController::class, 'destroy']);
     Route::patch('/projects/tasks/{task}/move', [ProjectTaskController::class, 'move']);
+    Route::patch('/projects/tasks/{task}/triage', [ProjectTaskController::class, 'triage']);
 
     // Project Notes
     Route::post('/projects/{project}/notes', [ProjectNoteController::class, 'store']);

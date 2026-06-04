@@ -111,6 +111,35 @@ class ProjectTaskController extends Controller
         return back();
     }
 
+    public function triage(Request $request, ProjectTask $task): \Illuminate\Http\RedirectResponse
+    {
+        abort_if($task->project->user_id !== $request->user()->id, 403);
+
+        $validated = $request->validate([
+            'due_at'            => 'nullable|date',
+            'priority'          => 'sometimes|in:low,medium,high,urgent',
+            'project_column_id' => ['sometimes', 'integer', Rule::exists('project_columns', 'id')->where('project_id', $task->project_id)],
+        ]);
+
+        DB::transaction(function () use ($task, $validated) {
+            if (array_key_exists('due_at', $validated)) {
+                $task->update(['due_at' => $validated['due_at']]);
+            }
+            if (array_key_exists('priority', $validated)) {
+                $task->update(['priority' => $validated['priority']]);
+            }
+            if (array_key_exists('project_column_id', $validated)
+                && $validated['project_column_id'] !== $task->project_column_id) {
+                $this->placeTaskInColumn($task, $validated['project_column_id']);
+            }
+            if ($task->triaged_at === null) {
+                $task->update(['triaged_at' => now()]);
+            }
+        });
+
+        return back();
+    }
+
     /**
      * Coluna "Concluído" do projeto (a primeira por posição). Cria uma se não existir.
      */
