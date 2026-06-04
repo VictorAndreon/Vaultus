@@ -107,7 +107,7 @@ export default function ProjectCard({ project, onEdit }: Props) {
                 </div>
             </div>
             <div className="meter" style={{ margin: "16px 0 14px" }}>
-                <span style={{ width: "0%" }} />
+                <span style={{ width: `${project.progress_percent ?? 0}%` }} />
             </div>
             <div
                 style={{
@@ -118,13 +118,13 @@ export default function ProjectCard({ project, onEdit }: Props) {
                     color: "var(--text-3)",
                 }}
             >
-                {project.tasks_count !== undefined && (
+                {project.tasks_total !== undefined && (
                     <span>
                         <span
                             className="mono"
                             style={{ color: "var(--text-2)" }}
                         >
-                            {project.tasks_count}
+                            {project.tasks_done ?? 0}/{project.tasks_total}
                         </span>{" "}
                         tarefas
                     </span>

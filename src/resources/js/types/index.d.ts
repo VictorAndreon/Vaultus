@@ -127,6 +127,9 @@ export interface Project {
     status: 'active' | 'paused' | 'done' | 'archived'
     want_id: number | null
     tasks_count?: number
+    progress_percent?: number
+    tasks_done?: number
+    tasks_total?: number
     columns?: ProjectColumn[]
     notes?: ProjectNote[]
     links?: ProjectLink[]
