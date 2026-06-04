@@ -30,6 +30,7 @@ class ProjectTaskController extends Controller
 
         $validated['position'] = $maxPos + 1;
         $validated['priority'] ??= 'medium';
+        $validated['triaged_at'] = now();
 
         $project->tasks()->create($validated);
 

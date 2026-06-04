@@ -39,4 +39,22 @@ class TaskInboxTest extends TestCase
         $task->update(['triaged_at' => now()]);
         $this->assertTrue($task->fresh()->isTriaged());
     }
+
+    public function test_full_create_marks_task_triaged(): void
+    {
+        $user = User::factory()->create();
+        [$project, $first] = $this->makeProject($user);
+
+        $this->actingAs($user)
+            ->post("/projects/{$project->id}/tasks", [
+                'title'             => 'Detalhada',
+                'project_column_id' => $first->id,
+                'priority'          => 'high',
+            ])
+            ->assertRedirect();
+
+        $task = ProjectTask::where('title', 'Detalhada')->first();
+        $this->assertNotNull($task);
+        $this->assertNotNull($task->triaged_at);
+    }
 }
