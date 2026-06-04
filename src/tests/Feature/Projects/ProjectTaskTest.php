@@ -217,4 +217,25 @@ class ProjectTaskTest extends TestCase
         $this->assertSame($todo->id, $task->project_column_id);
         $this->assertNull($task->completed_at);
     }
+
+    public function test_cannot_move_task_into_another_projects_column(): void
+    {
+        $user = User::factory()->create();
+        [$projectA, $todoA] = $this->makeProjectWithColumn($user);
+        $projectB = Project::create(['user_id' => $user->id, 'title' => 'B', 'status' => 'active']);
+        $columnB  = ProjectColumn::create(['project_id' => $projectB->id, 'name' => 'Todo B', 'position' => 0]);
+        $task = ProjectTask::create([
+            'project_id' => $projectA->id, 'project_column_id' => $todoA->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/move", [
+                'project_column_id' => $columnB->id,
+                'position'          => 0,
+            ])
+            ->assertSessionHasErrors('project_column_id');
+
+        $this->assertSame($todoA->id, $task->fresh()->project_column_id);
+    }
 }

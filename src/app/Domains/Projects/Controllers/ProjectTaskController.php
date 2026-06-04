@@ -86,7 +86,8 @@ class ProjectTaskController extends Controller
      */
     private function resolveDoneColumn(Project $project): ProjectColumn
     {
-        $existing = $project->columns()->get()->first(fn (ProjectColumn $c) => $c->isDoneColumn());
+        $columns  = $project->columns()->get();
+        $existing = $columns->first(fn (ProjectColumn $c) => $c->isDoneColumn());
 
         if ($existing) {
             return $existing;
@@ -94,7 +95,7 @@ class ProjectTaskController extends Controller
 
         return $project->columns()->create([
             'name'     => 'Concluído',
-            'position' => $project->columns()->count(),
+            'position' => $columns->count(),
         ]);
     }
 
@@ -133,7 +134,7 @@ class ProjectTaskController extends Controller
         abort_if($task->project->user_id !== $request->user()->id, 403);
 
         $validated = $request->validate([
-            'project_column_id' => 'required|integer|exists:project_columns,id',
+            'project_column_id' => ['required', 'integer', Rule::exists('project_columns', 'id')->where('project_id', $task->project_id)],
             'position'          => 'required|integer|min:0',
         ]);
 
