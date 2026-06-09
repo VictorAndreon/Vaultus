@@ -77,6 +77,28 @@ class TasksController extends Controller
             ->values()
             ->toArray();
 
+        $board = Project::where('user_id', $user->id)
+            ->whereIn('status', ['active', 'paused'])
+            ->with(['columns' => fn ($q) => $q->orderBy('position'), 'columns.tasks'])
+            ->orderBy('title')
+            ->get()
+            ->map(fn ($p) => [
+                'id'      => $p->id,
+                'title'   => $p->title,
+                'columns' => $p->columns->map(fn ($c) => [
+                    'id'    => $c->id,
+                    'name'  => $c->name,
+                    'tasks' => $c->tasks->map(fn ($t) => [
+                        'id'       => $t->id,
+                        'title'    => $t->title,
+                        'priority' => $t->priority,
+                        'is_done'  => $t->completed_at !== null || $c->isDoneColumn(),
+                    ])->values()->toArray(),
+                ])->values()->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
         return Inertia::render('Tasks/Index', [
             'tasks'        => $tasks,
             'stats'        => [
@@ -99,6 +121,7 @@ class TasksController extends Controller
                 'priority'     => $t->priority,
             ])->values()->toArray(),
             'inbox_count' => $inbox->count(),
+            'projects_board' => $board,
         ]);
     }
 }
