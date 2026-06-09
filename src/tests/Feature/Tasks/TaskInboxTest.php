@@ -198,4 +198,35 @@ class TaskInboxTest extends TestCase
         $this->assertNotNull($task->completed_at);
         $this->assertNotNull($task->triaged_at);
     }
+
+    public function test_index_inbox_lists_only_untriaged_not_done(): void
+    {
+        $user = User::factory()->create();
+        [$project, $first] = $this->makeProject($user);
+        $done = ProjectColumn::create(['project_id' => $project->id, 'name' => 'Concluído', 'position' => 2]);
+
+        // (a) não-triada e não-concluída → ENTRA no Inbox
+        ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $first->id,
+            'title' => 'Na inbox', 'position' => 0, 'priority' => 'low',
+        ]);
+        // (b) triada → fora
+        ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $first->id,
+            'title' => 'Triada', 'position' => 1, 'priority' => 'low', 'triaged_at' => now(),
+        ]);
+        // (c) não-triada porém na coluna "Concluído" (isDone) → fora
+        ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $done->id,
+            'title' => 'Concluída', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/tasks')
+            ->assertInertia(fn ($page) => $page
+                ->component('Tasks/Index')
+                ->where('inbox_count', 1)
+                ->where('inbox.0.title', 'Na inbox')
+            );
+    }
 }

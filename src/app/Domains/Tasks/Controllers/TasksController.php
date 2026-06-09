@@ -48,6 +48,7 @@ class TasksController extends Controller
         $doneTasks  = collect($tasks)->where('is_done', true)->where('due_date', $today);
         $weekTasks  = collect($tasks)->whereBetween('due_date', [$now->copy()->addDay()->toDateString(), $weekEnd]);
         $noDue      = $allTasks->filter(fn($t) => $t->due_at === null && ! $isDone($t));
+        $inbox      = $allTasks->filter(fn($t) => $t->triaged_at === null && ! $isDone($t));
 
         $byProject = ProjectTask::whereHas('project', fn($q) => $q->where('user_id', $user->id))
             ->with('project')
@@ -90,6 +91,14 @@ class TasksController extends Controller
                 'id'    => $t->id,
                 'title' => $t->title,
             ])->values()->toArray(),
+            'inbox' => $inbox->map(fn($t) => [
+                'id'           => $t->id,
+                'title'        => $t->title,
+                'project_id'   => $t->project_id,
+                'project_name' => $t->project->title,
+                'priority'     => $t->priority,
+            ])->values()->toArray(),
+            'inbox_count' => $inbox->count(),
         ]);
     }
 }
