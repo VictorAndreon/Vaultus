@@ -89,6 +89,9 @@ class ProjectTaskController extends Controller
         DB::transaction(function () use ($task) {
             if ($task->completed_at === null) {
                 $task->update(['completed_at' => now()]);
+                if ($task->triaged_at === null) {
+                    $task->update(['triaged_at' => now()]);
+                }
                 $doneColumn = $this->resolveDoneColumn($task->project);
                 $this->placeTaskInColumn($task, $doneColumn->id);
             } else {

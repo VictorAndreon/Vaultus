@@ -180,4 +180,22 @@ class TaskInboxTest extends TestCase
         // Uma vez triada, sempre triada — mover de volta não desfaz.
         $this->assertNotNull($task->fresh()->triaged_at);
     }
+
+    public function test_completing_task_marks_triaged(): void
+    {
+        $user = User::factory()->create();
+        [$project, $first] = $this->makeProject($user);
+        $task = ProjectTask::create([
+            'project_id' => $project->id, 'project_column_id' => $first->id,
+            'title' => 'T', 'position' => 0, 'priority' => 'low',
+        ]);
+
+        $this->actingAs($user)
+            ->patch("/projects/tasks/{$task->id}/toggle-done")
+            ->assertRedirect();
+
+        $task->refresh();
+        $this->assertNotNull($task->completed_at);
+        $this->assertNotNull($task->triaged_at);
+    }
 }
