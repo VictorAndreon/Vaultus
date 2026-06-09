@@ -9,7 +9,7 @@ export interface Task {
     id: number
     title: string
     project_name: string
-    priority: 'high' | 'medium' | 'low' | null
+    priority: 'urgent' | 'high' | 'medium' | 'low' | null
     due_at: string | null
     due_date: string | null
     is_done: boolean
@@ -22,7 +22,7 @@ export interface InboxItem {
     title: string
     project_id: number
     project_name: string
-    priority: 'high' | 'medium' | 'low' | null
+    priority: 'urgent' | 'high' | 'medium' | 'low' | null
 }
 
 interface Props {
@@ -34,8 +34,8 @@ interface Props {
     inbox_count: number
 }
 
-const PRIO_TAG: Record<string, string>   = { high: 'tag-rose', medium: 'tag-gold', low: 'tag-sky' }
-const PRIO_LABEL: Record<string, string> = { high: 'alta', medium: 'média', low: 'baixa' }
+const PRIO_TAG: Record<string, string>   = { urgent: 'tag-rose', high: 'tag-rose', medium: 'tag-gold', low: 'tag-sky' }
+const PRIO_LABEL: Record<string, string> = { urgent: 'urgente', high: 'alta', medium: 'média', low: 'baixa' }
 const GROUP_LABEL: Record<string, string> = {
     today: 'Hoje', week: 'Esta semana', later: 'Mais tarde', done_today: 'Concluídas hoje',
 }

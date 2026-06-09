@@ -4,7 +4,7 @@ import { router } from '@inertiajs/react'
 export interface BoardTask {
     id: number
     title: string
-    priority: 'high' | 'medium' | 'low' | null
+    priority: 'urgent' | 'high' | 'medium' | 'low' | null
     is_done: boolean
 }
 export interface BoardColumn {
@@ -26,7 +26,7 @@ const PROJECT_COLORS = [
     'var(--green)', 'var(--gold)', 'var(--sky)', 'var(--rose)',
     'oklch(70% 0.13 320)', 'var(--text-3)',
 ]
-const PRIO_TAG: Record<string, string> = { high: 'tag-rose', medium: 'tag-gold', low: 'tag-sky' }
+const PRIO_TAG: Record<string, string> = { urgent: 'tag-rose', high: 'tag-rose', medium: 'tag-gold', low: 'tag-sky' }
 
 export default function ProjectBoardView({ projectsBoard }: Props) {
     const [selected, setSelected] = useState<number[]>(() => projectsBoard.map(p => p.id))

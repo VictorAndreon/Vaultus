@@ -50,11 +50,9 @@ class TasksController extends Controller
         $noDue      = $allTasks->filter(fn($t) => $t->due_at === null && ! $isDone($t));
         $inbox      = $allTasks->filter(fn($t) => $t->triaged_at === null && ! $isDone($t));
 
-        $byProject = ProjectTask::whereHas('project', fn($q) => $q->where('user_id', $user->id))
-            ->with('project')
-            ->get()
+        $byProject = $allTasks
             ->groupBy('project_id')
-            ->map(fn($tasks, $id) => [
+            ->map(fn($tasks) => [
                 'project_name' => $tasks->first()->project->title,
                 'count'        => $tasks->count(),
             ])
@@ -109,10 +107,6 @@ class TasksController extends Controller
             ],
             'by_project'   => $byProject,
             'projects'     => $projects,
-            'no_due_tasks' => $noDue->take(5)->map(fn($t) => [
-                'id'    => $t->id,
-                'title' => $t->title,
-            ])->values()->toArray(),
             'inbox' => $inbox->map(fn($t) => [
                 'id'           => $t->id,
                 'title'        => $t->title,
