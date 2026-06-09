@@ -18,11 +18,11 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->call([
-            NotesSeeder::class,
-            ContactsSeeder::class,
-            ReviewsSeeder::class,
-            HabitsSeeder::class,
-        ]);
+        // $this->call([
+        //     NotesSeeder::class,
+        //     ContactsSeeder::class,
+        //     ReviewsSeeder::class,
+        //     HabitsSeeder::class,
+        // ]);
     }
 }
