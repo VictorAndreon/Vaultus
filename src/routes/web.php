@@ -25,7 +25,10 @@ use App\Domains\Library\Controllers\LibraryController;
 use App\Http\Controllers\Dev\DesignShowcaseController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn() => redirect('/dashboard'));
+// Landing pública para visitantes; usuários logados seguem direto ao app.
+Route::get('/', fn() => auth()->check()
+    ? redirect('/dashboard')
+    : \Inertia\Inertia::render('Landing/Index'));
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
