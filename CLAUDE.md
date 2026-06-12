@@ -45,6 +45,25 @@ App em `https://vaultus.local` (Caddy/TLS). Filas via Horizon (container `horizo
 
 **Auth:** sessão + 2FA (TOTP). O model de usuário canônico é `App\Domains\Auth\Models\User` (ver `config/auth.php`). ⚠️ Existe também `app/Models/User.php`, mas ele **não** é o model de autenticação — não o use.
 
+### Mapa de domínios e funcionalidades
+
+Todos os dados são por usuário (`user_id`). Frontend espelha em `resources/js/Pages/{Domínio}/`.
+
+- **Dashboard** — agregador (só `Controllers/` + `Services/`, sem models próprios); consome dados dos outros domínios.
+- **Finance** — o mais complexo (ver seção abaixo): contas, transações, metas, wishlist, orçamento por categoria, pagamentos futuros, recorrências, parcelamentos, relatórios/CSV, faturas de cartão.
+- **Habits** — hábitos com check-ins diários + métricas de saúde (`HealthMetric`). A lógica de adesão/frequência vive no model `Habit` (`isExpectedOn`, `adherenceInRange`) e é sensível a timezone.
+- **Journal** — entradas de diário + prompts configuráveis (`JournalPrompt`).
+- **Projects** — kanban por projeto (`ProjectColumn`/`ProjectTask` com `move`/`triage`), notas e links de projeto, e **Wants** (lista de desejos/ideias promovível a projeto via `POST /wants/{want}/promote`).
+- **Tasks** — ⚠️ domínio **sem models próprios**: é uma visão agregada de `ProjectTask` (do domínio Projects) com inbox, captura rápida (`POST /tasks/capture`) e triagem. Mudanças em tarefas geralmente tocam o domínio Projects.
+- **Library** — itens de leitura/mídia com progresso (accessor `progress_percent`) e capas com upload (servidas via `GET /library/{item}/cover`).
+- **Notes** — notas organizadas em `Notebook`s, com histórico de versões (`NoteVersion`).
+- **Contacts / Reviews** — CRUDs simples; Reviews são revisões semanais exibidas por `isoWeek` (segunda-feira — ver regra de timezone).
+- **Auth** — login, 2FA e `AuditLog`.
+
+Em ambiente `local` existe `/dev/design` (showcase do design system).
+
+**Histórico de design:** `docs/superpowers/specs/` e `docs/superpowers/plans/` guardam os documentos de design e planos de implementação datados de cada feature — consulte antes de mudanças grandes em uma feature para entender as decisões originais.
+
 ### Domínio Finance (o mais complexo)
 
 - **Valores monetários são criptografados em repouso** em colunas `*_encrypted` (`amount_encrypted`, `balance_encrypted`, `target_amount_encrypted`, …) via `App\Shared\Casts\EncryptedCast` / trait `Encryptable`. Nunca grave/consulte valores como texto puro.
