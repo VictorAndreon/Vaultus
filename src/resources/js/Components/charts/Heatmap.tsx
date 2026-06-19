@@ -10,7 +10,8 @@ interface Props {
   labelWidth?: number
 }
 
-function shade(value: number | null): string {
+// Exportada p/ legendas usarem exatamente a mesma escala das células.
+export function shade(value: number | null): string {
   if (value === null) return 'var(--surface-3)'
   if (value <= 0) return 'var(--surface-3)'
   if (value < 0.25) return 'oklch(28% 0.05 var(--h))'

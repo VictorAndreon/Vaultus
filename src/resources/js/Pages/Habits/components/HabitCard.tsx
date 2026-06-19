@@ -51,19 +51,27 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px 180px 100px 120px', padding: '18px 24px', borderTop: isFirst ? 'none' : '1px solid var(--line-soft)', alignItems: 'center' }}>
-            {/* Hábito */}
-            <div>
+            {/* Hábito — minWidth 0 deixa a célula 1fr encolher (senão o conteúdo
+                vaza por cima da coluna "Esta semana"); flexWrap quebra ENTRE os
+                itens (badge/categoria), nunca dentro do pill. */}
+            <div style={{ minWidth: 0, paddingRight: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 50, background: color }} />
+                    <div style={{ width: 8, height: 8, borderRadius: 50, background: color, flex: 'none' }} />
                     <div className="h-3">{habit.name}</div>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, marginLeft: 18, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, marginLeft: 18, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', rowGap: 4 }}>
                     {habit.icon && <span>{habit.icon}</span>}
                     <FrequencyBadge
                         frequencyType={habit.frequency_type}
                         frequencyDays={habit.frequency_days}
                         frequencyTimes={habit.frequency_times}
                     />
+                    {habit.category && (
+                        <>
+                            <span style={{ color: 'var(--text-4)' }}>·</span>
+                            <span style={{ color: 'var(--text-4)' }}>{habit.category}</span>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -87,8 +95,8 @@ export default function HabitCard({ habit, today, onEdit, isFirst }: Props) {
                 })}
             </div>
 
-            {/* Taxa 30d */}
-            <div>
+            {/* Taxa 30d — paddingRight afasta o % do contador de streak (coluna vizinha) */}
+            <div style={{ paddingRight: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div className="meter" style={{ flex: 1 }}><span style={{ width: `${rate}%`, background: color }} /></div>
                     <span className="mono" style={{ fontSize: 12, color: 'var(--text-2)' }}>{rate}%</span>

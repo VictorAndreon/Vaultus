@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
+import CoverImg from '@/Components/CoverImg'
 import Sparkline from '@/Components/charts/Sparkline'
 import LibraryModal, { EditableBook } from './components/LibraryModal'
 
@@ -15,24 +16,6 @@ interface Props {
     queue: BookQueue[]
     abandoned: BookAbandoned[]
     stats: { total_year: number; in_progress: number; pages_year: number; queue_count: number; books_spark: number[]; pages_spark: number[] }
-}
-
-// Capa com fallback: cai no placeholder .ph se a imagem falhar (404 da rota local,
-// arquivo sumido do disco, ou capa externa legada bloqueada pela CSP).
-function CoverImg({ src, alt, w, h }: { src: string | null; alt: string; w: number; h: number }) {
-    const [failed, setFailed] = useState(false)
-    if (!src || failed) {
-        return <div className="ph" style={{ width: w, height: h, flex: 'none', fontSize: 0 }} />
-    }
-    return (
-        <img
-            src={src}
-            alt={alt}
-            loading="lazy"
-            onError={() => setFailed(true)}
-            style={{ width: w, height: h, objectFit: 'cover', borderRadius: 'var(--r-2)', flex: 'none' }}
-        />
-    )
 }
 
 function Stars({ rating }: { rating: number | null }) {

@@ -35,8 +35,12 @@ class JournalEntryController extends Controller
             ->toArray();
 
         return Inertia::render('Journal/Index', [
-            'entries'    => $entries->map(fn($e) => new JournalEntryResource($e)),
-            'prompts'    => $prompts->map(fn($p) => new JournalPromptResource($p)),
+            // resolve() desembrulha o envelope `data` que o Inertia adiciona ao
+            // serializar JsonResource — o front lê os campos no topo (e.date,
+            // e.tags, prompt.content). Sem isso, calendário/lista/prompts quebram
+            // e não dá para abrir entradas existentes (find por e.date falha).
+            'entries'    => $entries->map(fn($e) => (new JournalEntryResource($e))->resolve($request)),
+            'prompts'    => $prompts->map(fn($p) => (new JournalPromptResource($p))->resolve($request)),
             'today'      => Carbon::now($user->timezone)->toDateString(),
             'mood_chart' => $moodChart,
         ]);
@@ -44,22 +48,31 @@ class JournalEntryController extends Controller
 
     public function store(Request $request)
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
+
+        // Criação é restrita ao "hoje" do usuário (fuso). Entradas de dias
+        // passados só existem se já foram criadas naquele dia — depois disso
+        // são editadas via update(). Espelha o botão "Escrever hoje" do front.
+        $today = Carbon::now($user->timezone)->toDateString();
 
         $validated = $request->validate([
             'date'    => [
                 'required',
                 'date_format:Y-m-d',
-                \Illuminate\Validation\Rule::unique('journal_entries')->where(fn ($q) => $q->where('user_id', $userId)),
+                \Illuminate\Validation\Rule::in([$today]),
+                \Illuminate\Validation\Rule::unique('journal_entries')->where(fn ($q) => $q->where('user_id', $user->id)),
             ],
             'title'   => 'nullable|string|max:200',
             'content' => 'nullable|string',
+            'tags'    => 'sometimes|array',
+            'tags.*'  => 'nullable|string|max:50',
         ]);
 
-        $request->user()->journalEntries()->create([
+        $user->journalEntries()->create([
             'date'    => $validated['date'],
             'title'   => $validated['title'] ?? null,
             'content' => $validated['content'] ?? '',
+            'tags'    => $this->normalizeTags($validated['tags'] ?? []),
         ]);
 
         return back();
@@ -73,11 +86,26 @@ class JournalEntryController extends Controller
             'title'   => 'nullable|string|max:200',
             'content' => 'nullable|string',
             'tags'    => 'sometimes|array',
-            'tags.*'  => 'string|max:50',
+            'tags.*'  => 'nullable|string|max:50',
         ]);
+
+        if (array_key_exists('tags', $validated)) {
+            $validated['tags'] = $this->normalizeTags($validated['tags']);
+        }
 
         $entry->update($validated);
 
         return back();
+    }
+
+    /** Limpa, deduplica e descarta tags vazias antes de persistir. */
+    private function normalizeTags(?array $tags): array
+    {
+        return collect($tags ?? [])
+            ->map(fn ($t) => trim((string) $t))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }

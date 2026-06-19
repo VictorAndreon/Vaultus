@@ -14,6 +14,13 @@ class NotesSeeder extends Seeder
         $user = User::first();
         if (! $user) return;
 
+        // Idempotente: zera cadernos do usuário (notas e versões junto).
+        $notebookIds = Notebook::withTrashed()->where('user_id', $user->id)->pluck('id');
+        $noteIds     = Note::withTrashed()->whereIn('notebook_id', $notebookIds)->pluck('id');
+        \App\Domains\Notes\Models\NoteVersion::whereIn('note_id', $noteIds)->delete();
+        Note::withTrashed()->whereIn('id', $noteIds)->forceDelete();
+        Notebook::withTrashed()->whereIn('id', $notebookIds)->forceDelete();
+
         $books = [
             ['name' => 'Design',     'color' => '#7ec27b'],
             ['name' => 'Pesquisa',   'color' => '#d4a55a'],

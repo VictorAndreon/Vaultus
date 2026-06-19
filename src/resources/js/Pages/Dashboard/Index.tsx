@@ -5,9 +5,10 @@ import { Icons } from '@/Components/Icons'
 import { PageProps } from '@/types'
 import Greeting from '@/Components/Greeting'
 import GoalIcon from '@/Components/GoalIcon'
+import CoverImg from '@/Components/CoverImg'
 import Sparkline from '@/Components/charts/Sparkline'
 import AreaChart from '@/Components/charts/AreaChart'
-import Heatmap from '@/Components/charts/Heatmap'
+import Heatmap, { shade } from '@/Components/charts/Heatmap'
 
 /* ---- Tipos ---- */
 interface TaskToday {
@@ -26,6 +27,7 @@ interface Goal {
 interface ReadingItem {
   id: number; title: string; author: string | null
   progress_percent: number; current_page: number; total_pages: number | null
+  cover_url: string | null
 }
 interface JournalEntry {
   day: string; month: string; quote: string; mood: string; tag: string
@@ -38,7 +40,7 @@ interface Props {
     month_income: number; month_expense: number
   }
   journal_recent: JournalEntry[]
-  habits_today: Array<{ id: number; name: string; icon: string | null; checked_in_today: boolean }>
+  habits_heatmap: Array<{ label: string; values: (number | null)[] }>
   tasks_today: TaskToday[]
   projects: DashProject[]
   financial_goals: Goal[]
@@ -95,7 +97,7 @@ function categoryToIconKey(category: string | null): string {
 
 /* ---- Dashboard ---- */
 export default function Dashboard({
-  stats, journal_recent, habits_today,
+  stats, journal_recent, habits_heatmap,
   tasks_today, projects, financial_goals, wealth_chart, reading,
 }: Props) {
   const { props: pageProps } = usePage<PageProps>()
@@ -240,28 +242,21 @@ export default function Dashboard({
               <div style={{ display: 'flex', gap: 14, alignItems: 'center', fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
                 <span>Menos</span>
                 <div style={{ display: 'flex', gap: 3 }}>
-                  {[0,1,2,3].map(l => (
-                    <div key={l} style={{ width: 10, height: 10, borderRadius: 2, background: ['var(--surface-2)','oklch(35% 0.06 var(--h))','oklch(50% 0.10 var(--h))','oklch(70% 0.14 var(--h))'][l] }} />
+                  {[0, 0.2, 0.4, 0.6, 1].map(l => (
+                    <div key={l} style={{ width: 10, height: 10, borderRadius: 2, background: shade(l) }} />
                   ))}
                 </div>
                 <span>Mais</span>
               </div>
             </div>
-            {habits_today.length === 0 ? (
+            {habits_heatmap.length === 0 ? (
               <div style={{ color: 'var(--text-4)', fontSize: 13, fontStyle: 'italic' }}>Nenhum hábito ativo.</div>
             ) : (
               <Heatmap
                 cell={14}
                 gap={3}
                 labelWidth={68}
-                rows={habits_today.slice(0, 5).map((h, r) => ({
-                  label: h.name,
-                  values: Array.from({ length: 12 }, (_, c) => {
-                    if (c === 11 && h.checked_in_today) return 1
-                    const x = (r * 31 + c * 17 + 11) % 100
-                    return x > 70 ? 0.9 : x > 45 ? 0.6 : x > 25 ? 0.3 : 0
-                  }),
-                }))}
+                rows={habits_heatmap}
               />
             )}
             <div style={{ display: 'flex', gap: 24, marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--line-soft)' }}>
@@ -389,7 +384,7 @@ export default function Dashboard({
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {reading.map(b => (
                   <div key={b.id} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                    <div className="ph" style={{ width: 38, height: 54, flex: 'none' }} />
+                    <CoverImg src={b.cover_url} alt={b.title} w={38} h={54} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="h-3" style={{ fontSize: 13.5 }}>{b.title}</div>
                       {b.author && <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>{b.author}</div>}

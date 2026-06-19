@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AppLayout from '@/Layouts/AppLayout'
 import { Icons } from '@/Components/Icons'
 import { JournalEntry, JournalPrompt } from '@/types'
+import { parseLocalDate, formatLocalDate } from '@/lib/date'
 import JournalCalendar from './components/JournalCalendar'
 import EntryList from './components/EntryList'
 import EntryEditor from './components/EntryEditor'
@@ -21,6 +22,15 @@ const MOOD_LABELS: Record<number, string> = { 1: 'Difícil', 2: 'Cansado', 3: 'N
 export default function JournalIndex({ entries, prompts, today, mood_chart }: Props) {
     const [selectedDate, setSelectedDate] = useState<string | null>(null)
     const currentEntry = selectedDate ? entries.find(e => e.date === selectedDate) ?? null : null
+
+    // Criação só é permitida para HOJE ("Escrever hoje"). Clicar num dia passado
+    // sem entrada não abre o editor — apenas mostra um placeholder de leitura.
+    const isToday = selectedDate === today
+    const canEdit = selectedDate !== null && (currentEntry !== null || isToday)
+
+    // Sugestões de etiquetas: tudo que já foi usado nas entradas.
+    const allTags = Array.from(new Set(entries.flatMap(e => e.tags ?? [])))
+    const todayDate = parseLocalDate(today)
 
     const avgMood = mood_chart.length > 0
         ? Math.round(mood_chart.reduce((s, m) => s + m.value, 0) / mood_chart.length)
@@ -46,7 +56,7 @@ export default function JournalIndex({ entries, prompts, today, mood_chart }: Pr
                     <div className="card">
                         <div className="card-head"><div className="card-title">Etiquetas frequentes</div></div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                            {Array.from(new Set(entries.flatMap(e => e.tags ?? []))).slice(0, 8).map(tag => (
+                            {allTags.slice(0, 8).map(tag => (
                                 <span key={tag} className="tag"><span className="dot" />{tag}</span>
                             ))}
                             {entries.length === 0 && <span style={{ color: 'var(--text-4)', fontSize: 12, fontStyle: 'italic' }}>Nenhuma etiqueta ainda.</span>}
@@ -81,18 +91,29 @@ export default function JournalIndex({ entries, prompts, today, mood_chart }: Pr
                 </aside>
 
                 {/* SECTION CENTRAL */}
-                {selectedDate ? (
-                    <EntryEditor entry={currentEntry} selectedDate={selectedDate} onBack={() => setSelectedDate(null)} />
+                {selectedDate && canEdit ? (
+                    <EntryEditor entry={currentEntry} selectedDate={selectedDate} onBack={() => setSelectedDate(null)} suggestions={allTags} />
+                ) : selectedDate ? (
+                    <section className="card" style={{ padding: 40, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                        <div className="kicker">{formatLocalDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                        <div style={{ fontFamily: 'var(--serif)', fontSize: 18, fontStyle: 'italic', color: 'var(--text-3)' }}>
+                            Nenhuma entrada neste dia.
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--text-4)', maxWidth: '46ch', lineHeight: 1.6 }}>
+                            Novas entradas só podem ser escritas para o dia de hoje, pelo botão <b>Escrever hoje</b>.
+                        </div>
+                        <button onClick={() => setSelectedDate(null)} className="card-link" style={{ marginTop: 4 }}>← Voltar</button>
+                    </section>
                 ) : (
                     <section style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                         {/* Card de hoje */}
                         <div className="card" style={{ padding: 28, borderColor: 'var(--green-soft)', background: 'linear-gradient(180deg, var(--green-wash) 0%, var(--surface) 100%)' }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                                 <div className="accent-line">
-                                    <div className="kicker">Hoje · {new Date(today + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}</div>
+                                    <div className="kicker">Hoje · {formatLocalDate(today, { weekday: 'long' })}</div>
                                     <h2 className="h-display" style={{ marginTop: 4 }}>
-                                        {new Date(today + 'T12:00:00').getDate()}{' '}
-                                        <span style={{ color: 'var(--text-3)' }}>de {new Date(today + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'long' })}</span>
+                                        {todayDate?.getDate() ?? '—'}{' '}
+                                        <span style={{ color: 'var(--text-3)' }}>de {formatLocalDate(today, { month: 'long' })}</span>
                                     </h2>
                                 </div>
                                 <button className="btn btn-primary" onClick={() => setSelectedDate(today)}>

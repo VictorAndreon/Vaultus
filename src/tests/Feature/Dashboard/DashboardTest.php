@@ -224,4 +224,89 @@ class DashboardTest extends TestCase
         $this->assertEquals('Livro A', $result[0]['title']);
         $this->assertEquals(33, $result[0]['progress_percent']);
     }
+
+    public function test_habits_heatmap_returns_12_weekly_adherence_values_per_habit(): void
+    {
+        Carbon::setTestNow('2026-06-10'); // quarta — semana atual Jun 8–14
+        $user  = User::factory()->create(['timezone' => 'UTC']);
+        $habit = Habit::factory()->create(['user_id' => $user->id, 'frequency_type' => 'daily']);
+
+        // Semana passada (Jun 1–7) completa; semana atual sem nada até quarta.
+        foreach (range(1, 7) as $day) {
+            HabitCheckIn::factory()->create([
+                'habit_id' => $habit->id,
+                'date'     => sprintf('2026-06-%02d', $day),
+            ]);
+        }
+
+        $rows = (new DashboardAggregator())->getHabitsHeatmap($user);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame($habit->name, $rows[0]['label']);
+        $this->assertCount(12, $rows[0]['values']);
+        $this->assertEquals(1.0, $rows[0]['values'][10]);  // semana passada 7/7
+        $this->assertEquals(0.0, $rows[0]['values'][11]);  // semana atual 0/3 (seg–qua)
+        $this->assertEquals(0.0, $rows[0]['values'][0]);   // 12 semanas atrás, sem check-ins
+    }
+
+    public function test_habits_heatmap_uses_user_timezone_for_current_week(): void
+    {
+        // 01:30 UTC de segunda = 22:30 de domingo em São Paulo — a semana atual
+        // do usuário ainda é Jun 1–7; em UTC seria Jun 8–14 e o valor cairia p/ 0.
+        Carbon::setTestNow(Carbon::parse('2026-06-08 01:30:00', 'UTC'));
+        $user  = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        $habit = Habit::factory()->weekly([0])->create(['user_id' => $user->id]); // só domingo
+
+        HabitCheckIn::factory()->create(['habit_id' => $habit->id, 'date' => '2026-06-07']);
+
+        $rows = (new DashboardAggregator())->getHabitsHeatmap($user);
+
+        $this->assertEquals(1.0, $rows[0]['values'][11]);
+    }
+
+    public function test_habits_heatmap_x_per_week_is_fraction_of_weekly_target(): void
+    {
+        Carbon::setTestNow('2026-06-10');
+        $user  = User::factory()->create(['timezone' => 'UTC']);
+        $habit = Habit::factory()->create([
+            'user_id' => $user->id, 'frequency_type' => 'x_per_week', 'frequency_times' => 4,
+        ]);
+
+        // Semana passada (Jun 1–7): 2 de 4 → 0.5
+        HabitCheckIn::factory()->create(['habit_id' => $habit->id, 'date' => '2026-06-02']);
+        HabitCheckIn::factory()->create(['habit_id' => $habit->id, 'date' => '2026-06-04']);
+
+        $rows = (new DashboardAggregator())->getHabitsHeatmap($user);
+
+        $this->assertEquals(0.5, $rows[0]['values'][10]);
+    }
+
+    public function test_journal_recent_reads_mood_from_linked_health_metric(): void
+    {
+        $user   = User::factory()->create();
+        $metric = \App\Domains\Habits\Models\HealthMetric::create([
+            'user_id' => $user->id, 'date' => '2026-06-10', 'mood' => 5,
+        ]);
+        $user->journalEntries()->create([
+            'date' => '2026-06-10', 'content' => '<p>Ótimo dia.</p>',
+            'tags' => [], 'health_metric_id' => $metric->id,
+        ]);
+
+        $result = (new DashboardAggregator())->getJournalRecent($user);
+
+        $this->assertEquals('Realizado', $result[0]['mood']);
+    }
+
+    public function test_get_reading_exposes_display_url_for_local_covers(): void
+    {
+        $user = User::factory()->create();
+        $item = \App\Domains\Library\Models\LibraryItem::create([
+            'user_id' => $user->id, 'type' => 'book', 'title' => 'Com capa local',
+            'status' => 'reading', 'cover_path' => 'library/covers/abc.webp',
+        ]);
+
+        $result = (new DashboardAggregator())->getReading($user);
+
+        $this->assertEquals(route('library.cover', $item->id), $result[0]['cover_url']);
+    }
 }

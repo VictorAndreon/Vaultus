@@ -1,11 +1,14 @@
 export type CheckState = 'filled' | 'failed' | 'neutral' | 'empty'
 
-export interface ReviewItem {
+// type (não interface): ReviewContent é enviado como payload do router.patch e
+// precisa ser atribuível a RequestPayload (FormDataConvertible) do Inertia —
+// interfaces não casam com index signatures, type aliases sim.
+export type ReviewItem = {
   text: string
   state?: CheckState
 }
 
-export interface ReviewContent {
+export type ReviewContent = {
   funcionou_bem: ReviewItem[]
   pode_melhorar: ReviewItem[]
   aprendizados: ReviewItem[]

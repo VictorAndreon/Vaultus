@@ -13,6 +13,9 @@ class ContactsSeeder extends Seeder
         $user = User::first();
         if (! $user) return;
 
+        // Idempotente: re-rodar não duplica contatos.
+        Contact::withTrashed()->where('user_id', $user->id)->forceDelete();
+
         $contacts = [
             // Família
             ['name' => 'Heloísa Camargo',   'email' => 'helo@gmail.com',     'phone' => '(11) 99812-4501', 'context' => 'Família',  'birthday' => '1962-03-14', 'next_step' => 'Ligar no fim de semana', 'last_contacted_at' => '2026-05-19', 'remind_after_days' => 14],

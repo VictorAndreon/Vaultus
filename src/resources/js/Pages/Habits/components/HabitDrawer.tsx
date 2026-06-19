@@ -37,7 +37,9 @@ export default function HabitDrawer({ habit, onClose }: Props) {
     useEffect(() => {
         if (habit) {
             setForm({
-                name:            habit.name,
+                // `?? ''` evita que form.name vire undefined — o submit faz
+                // form.name.trim() e, sem ErrorBoundary, um throw aqui apaga a tela.
+                name:            habit.name ?? '',
                 icon:            habit.icon ?? '',
                 category:        habit.category ?? '',
                 frequency_type:  habit.frequency_type,

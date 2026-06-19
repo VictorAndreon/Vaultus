@@ -2,7 +2,11 @@ import { Link, usePage } from '@inertiajs/react'
 import { PageProps } from '@/types'
 import { Icons } from '@/Components/Icons'
 
-const NAV_GROUPS = [
+type IconComponent = (typeof Icons)[keyof typeof Icons]
+type NavItem = { id: string; label: string; href: string; Icon: IconComponent; count?: number | null }
+type NavGroup = { label: string; items: NavItem[] }
+
+const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Painel',
     items: [

@@ -14,6 +14,9 @@ class ReviewsSeeder extends Seeder
         $user = User::first();
         if (! $user) return;
 
+        // Idempotente: re-rodar não duplica revisões.
+        Review::withTrashed()->where('user_id', $user->id)->forceDelete();
+
         $weeks = [
             // Semana atual — em andamento (alguns itens vazios)
             [

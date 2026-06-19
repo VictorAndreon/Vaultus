@@ -4,7 +4,8 @@ import { Icons } from '@/Components/Icons'
 import CurrencyInput from '@/Components/CurrencyInput'
 import { BudgetEntry } from '@/types/finance'
 
-interface BudgetDraft { id?: number; name: string; budget: number; color: string }
+// type (não interface) p/ ser atribuível a RequestPayload do Inertia (FormDataConvertible).
+type BudgetDraft = { id?: number; name: string; budget: number; color: string }
 
 const BUDGET_COLORS = ['var(--green)','var(--gold)','var(--sky)','var(--purple, oklch(72% 0.12 290))','var(--pink, oklch(74% 0.14 340))','var(--teal, oklch(76% 0.12 195))']
 

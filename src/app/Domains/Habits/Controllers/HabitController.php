@@ -63,8 +63,12 @@ class HabitController extends Controller
         $unitOf     = fn($h) => $h && $h->frequency_type === 'x_per_week' ? 'semanas' : 'dias';
 
         return Inertia::render('Habits/Index', [
-            'habits'        => $habits->map(fn($h) => new HabitResource($h)),
-            'today_metrics' => $todayMetric ? HealthMetricResource::make($todayMetric) : null,
+            // resolve() entrega o array já filtrado (sem o envelope `data` que o
+            // Inertia adiciona ao serializar JsonResource). O front lê os campos
+            // no topo (habit.id, habit.name, today_metrics.mood); passar o Resource
+            // cru re-introduz o wrapper e quebra tudo (id undefined, etc.).
+            'habits'        => $habits->map(fn($h) => (new HabitResource($h))->resolve($request)),
+            'today_metrics' => $todayMetric ? (new HealthMetricResource($todayMetric))->resolve($request) : null,
             'today'         => $today,
             'consistency'   => [
                 'labels' => $weekLabels,

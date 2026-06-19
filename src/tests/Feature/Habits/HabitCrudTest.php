@@ -32,6 +32,48 @@ class HabitCrudTest extends TestCase
             );
     }
 
+    /**
+     * Regressão: as props devem chegar SEM o envelope `data` que o Inertia
+     * adiciona ao serializar JsonResource. O front lê os campos no topo
+     * (habit.id, habit.frequency_type, today_metrics.mood); o wrapper deixava
+     * todos undefined — id virava "undefined" na URL do check-in, a pill caía
+     * no default "Semanal", o nome sumia e o drawer de edição quebrava a tela.
+     */
+    public function test_index_props_are_not_wrapped_in_data(): void
+    {
+        $user  = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        $today = \Carbon\Carbon::now('America/Sao_Paulo')->toDateString();
+
+        $habit = Habit::factory()->create([
+            'user_id'        => $user->id,
+            'name'           => 'Musculação',
+            'frequency_type' => 'weekly',
+            'frequency_days' => [1, 3, 5],
+        ]);
+        $habit->checkIns()->create(['date' => $today]);
+
+        \App\Domains\Habits\Models\HealthMetric::create([
+            'user_id' => $user->id,
+            'date'    => $today,
+            'mood'    => 4,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/habits')
+            ->assertInertia(fn ($page) => $page
+                // hábito: campos no topo, nada sob `data`
+                ->where('habits.0.id', $habit->id)
+                ->where('habits.0.name', 'Musculação')
+                ->where('habits.0.frequency_type', 'weekly')
+                ->where('habits.0.frequency_days', [1, 3, 5])
+                ->where('habits.0.checked_in_today', true)
+                ->missing('habits.0.data')
+                // métricas de hoje: idem
+                ->where('today_metrics.mood', 4)
+                ->missing('today_metrics.data')
+            );
+    }
+
     public function test_can_create_daily_habit(): void
     {
         $user = User::factory()->create();

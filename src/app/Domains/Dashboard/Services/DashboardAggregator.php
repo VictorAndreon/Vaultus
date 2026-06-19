@@ -208,27 +208,44 @@ class DashboardAggregator
                 'progress_percent' => $item->progress_percent,
                 'current_page'     => $item->current_page ?? 0,
                 'total_pages'      => $item->total_pages,
-                'cover_url'        => $item->cover_url,
+                // cover_display_url resolve capa local (cover_path) p/ rota; a coluna
+                // cover_url crua fica null quando a capa foi baixada p/ o storage.
+                'cover_url'        => $item->cover_display_url,
             ])
             ->toArray();
     }
 
-    public function getHabitsToday(User $user): array
+    /**
+     * Aderência semanal real por hábito p/ o heatmap (12 semanas, seg–dom),
+     * mesma convenção do gráfico de consistência em Habits/Index. Cada célula
+     * é done/expected da semana (0–1); null quando nada era esperado.
+     */
+    public function getHabitsHeatmap(User $user): array
     {
-        $now   = Carbon::now($user->timezone);
-        $today = $now->toDateString();
+        $timezone    = $user->timezone ?? 'America/Sao_Paulo';
+        $now         = Carbon::now($timezone);
+        $windowStart = $now->copy()->startOfWeek(Carbon::MONDAY)->subWeeks(11)->toDateString();
 
         return $user->habits()
             ->active()
-            ->with(['checkIns' => fn($q) => $q->whereDate('date', $today)])
+            ->with(['checkIns' => fn($q) => $q->where('date', '>=', $windowStart)])
+            ->limit(5)
             ->get()
-            ->filter(fn($h) => $h->isExpectedOn($now, $user->timezone))
-            ->map(fn($h) => [
-                'id'               => $h->id,
-                'name'             => $h->name,
-                'icon'             => $h->icon,
-                'checked_in_today' => $h->checkIns->isNotEmpty(),
-            ])
+            ->map(function ($habit) use ($now) {
+                $values = [];
+                for ($w = 11; $w >= 0; $w--) {
+                    $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->subWeeks($w);
+                    $weekEnd   = $weekStart->copy()->addDays(6);
+                    if ($weekEnd->gt($now)) {
+                        $weekEnd = $now->copy();
+                    }
+
+                    [$expected, $done] = $habit->adherenceInRange($weekStart, $weekEnd);
+                    $values[] = $expected > 0 ? round($done / $expected, 2) : null;
+                }
+
+                return ['label' => $habit->name, 'values' => $values];
+            })
             ->values()
             ->toArray();
     }
@@ -239,6 +256,7 @@ class DashboardAggregator
         $ptMonths  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
         return $user->journalEntries()
+            ->with('healthMetric')
             ->orderBy('date', 'desc')
             ->limit(3)
             ->get()
@@ -246,7 +264,8 @@ class DashboardAggregator
                 'day'   => $e->date->format('d'),
                 'month' => $ptMonths[$e->date->month - 1],
                 'quote' => mb_substr(strip_tags($e->content ?? ''), 0, 120),
-                'mood'  => $moodLabel[$e->mood ?? 0] ?? 'Sereno',
+                // o humor vive na HealthMetric do dia (JournalEntry não tem coluna mood)
+                'mood'  => $moodLabel[$e->healthMetric?->mood ?? 0] ?? 'Sereno',
                 'tag'   => implode(' · ', array_slice($e->tags ?? [], 0, 2)),
             ])
             ->toArray();

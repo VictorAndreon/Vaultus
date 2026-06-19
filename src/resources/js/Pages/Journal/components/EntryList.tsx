@@ -1,4 +1,5 @@
 import { JournalEntry } from '@/types'
+import { parseLocalDate } from '@/lib/date'
 
 interface Props { entries: JournalEntry[]; selectedDate: string | null; onSelectDate: (d: string) => void }
 
@@ -20,7 +21,7 @@ export default function EntryList({ entries, selectedDate, onSelectDate }: Props
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {entries.map(entry => {
-                const d = new Date(entry.date + 'T12:00:00')
+                const d = parseLocalDate(entry.date)
                 const mood = entry.mood ? MOOD_TAG[entry.mood] : null
                 return (
                     <article
@@ -31,9 +32,9 @@ export default function EntryList({ entries, selectedDate, onSelectDate }: Props
                     >
                         <div style={{ display: 'flex', gap: 24 }}>
                             <div style={{ flex: 'none', textAlign: 'center', width: 64, paddingTop: 6 }}>
-                                <div style={{ fontFamily: 'var(--serif)', fontSize: 42, lineHeight: 1, color: 'var(--text)' }}>{d.getDate()}</div>
+                                <div style={{ fontFamily: 'var(--serif)', fontSize: 42, lineHeight: 1, color: 'var(--text)' }}>{d ? d.getDate() : '—'}</div>
                                 <div className="kicker" style={{ marginTop: 4 }}>
-                                    {d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                                    {d ? d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '') : ''}
                                 </div>
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>

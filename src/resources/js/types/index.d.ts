@@ -7,6 +7,8 @@ export interface User {
 }
 
 export interface PageProps {
+    // Index signature exigida pelo @inertiajs/core (usePage<T extends Record<string, unknown>>).
+    [key: string]: unknown
     auth: { user: User | null }
     flash?: { success?: string; error?: string }
 }
