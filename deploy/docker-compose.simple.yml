@@ -1,0 +1,28 @@
+# Overlay do "modo simples" (localhost, sem TLS) — usado SEMPRE com -f explícito:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.simple.yml ...
+#
+# O -f explícito faz o Compose IGNORAR o docker-compose.override.yml (que fixa
+# vaultus.local + TLS), preservando 100% o ambiente do dono do repo.
+#
+# Dois ajustes são OBRIGATÓRIOS aqui:
+#  1. caddy.APP_URL — o caddy base não tem APP_URL nem usa env_file; sem isto o
+#     {$APP_URL} do Caddyfile fica vazio e o Caddy falha ao subir.
+#  2. node — o serviço `node` mora SÓ no override (ignorado pelo -f), então
+#     precisa ser redefinido aqui ou o build do frontend não tem onde rodar.
+services:
+  caddy:
+    environment:
+      APP_URL: http://localhost     # Caddyfile {$APP_URL} -> escuta HTTP na :80 (já publicada 80:80)
+
+  app:
+    environment:                    # belt-and-suspenders; o .env gerado já traz estes valores
+      APP_ENV: local
+      APP_DEBUG: "false"
+
+  node:
+    image: node:20-alpine
+    working_dir: /var/www/html
+    volumes:
+      - ./src:/var/www/html
+    profiles:
+      - dev                         # chamado via `--profile dev run --rm node ...`

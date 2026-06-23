@@ -1,0 +1,51 @@
+============================================
+   VAULTUS - COMO USAR
+============================================
+
+PASSO 1 - Instalar o Docker Desktop (so na primeira vez)
+--------------------------------------------------------
+Baixe e instale o Docker Desktop:
+   https://www.docker.com/products/docker-desktop/
+Depois de instalar, ABRA o Docker Desktop pelo menu Iniciar e
+espere ele terminar de carregar (o icone da baleia fica parado).
+
+
+PASSO 2 - Instalar o Vaultus (so na primeira vez)
+-------------------------------------------------
+De um duplo-clique em:
+   "Instalar Vaultus"
+Uma janela preta vai aparecer mostrando o progresso.
+A PRIMEIRA vez DEMORA VARIOS MINUTOS (ele baixa e prepara tudo).
+Nao feche a janela ate aparecer "Pronto!".
+
+Ao final, o navegador abre sozinho em http://localhost e
+tres atalhos sao criados na Area de Trabalho:
+   - "Vaultus"            -> abre o app
+   - "Parar Vaultus"      -> desliga o app
+   - "Atualizar Vaultus"  -> atualiza para a versao mais nova
+
+
+PASSO 3 - No dia a dia
+----------------------
+Basta o atalho "Vaultus" na Area de Trabalho.
+Ele liga tudo sozinho e abre o navegador.
+
+
+LOGIN
+-----
+   Endereco: http://localhost
+   Email:    teste@vaultus.local
+   Senha:    senha123
+
+
+ATUALIZAR
+---------
+Use o atalho "Atualizar Vaultus". Ele baixa a versao nova
+SEM apagar seus dados (login e banco continuam).
+
+
+SE ALGO DER ERRADO
+------------------
+1. Confira se o Docker Desktop esta ABERTO.
+2. Rode "Instalar Vaultus" de novo (e seguro repetir).
+3. Se ainda assim falhar, avise quem cuida do Vaultus.
