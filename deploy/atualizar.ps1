@@ -57,6 +57,7 @@ try {
 
     # --- Dependencias PHP -----------------------------------------------------
     Write-Step "Atualizando dependencias do PHP..."
+    # Producao: --no-dev (igual ao instalar). Sem seed de demo no update.
     Invoke-Docker @($dc + @("run", "--rm", "--no-deps", "app",
         "composer", "install", "--no-interaction", "--no-dev", "--optimize-autoloader"))
 

@@ -35,7 +35,10 @@ LOGIN
 -----
    Endereco: http://localhost
    Email:    teste@vaultus.local
-   Senha:    senha123
+   Senha:    gerada na instalacao. Aparece no FINAL do "Instalar Vaultus"
+             (em amarelo) e fica salva no arquivo "Vaultus - Login.txt"
+             criado na Area de Trabalho.
+   Dica: troque a senha depois de entrar, nas configuracoes.
 
 
 ATUALIZAR

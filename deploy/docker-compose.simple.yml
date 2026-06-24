@@ -16,7 +16,7 @@ services:
 
   app:
     environment:                    # belt-and-suspenders; o .env gerado já traz estes valores
-      APP_ENV: local
+      APP_ENV: production
       APP_DEBUG: "false"
 
   node:
