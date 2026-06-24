@@ -1,7 +1,7 @@
-import { useForm } from '@inertiajs/react'
+import { useForm, Link } from '@inertiajs/react'
 import { FormEvent } from 'react'
 
-export default function Login() {
+export default function Login({ canRegister = false }: { canRegister?: boolean }) {
     const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
@@ -52,6 +52,15 @@ export default function Login() {
                         {processing ? 'Entrando...' : 'Entrar'}
                     </button>
                 </form>
+
+                {canRegister && (
+                    <p style={{ color: '#94a3b8', fontSize: 14, marginTop: 20, textAlign: 'center' }}>
+                        Primeiro acesso?{' '}
+                        <Link href="/register" style={{ color: '#818cf8', fontWeight: 600 }}>
+                            Criar conta
+                        </Link>
+                    </p>
+                )}
             </div>
         </div>
     )

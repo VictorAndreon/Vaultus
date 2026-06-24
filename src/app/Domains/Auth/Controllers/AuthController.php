@@ -2,12 +2,14 @@
 
 namespace App\Domains\Auth\Controllers;
 
+use App\Domains\Auth\Models\User;
 use App\Domains\Auth\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -17,7 +19,50 @@ class AuthController extends Controller
 
     public function showLogin()
     {
-        return Inertia::render('Auth/Login');
+        // No primeiro acesso (sem nenhum usuário) a tela de login oferece o
+        // link para criar a conta. Depois disso o cadastro fica travado.
+        return Inertia::render('Auth/Login', [
+            'canRegister' => !User::exists(),
+        ]);
+    }
+
+    public function showRegister()
+    {
+        // Cadastro de primeiro acesso: disponível apenas enquanto não houver
+        // nenhum usuário. Uma vez criada a conta do dono, redireciona ao login.
+        if (User::exists()) {
+            return redirect('/login');
+        }
+
+        return Inertia::render('Auth/Register');
+    }
+
+    public function register(Request $request)
+    {
+        // Defesa em profundidade: mesmo que alguém envie o POST direto, só o
+        // primeiro usuário é aceito.
+        if (User::exists()) {
+            return redirect('/login');
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'timezone' => 'America/Sao_Paulo',
+        ]);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+        $this->audit->log('register', $user->id);
+
+        return redirect()->intended('/dashboard');
     }
 
     public function login(Request $request)

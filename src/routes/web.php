@@ -33,6 +33,9 @@ Route::get('/', fn() => auth()->check()
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    // Cadastro de primeiro acesso (trava após o 1º usuário — ver AuthController).
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
     Route::get('/two-factor', [TwoFactorController::class, 'show'])->name('two-factor.show');
     Route::post('/two-factor', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
 });

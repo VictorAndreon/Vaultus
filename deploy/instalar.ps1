@@ -74,36 +74,11 @@ try {
         Write-Ok "APP_KEY gerada."
     }
 
-    # --- 3b. Senha inicial de login (forte, unica por instalacao) -------------
-    Write-Step "Definindo a senha de login..."
-    $content = Get-Content $envPath -Raw
-    $pwMatch = [regex]::Match($content, "(?m)^ADMIN_INITIAL_PASSWORD=(.+)$")
-    if ($pwMatch.Success) {
-        $AdminPassword = $pwMatch.Groups[1].Value.Trim()
-        Write-Ok "Senha de login ja definida (mantida)."
-    } else {
-        # Caracteres sem ambiguidade (sem 0/O, 1/l/I) p/ facilitar digitar.
-        $set = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789".ToCharArray()
-        $rng = New-Object byte[] 20
-        [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($rng)
-        $AdminPassword = -join ($rng | ForEach-Object { $set[$_ % $set.Length] })
-        if ($content -match "(?m)^ADMIN_INITIAL_PASSWORD=.*$") {
-            $content = $content -replace "(?m)^ADMIN_INITIAL_PASSWORD=.*$", "ADMIN_INITIAL_PASSWORD=$AdminPassword"
-        } else {
-            $content = $content.TrimEnd() + "`nADMIN_INITIAL_PASSWORD=$AdminPassword`n"
-        }
-        Set-Content -Path $envPath -Value $content -NoNewline
-        Write-Ok "Senha forte gerada."
-    }
-    $emMatch = [regex]::Match((Get-Content $envPath -Raw), "(?m)^ADMIN_EMAIL=(.+)$")
-    $AdminEmail = if ($emMatch.Success) { $emMatch.Groups[1].Value.Trim() } else { "teste@vaultus.local" }
-
     # --- 4. composer install (dependencias PHP) -------------------------------
     Write-Step "Instalando dependencias do PHP (composer)..."
     # Producao: --no-dev (sem dependencias de desenvolvimento, ex.: faker).
-    # Por isso NAO rodamos o db:seed completo (os seeders de demo usam factories/
-    # faker e ainda apagam dados a cada execucao). Criamos apenas o usuario de
-    # login no passo 7 (AdminUserSeeder, idempotente, sem faker).
+    # Nao ha seed: o proprio app cria a conta no primeiro acesso (tela de
+    # cadastro, que trava apos o 1o usuario).
     Invoke-Docker @($dc + @("run", "--rm", "--no-deps", "app",
         "composer", "install", "--no-interaction", "--no-dev", "--optimize-autoloader"))
     Write-Ok "Dependencias PHP instaladas."
@@ -122,9 +97,7 @@ try {
     # --- 7. Banco de dados ----------------------------------------------------
     Write-Step "Preparando o banco de dados..."
     Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan", "migrate", "--force"))
-    # Cria SOMENTE o usuario de login (sem dados de demonstracao).
-    Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan",
-        "db:seed", "--class=AdminUserSeeder", "--force"))
+    # Sem seed: a conta e criada pelo proprio usuario no primeiro acesso.
     Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan", "storage:link"))
     Write-Ok "Banco pronto."
 
@@ -157,28 +130,13 @@ try {
     Write-Host "  Pronto! O Vaultus esta instalado." -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor Green
     Write-Host ""
-    # Salva as credenciais num arquivo na Area de Trabalho (fora do repo).
-    $credFile = Join-Path $desktop "Vaultus - Login.txt"
-    @(
-        "Vaultus - dados de acesso",
-        "==========================",
-        "Endereco: http://localhost",
-        "Email:    $AdminEmail",
-        "Senha:    $AdminPassword",
-        "",
-        "Guarde este arquivo. Recomendado trocar a senha apos o primeiro login."
-    ) | Set-Content -Path $credFile -Encoding UTF8
-
-    Write-Host "  Endereco: http://localhost"
-    Write-Host "  Login:    $AdminEmail"
-    Write-Host "  Senha:    $AdminPassword" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  GUARDE esta senha! Tambem foi salva em:"
-    Write-Host "    $credFile"
+    Write-Host "  Vou abrir http://localhost no navegador."
+    Write-Host "  CRIE SUA CONTA na primeira tela (seu nome, email e senha)."
+    Write-Host "  Esse cadastro funciona so uma vez: a conta criada e a sua." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  No dia a dia, use o atalho 'Vaultus' na Area de Trabalho."
     Write-Host ""
-    Start-Process "http://localhost"
+    Start-Process "http://localhost/register"
 }
 catch {
     Write-Host "`n--------------------------------------------" -ForegroundColor Red
