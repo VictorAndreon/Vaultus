@@ -70,7 +70,11 @@ try {
     # --- 3. APP_KEY -----------------------------------------------------------
     Write-Step "Gerando chave de seguranca (APP_KEY)..."
     $content = Get-Content $envPath -Raw
-    if ($content -match "(?m)^APP_KEY=.+$") {
+    # \S+ (e nao .+): com finais de linha CRLF (checkout Git no Windows), uma
+    # linha "APP_KEY=" vazia e na verdade "APP_KEY=`r" e o "." do .NET casa com
+    # o \r — o teste passaria, a chave nunca seria gerada e o app subiria sem
+    # APP_KEY (erro 500 "MissingAppKeyException" no primeiro acesso).
+    if ($content -match "(?m)^APP_KEY=\S+") {
         Write-Ok "APP_KEY ja definida (mantida)."
     } else {
         $bytes = New-Object byte[] 32
