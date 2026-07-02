@@ -25,7 +25,10 @@ function Invoke-Docker {
     param([Parameter(ValueFromRemainingArguments = $true)] $Args)
     & docker @Args
     if ($LASTEXITCODE -ne 0) {
-        throw "Comando falhou (codigo $LASTEXITCODE): docker $($Args -join ' ')"
+        # Achata arrays aninhados (as chamadas passam UM argumento que e um
+        # array); sem isso a mensagem sairia como "docker System.Object[]".
+        $flat = @($Args | ForEach-Object { $_ })
+        throw "Comando falhou (codigo $LASTEXITCODE): docker $($flat -join ' ')"
     }
 }
 
