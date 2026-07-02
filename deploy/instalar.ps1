@@ -112,8 +112,13 @@ try {
     Write-Ok "Banco pronto."
 
     # --- 8. Permissoes (salvaguarda) ------------------------------------------
-    Invoke-Docker @($dc + @("exec", "-T", "app", "sh", "-c",
+    # Roda como root: o container "app" usa um usuario fixo (1000:1000) e, em
+    # mounts do Windows (Docker Desktop/WSL2), os arquivos podem aparecer com
+    # dono diferente desse uid, fazendo chmod falhar com "Operation not
+    # permitted". Nao e fatal (mesmo motivo do storage:link acima): so avisa.
+    & docker @($dc + @("exec", "-T", "--user", "root", "app", "sh", "-c",
         "chmod -R ug+rw storage bootstrap/cache"))
+    if ($LASTEXITCODE -ne 0) { Write-Warn "Aviso: ajuste de permissoes falhou; o app funciona mesmo assim." }
 
     # --- 9. Atalhos na Area de Trabalho ---------------------------------------
     Write-Step "Criando atalhos na Area de Trabalho..."
