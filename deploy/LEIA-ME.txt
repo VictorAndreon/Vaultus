@@ -2,17 +2,29 @@
    VAULTUS - COMO USAR
 ============================================
 
+PASSO 0 - Baixar o Vaultus (so na primeira vez)
+-----------------------------------------------
+1. Instale o Git para Windows (pode aceitar as opcoes padrao):
+      https://git-scm.com/download/win
+2. Abra o "Prompt de Comando" (menu Iniciar, digite "cmd") e cole:
+      git clone https://github.com/VictorAndreon/Vaultus.git "%USERPROFILE%\Vaultus"
+3. Pronto: a pasta do Vaultus fica em C:\Users\SEU-USUARIO\Vaultus
+   e os instaladores ficam na subpasta "deploy" dentro dela.
+
+
 PASSO 1 - Instalar o Docker Desktop (so na primeira vez)
 --------------------------------------------------------
 Baixe e instale o Docker Desktop:
    https://www.docker.com/products/docker-desktop/
+Se ele pedir para instalar/atualizar o WSL 2 ou reiniciar o
+computador, aceite e reinicie.
 Depois de instalar, ABRA o Docker Desktop pelo menu Iniciar e
 espere ele terminar de carregar (o icone da baleia fica parado).
 
 
 PASSO 2 - Instalar o Vaultus (so na primeira vez)
 -------------------------------------------------
-De um duplo-clique em:
+Abra a pasta Vaultus\deploy e de um duplo-clique em:
    "Instalar Vaultus"
 Uma janela preta vai aparecer mostrando o progresso.
 A PRIMEIRA vez DEMORA VARIOS MINUTOS (ele baixa e prepara tudo).
@@ -40,7 +52,7 @@ LOGIN
 -----
    Endereco: http://localhost
    Email/Senha: os que VOCE escolheu ao criar a conta no primeiro acesso.
-   (Nao existe senha padrao — a conta e sua.)
+   (Nao existe senha padrao - a conta e sua.)
 
 
 ATUALIZAR
