@@ -11,7 +11,20 @@ Set-Location $Root
 $dc = @("compose", "-f", "docker-compose.yml", "-f", "deploy/docker-compose.simple.yml")
 $Url = "http://localhost"
 
+# A janela roda oculta (-WindowStyle Hidden no .bat), entao erros precisam
+# aparecer como caixa de dialogo - senao "nada acontece" e o usuario fica perdido.
+function Show-Alert($msg) {
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.MessageBox]::Show($msg, "Vaultus",
+        [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxIcon]::Warning) | Out-Null
+}
+
 # --- 1. Docker Desktop no ar? -----------------------------------------------
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Show-Alert "O Docker Desktop nao esta instalado. Rode 'Instalar Vaultus' novamente."
+    exit 1
+}
 & docker version *> $null
 if ($LASTEXITCODE -ne 0) {
     $candidates = @(
@@ -42,6 +55,11 @@ do {
     } catch { }
     Start-Sleep -Seconds 3
 } while ((Get-Date) -lt $deadline)
+
+if (-not $ready) {
+    Show-Alert "O Vaultus nao respondeu. Confira se o Docker Desktop esta aberto (icone da baleia) e clique no atalho de novo. Se continuar, rode 'Instalar Vaultus' novamente."
+    exit 1
+}
 
 # --- 4. Abrir o navegador ---------------------------------------------------
 Start-Process $Url

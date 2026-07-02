@@ -32,20 +32,26 @@ Write-Warn "Seus dados (login, banco) serao mantidos."
 
 try {
     # --- Docker disponivel? ---------------------------------------------------
-    & docker version *> $null
-    if ($LASTEXITCODE -ne 0) {
+    # Get-Command primeiro: com ErrorActionPreference=Stop, invocar um comando
+    # inexistente lancaria excecao e pularia direto pro catch generico.
+    $dockerOk = [bool](Get-Command docker -ErrorAction SilentlyContinue)
+    if ($dockerOk) { & docker version *> $null; $dockerOk = ($LASTEXITCODE -eq 0) }
+    if (-not $dockerOk) {
         Write-Warn "Abra o Docker Desktop e tente novamente."
         Read-Host "`nPressione ENTER para sair"; exit 1
     }
 
     # --- Baixar o codigo novo (git) ------------------------------------------
     Write-Step "Baixando a versao mais nova do codigo..."
-    & git --version *> $null
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         Write-Warn "O 'git' nao esta instalado, entao nao da pra atualizar automaticamente."
         Write-Warn "Peca a versao nova de quem cuida do Vaultus."
         Read-Host "`nPressione ENTER para sair"; exit 1
     }
+    # Descarta mudancas acidentais em arquivos RASTREADOS (ex.: package-lock
+    # reescrito por um npm antigo), senao o pull falha com "local changes would
+    # be overwritten". .env, banco e uploads nao sao rastreados - ficam intactos.
+    & git restore . *> $null
     $branch = (& git rev-parse --abbrev-ref HEAD).Trim()
     & git pull origin $branch
     if ($LASTEXITCODE -ne 0) { throw "Falha ao baixar o codigo (git pull)." }
@@ -63,14 +69,19 @@ try {
 
     # --- Build do frontend ----------------------------------------------------
     Write-Step "Recompilando a interface..."
+    # npm ci: instala exatamente o package-lock.json SEM reescreve-lo (um lock
+    # alterado sujaria o working tree e quebraria o proximo git pull).
     Invoke-Docker @($dc + @("--profile", "dev", "run", "--rm", "node",
-        "sh", "-c", "npm install && npm run build"))
+        "sh", "-c", "npm ci && npm run build"))
 
     # --- Subir + migrar -------------------------------------------------------
     Write-Step "Reiniciando os servicos e aplicando migracoes..."
     Invoke-Docker @($dc + @("up", "-d"))
     Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan", "migrate", "--force"))
-    Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan", "storage:link"))
+    # storage:link cria symlink e pode falhar em mount NTFS sem o Modo
+    # Desenvolvedor do Windows. Nao e fatal (as capas sao servidas por rota).
+    & docker @($dc + @("exec", "-T", "app", "php", "artisan", "storage:link"))
+    if ($LASTEXITCODE -ne 0) { Write-Warn "Aviso: 'storage:link' falhou; o app funciona mesmo assim." }
 
     Write-Host "`n============================================" -ForegroundColor Green
     Write-Host "  Vaultus atualizado com sucesso!" -ForegroundColor Green

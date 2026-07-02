@@ -20,7 +20,7 @@ function Write-Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)   { Write-Host "    $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "    $msg" -ForegroundColor Yellow }
 
-# Executa `docker <args...>` e aborta se o exit code não for 0.
+# Executa `docker <args...>` e aborta se o exit code nao for 0.
 function Invoke-Docker {
     param([Parameter(ValueFromRemainingArguments = $true)] $Args)
     & docker @Args
@@ -39,8 +39,12 @@ Write-Warn "Pode levar VARIOS MINUTOS. Nao feche esta janela."
 try {
     # --- 1. Docker disponivel? ------------------------------------------------
     Write-Step "Verificando o Docker Desktop..."
-    & docker version *> $null
-    if ($LASTEXITCODE -ne 0) {
+    # Get-Command primeiro: com ErrorActionPreference=Stop, invocar um comando
+    # inexistente lancaria excecao e cairia no catch generico, sem mostrar a
+    # mensagem amigavel abaixo (com o link de download).
+    $dockerOk = [bool](Get-Command docker -ErrorAction SilentlyContinue)
+    if ($dockerOk) { & docker version *> $null; $dockerOk = ($LASTEXITCODE -eq 0) }
+    if (-not $dockerOk) {
         Write-Warn "O Docker Desktop nao esta instalado ou nao esta rodando."
         Write-Warn "Vou abrir a pagina de download. Instale, ABRA o Docker Desktop"
         Write-Warn "e rode este instalador novamente."
@@ -85,8 +89,10 @@ try {
 
     # --- 5. Build do frontend -------------------------------------------------
     Write-Step "Compilando a interface (npm). Isto demora na 1a vez..."
+    # npm ci: instala exatamente o package-lock.json SEM reescreve-lo (um lock
+    # alterado sujaria o working tree e quebraria o git pull do atualizador).
     Invoke-Docker @($dc + @("--profile", "dev", "run", "--rm", "node",
-        "sh", "-c", "npm install && npm run build"))
+        "sh", "-c", "npm ci && npm run build"))
     Write-Ok "Interface compilada."
 
     # --- 6. Subir o stack -----------------------------------------------------
@@ -98,7 +104,11 @@ try {
     Write-Step "Preparando o banco de dados..."
     Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan", "migrate", "--force"))
     # Sem seed: a conta e criada pelo proprio usuario no primeiro acesso.
-    Invoke-Docker @($dc + @("exec", "-T", "app", "php", "artisan", "storage:link"))
+    # storage:link cria symlink e pode falhar em mount NTFS sem o Modo
+    # Desenvolvedor do Windows. Nao e fatal (as capas sao servidas por rota),
+    # entao so avisa em vez de abortar a instalacao com o banco ja pronto.
+    & docker @($dc + @("exec", "-T", "app", "php", "artisan", "storage:link"))
+    if ($LASTEXITCODE -ne 0) { Write-Warn "Aviso: 'storage:link' falhou; o app funciona mesmo assim." }
     Write-Ok "Banco pronto."
 
     # --- 8. Permissoes (salvaguarda) ------------------------------------------

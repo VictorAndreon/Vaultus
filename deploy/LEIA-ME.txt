@@ -18,8 +18,9 @@ Uma janela preta vai aparecer mostrando o progresso.
 A PRIMEIRA vez DEMORA VARIOS MINUTOS (ele baixa e prepara tudo).
 Nao feche a janela ate aparecer "Pronto!".
 
-Ao final, o navegador abre sozinho em http://localhost e
-tres atalhos sao criados na Area de Trabalho:
+Ao final, o navegador abre sozinho na tela de criar conta
+(http://localhost/register) e tres atalhos sao criados na
+Area de Trabalho:
    - "Vaultus"            -> abre o app
    - "Parar Vaultus"      -> desliga o app
    - "Atualizar Vaultus"  -> atualiza para a versao mais nova
